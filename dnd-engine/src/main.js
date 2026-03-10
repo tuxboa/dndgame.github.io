@@ -28,7 +28,11 @@ import { initStory, startStory } from "./systems/storyManager.js";
 import { initStoryUI } from "./ui/components/StoryUI.js";
 import { executeChoice } from "./systems/storyManager.js";
 import { initMana } from "./systems/spellSystem.js";
-import { initEquipment } from "./systems/equipmentSystem.js";
+import {
+  initEquipment,
+  equipItem as autoEquipItem,
+  isEquippable,
+} from "./systems/equipmentSystem.js";
 import { initLevelUpUI } from "./ui/components/LevelUpUI.js";
 import { initMerchantUI } from "./ui/components/MerchantUI.js";
 import { initAudio } from "./systems/audioSystem.js";
@@ -193,6 +197,13 @@ async function bootstrap() {
   // Snapshot base stats and apply any already-equipped item bonuses
   // (no-op if base stats already set — safe for loaded saves)
   initEquipment();
+
+  // Auto-equip all equippable starting items for new games
+  if (!menuResult.resumeSave) {
+    gameStore.getState().player.inventory.forEach(({ itemId }) => {
+      if (isEquippable(itemId)) autoEquipItem(itemId);
+    });
+  }
 
   // Wire the level-up stat-choice modal (listens for LEVEL_UP_READY)
   initLevelUpUI();

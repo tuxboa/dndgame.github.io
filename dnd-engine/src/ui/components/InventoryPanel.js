@@ -212,7 +212,14 @@ function renderInventoryList(inventory) {
     btn.addEventListener("click", () => useItem(btn.dataset.id));
   });
   list.querySelectorAll(".inv-btn--drop").forEach((btn) => {
-    btn.addEventListener("click", () => removeItem(btn.dataset.id, 1));
+    btn.addEventListener("click", () => {
+      const item = gameStore
+        .getState()
+        .player.inventory.find((i) => i.itemId === btn.dataset.id);
+      const name = item?.name ?? btn.dataset.id;
+      if (!confirm(`Biztosan eldobod: "${name}"?`)) return;
+      removeItem(btn.dataset.id, 1);
+    });
   });
 }
 
