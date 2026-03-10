@@ -820,24 +820,96 @@ const CLASS_SKILLS = {
 
 /** All 18 D&D 5e skills with governing ability (PHB p.174) */
 const ALL_SKILLS = [
-  { name: "Acrobatics", ability: "dex" },
-  { name: "Animal Handling", ability: "wis" },
-  { name: "Arcana", ability: "int" },
-  { name: "Athletics", ability: "str" },
-  { name: "Deception", ability: "cha" },
-  { name: "History", ability: "int" },
-  { name: "Insight", ability: "wis" },
-  { name: "Intimidation", ability: "cha" },
-  { name: "Investigation", ability: "int" },
-  { name: "Medicine", ability: "wis" },
-  { name: "Nature", ability: "int" },
-  { name: "Perception", ability: "wis" },
-  { name: "Performance", ability: "cha" },
-  { name: "Persuasion", ability: "cha" },
-  { name: "Religion", ability: "int" },
-  { name: "Sleight of Hand", ability: "dex" },
-  { name: "Stealth", ability: "dex" },
-  { name: "Survival", ability: "wis" },
+  {
+    name: "Acrobatics",
+    ability: "dex",
+    desc: "Perform acrobatic stunts: tumble, flip, balance on a tightrope.",
+  },
+  {
+    name: "Animal Handling",
+    ability: "wis",
+    desc: "Calm animals, sense their intentions, control mounts in danger.",
+  },
+  {
+    name: "Arcana",
+    ability: "int",
+    desc: "Recall lore about spells, magic items, planes, and magical traditions.",
+  },
+  {
+    name: "Athletics",
+    ability: "str",
+    desc: "Climb, jump, swim, grapple — challenges of brute physical effort.",
+  },
+  {
+    name: "Deception",
+    ability: "cha",
+    desc: "Mislead others through lies, misdirection, or disguise.",
+  },
+  {
+    name: "History",
+    ability: "int",
+    desc: "Recall historical events, legendary people, ancient kingdoms, wars.",
+  },
+  {
+    name: "Insight",
+    ability: "wis",
+    desc: "Gauge true intentions — detect lies, read emotions, predict behavior.",
+  },
+  {
+    name: "Intimidation",
+    ability: "cha",
+    desc: "Influence others through threats, hostile action, or fearsome presence.",
+  },
+  {
+    name: "Investigation",
+    ability: "int",
+    desc: "Search for clues, deduce how things work, and find hidden objects.",
+  },
+  {
+    name: "Medicine",
+    ability: "wis",
+    desc: "Stabilize the dying, diagnose illness, and tend grievous wounds.",
+  },
+  {
+    name: "Nature",
+    ability: "int",
+    desc: "Recall lore about terrain, plants, animals, weather, and natural cycles.",
+  },
+  {
+    name: "Perception",
+    ability: "wis",
+    desc: "Spot, hear, or detect the presence of something via your senses.",
+  },
+  {
+    name: "Performance",
+    ability: "cha",
+    desc: "Delight an audience with music, dance, acting, or storytelling.",
+  },
+  {
+    name: "Persuasion",
+    ability: "cha",
+    desc: "Influence others through tact, social grace, good will — and flattery.",
+  },
+  {
+    name: "Religion",
+    ability: "int",
+    desc: "Recall lore about deities, rites, prayers, and holy symbols.",
+  },
+  {
+    name: "Sleight of Hand",
+    ability: "dex",
+    desc: "Pick pockets, conceal small objects, perform manual trickery.",
+  },
+  {
+    name: "Stealth",
+    ability: "dex",
+    desc: "Conceal yourself from enemies, move silently, hide in shadows.",
+  },
+  {
+    name: "Survival",
+    ability: "wis",
+    desc: "Follow tracks, hunt, navigate wilderness, predict weather, forage.",
+  },
 ];
 
 /** Level-1 class features (PHB) */
@@ -1074,7 +1146,12 @@ function _renderCharForm(wrap) {
       const abMod = Math.floor((abs[sk.ability] - 10) / 2);
       const total = abMod + (prof ? profBonus : 0);
       const sign = total >= 0 ? "+" : "";
-      return `<li class="mm-cs-skill-row${prof ? " mm-cs-skill-row--prof" : ""}">
+      return `<li class="mm-cs-skill-row${prof ? " mm-cs-skill-row--prof" : ""}"
+        data-skill="${sk.name}"
+        data-desc="${sk.desc}"
+        data-ab="${sk.ability.toUpperCase()}"
+        data-val="${sign}${total}"
+        data-prof="${prof}">
         <span class="mm-cs-dot">${prof ? "●" : "○"}</span>
         <span class="mm-cs-skill-val">${sign}${total}</span>
         <span class="mm-cs-skill-name">${sk.name}</span>
@@ -1148,13 +1225,11 @@ function _renderCharForm(wrap) {
         <div class="mm-cs-section">
           <div class="mm-cs-section-label">⚔️ Choose Class</div>
           <div class="mm-sheet-pills mm-cs-pills">${pills}</div>
-          <div class="mm-cs-class-desc">${classDef.desc}</div>
         </div>
 
         <div class="mm-cs-section">
           <div class="mm-cs-section-label">🌍 Choose Race</div>
           <div class="mm-sheet-pills mm-cs-pills">${racePills}</div>
-          <div class="mm-cs-class-desc">${raceDef.desc}</div>
         </div>
 
         <div class="mm-cs-section">
@@ -1170,18 +1245,18 @@ function _renderCharForm(wrap) {
 
         <div class="mm-cs-section">
           <div class="mm-cs-section-label">📋 Proficiencies &amp; Languages</div>
-          <div class="mm-cs-prof-block">
-            <div class="mm-cs-prof-row">
-              <span class="mm-cs-prof-tag">Weapons</span>
-              <span class="mm-cs-prof-val">${WEAPON_PROFS[cls]}</span>
+          <div class="mm-cs-prof-chips">
+            <div class="mm-cs-prof-chip-group">
+              <span class="mm-cs-prof-chip-label">⚔️ Weapons</span>
+              <span class="mm-cs-prof-chip-val">${WEAPON_PROFS[cls]}</span>
             </div>
-            <div class="mm-cs-prof-row">
-              <span class="mm-cs-prof-tag">Armor</span>
-              <span class="mm-cs-prof-val">${ARMOR_PROFS[cls]}</span>
+            <div class="mm-cs-prof-chip-group">
+              <span class="mm-cs-prof-chip-label">🛡️ Armor</span>
+              <span class="mm-cs-prof-chip-val">${ARMOR_PROFS[cls]}</span>
             </div>
-            <div class="mm-cs-prof-row">
-              <span class="mm-cs-prof-tag">Languages</span>
-              <span class="mm-cs-prof-val">${LANGUAGES}</span>
+            <div class="mm-cs-prof-chip-group">
+              <span class="mm-cs-prof-chip-label">🗣️ Languages</span>
+              <span class="mm-cs-prof-chip-val">${LANGUAGES}</span>
             </div>
           </div>
         </div>
@@ -1192,30 +1267,53 @@ function _renderCharForm(wrap) {
       <div class="mm-cs-page">
 
         <div class="mm-cs-section">
+          <div class="mm-cs-identity-banner">
+            <div class="mm-cs-ib-class">
+              <span class="mm-cs-ib-icon">${classDef.icon}</span>
+              <span class="mm-cs-ib-name">${cls}</span>
+              <span class="mm-cs-ib-sub">Class</span>
+            </div>
+            <div class="mm-cs-ib-sep">×</div>
+            <div class="mm-cs-ib-race">
+              <span class="mm-cs-ib-icon">${raceDef.icon}</span>
+              <span class="mm-cs-ib-name">${raceDef.id}</span>
+              <span class="mm-cs-ib-sub">Race</span>
+            </div>
+            <div class="mm-cs-ib-desc">${classDef.desc}</div>
+          </div>
+        </div>
+
+        <div class="mm-cs-section">
           <div class="mm-cs-section-label">⚡ Combat Statistics</div>
           <div class="mm-cs-combat-row">
             <div class="mm-cs-combat-box mm-cs-combat-box--hp">
+              <div class="mm-cs-combat-icon">❤️</div>
               <div class="mm-cs-combat-val">${maxHp}</div>
               <div class="mm-cs-combat-sub">d${hd}</div>
               <div class="mm-cs-combat-label">Hit Points</div>
             </div>
-            <div class="mm-cs-combat-box">
+            <div class="mm-cs-combat-box mm-cs-combat-box--ac">
+              <div class="mm-cs-combat-icon">🛡️</div>
               <div class="mm-cs-combat-val">${ac}</div>
               <div class="mm-cs-combat-label">Armor Class</div>
             </div>
-            <div class="mm-cs-combat-box">
+            <div class="mm-cs-combat-box mm-cs-combat-box--init">
+              <div class="mm-cs-combat-icon">⚡</div>
               <div class="mm-cs-combat-val">${initStr}</div>
               <div class="mm-cs-combat-label">Initiative</div>
             </div>
-            <div class="mm-cs-combat-box">
+            <div class="mm-cs-combat-box mm-cs-combat-box--spd">
+              <div class="mm-cs-combat-icon">🏃</div>
               <div class="mm-cs-combat-val">${speed}<span class="mm-cs-combat-unit">ft</span></div>
               <div class="mm-cs-combat-label">Speed</div>
             </div>
-            <div class="mm-cs-combat-box">
+            <div class="mm-cs-combat-box mm-cs-combat-box--prof">
+              <div class="mm-cs-combat-icon">⭐</div>
               <div class="mm-cs-combat-val">+2</div>
               <div class="mm-cs-combat-label">Prof. Bonus</div>
             </div>
-            <div class="mm-cs-combat-box">
+            <div class="mm-cs-combat-box mm-cs-combat-box--gold">
+              <div class="mm-cs-combat-icon">💰</div>
               <div class="mm-cs-combat-val">${gold}<span class="mm-cs-combat-unit">gp</span></div>
               <div class="mm-cs-combat-label">Gold</div>
             </div>
@@ -1266,6 +1364,53 @@ function _renderCharForm(wrap) {
     });
 
     // Point buy: stepper +/− buttons — patch in-place to avoid scroll jump
+    // Skill tooltip — reuse single instance, remove old one first
+    document.querySelectorAll(".mm-skill-tooltip").forEach((el) => el.remove());
+    const tooltip = document.createElement("div");
+    tooltip.className = "mm-skill-tooltip";
+    tooltip.style.display = "none";
+    document.body.appendChild(tooltip);
+    const _removeTooltip = () => {
+      tooltip.style.display = "none";
+    };
+    wrap.querySelectorAll(".mm-cs-skill-row").forEach((row) => {
+      row.addEventListener("mouseenter", (e) => {
+        const name = row.dataset.skill;
+        const desc = row.dataset.desc;
+        const ab = row.dataset.ab;
+        const val = row.dataset.val;
+        const prof = row.dataset.prof === "true";
+        tooltip.innerHTML = `
+          <div class="mm-stt-header">
+            <span class="mm-stt-name">${name}</span>
+            <span class="mm-stt-badge mm-stt-badge--${ab.toLowerCase()}">${ab}</span>
+            ${prof ? `<span class="mm-stt-prof">✦ Proficient</span>` : ""}
+          </div>
+          <div class="mm-stt-val">${val}</div>
+          <div class="mm-stt-desc">${desc}</div>
+        `;
+        tooltip.style.display = "block";
+        const rect = row.getBoundingClientRect();
+        const ttW = 220;
+        let left = rect.right + 8;
+        if (left + ttW > window.innerWidth) left = rect.left - ttW - 8;
+        tooltip.style.left = left + "px";
+        tooltip.style.top =
+          Math.min(rect.top, window.innerHeight - tooltip.offsetHeight - 8) +
+          "px";
+      });
+      row.addEventListener("mouseleave", _removeTooltip);
+    });
+    // Clean up tooltip when navigating away
+    wrap.addEventListener("mouseleave", _removeTooltip);
+
+    // Feature accordion toggle
+    wrap.querySelectorAll(".mm-cs-feature").forEach((card) => {
+      card.addEventListener("click", () => {
+        card.classList.toggle("mm-cs-feature--open");
+      });
+    });
+
     wrap.querySelectorAll(".mm-ability-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         const ab = btn.dataset.ab;
