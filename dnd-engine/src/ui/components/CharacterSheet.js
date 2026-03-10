@@ -53,6 +53,37 @@ const SKILLS = [
 ];
 
 // Saving throw ability per class (the two standard ones)
+const WEAPON_PROFS = {
+  Barbarian: "All simple & martial weapons",
+  Bard: "Simple weapons, hand crossbows, longswords, rapiers, shortswords",
+  Cleric: "Simple weapons",
+  Druid:
+    "Clubs, daggers, darts, javelins, maces, quarterstaffs, scimitars, sickles, slings, spears",
+  Fighter: "All simple & martial weapons",
+  Monk: "Simple weapons & shortswords",
+  Paladin: "All simple & martial weapons",
+  Ranger: "All simple & martial weapons",
+  Rogue: "Simple weapons, hand crossbows, longswords, rapiers, shortswords",
+  Sorcerer: "Daggers, darts, slings, quarterstaffs, light crossbows",
+  Warlock: "Simple weapons",
+  Wizard: "Daggers, darts, slings, quarterstaffs, light crossbows",
+};
+
+const ARMOR_PROFS = {
+  Barbarian: "Light & medium armor, shields",
+  Bard: "Light armor",
+  Cleric: "Light, medium & heavy armor, shields",
+  Druid: "Light & medium armor, shields (no metal)",
+  Fighter: "All armor & shields",
+  Monk: "None",
+  Paladin: "All armor & shields",
+  Ranger: "Light & medium armor, shields",
+  Rogue: "Light armor",
+  Sorcerer: "None",
+  Warlock: "Light armor",
+  Wizard: "None",
+};
+
 const CLASS_SAVES = {
   Barbarian: ["str", "con"],
   Bard: ["dex", "cha"],
@@ -236,6 +267,26 @@ function _render(player) {
         </div>
       </section>
 
+      <!-- Saving Throws -->
+      <section class="cs-section">
+        <h3 class="cs-section-title">Saving Throws</h3>
+        <div class="cs-save-grid">
+          ${Object.entries(ab)
+            .map(([key, val]) => {
+              const m = mod(val);
+              const isProficient = saves.includes(key);
+              const total = m + (isProficient ? prof : 0);
+              return `
+              <div class="cs-save-row${isProficient ? " cs-save-row--prof" : ""}">
+                <span class="cs-save-pip${isProficient ? " proficient" : ""}">${isProficient ? "◆" : "◇"}</span>
+                <span class="cs-save-name">${ABILITY_SHORT[key]}</span>
+                <span class="cs-save-val">${fmtMod(total)}</span>
+              </div>`;
+            })
+            .join("")}
+        </div>
+      </section>
+
       <!-- Skills -->
       <section class="cs-section">
         <h3 class="cs-section-title">Skills</h3>
@@ -263,6 +314,25 @@ function _render(player) {
               </li>`;
           }).join("")}
         </ul>
+      </section>
+
+      <!-- Proficiencies & Languages -->
+      <section class="cs-section">
+        <h3 class="cs-section-title">Proficiencies &amp; Languages</h3>
+        <div class="cs-prof-list">
+          <div class="cs-prof-row">
+            <span class="cs-prof-label">⚔️ Weapons</span>
+            <span class="cs-prof-val">${WEAPON_PROFS[player.class] ?? "—"}</span>
+          </div>
+          <div class="cs-prof-row">
+            <span class="cs-prof-label">🛡️ Armor</span>
+            <span class="cs-prof-val">${ARMOR_PROFS[player.class] ?? "—"}</span>
+          </div>
+          <div class="cs-prof-row">
+            <span class="cs-prof-label">🗣️ Languages</span>
+            <span class="cs-prof-val">Common + one additional</span>
+          </div>
+        </div>
       </section>
 
       <!-- Conditions -->

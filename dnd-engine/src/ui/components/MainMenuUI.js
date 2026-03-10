@@ -1232,33 +1232,10 @@ function _renderCharForm(wrap) {
           <div class="mm-sheet-pills mm-cs-pills">${racePills}</div>
         </div>
 
-        <div class="mm-cs-section">
+        <div class="mm-cs-section mm-cs-section--fill">
           <div class="mm-cs-section-label">🧠 Ability Scores</div>
           ${pointsBar}
           <div class="mm-ability-grid" id="mm-ability-grid">${abilityBoxes}</div>
-        </div>
-
-        <div class="mm-cs-section mm-cs-section--fill">
-          <div class="mm-cs-section-label">🎲 Saving Throws</div>
-          <ul class="mm-cs-throw-list">${saveRows}</ul>
-        </div>
-
-        <div class="mm-cs-section">
-          <div class="mm-cs-section-label">📋 Proficiencies &amp; Languages</div>
-          <div class="mm-cs-prof-chips">
-            <div class="mm-cs-prof-chip-group">
-              <span class="mm-cs-prof-chip-label">⚔️ Weapons</span>
-              <span class="mm-cs-prof-chip-val">${WEAPON_PROFS[cls]}</span>
-            </div>
-            <div class="mm-cs-prof-chip-group">
-              <span class="mm-cs-prof-chip-label">🛡️ Armor</span>
-              <span class="mm-cs-prof-chip-val">${ARMOR_PROFS[cls]}</span>
-            </div>
-            <div class="mm-cs-prof-chip-group">
-              <span class="mm-cs-prof-chip-label">🗣️ Languages</span>
-              <span class="mm-cs-prof-chip-val">${LANGUAGES}</span>
-            </div>
-          </div>
         </div>
 
       </div>
@@ -1321,11 +1298,6 @@ function _renderCharForm(wrap) {
         </div>
 
         <div class="mm-cs-section mm-cs-section--fill">
-          <div class="mm-cs-section-label">🎯 Skills</div>
-          <ul class="mm-cs-skill-list">${skillRows}</ul>
-        </div>
-
-        <div class="mm-cs-section">
           <div class="mm-cs-section-label">✨ Class Features</div>
           <div class="mm-cs-features">${featureCards}</div>
         </div>
