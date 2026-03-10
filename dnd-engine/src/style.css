@@ -4043,6 +4043,12 @@ body {
     transform 0.3s ease;
 }
 
+/* Charsheet screen: fill viewport, no outer scroll */
+.mm-wrap:has(.mm-content--charsheet) {
+  overflow: hidden;
+  align-items: stretch;
+}
+
 .mm-wrap--visible {
   opacity: 1;
   transform: translateY(0);
@@ -4542,7 +4548,11 @@ body {
 .mm-content--charsheet {
   width: 100%;
   max-width: 1100px;
-  padding-bottom: 0;
+  padding: 0.4rem 1.5rem 0.4rem;
+  gap: 0.4rem;
+  flex: 1;
+  align-self: stretch;
+  min-height: 0;
 }
 
 /* ─ Name bar above the sheet ─────────────────────────────────────────────────── */
@@ -4611,11 +4621,15 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
   width: 100%;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
 }
 
 @media (max-width: 780px) {
   .mm-charsheet {
     grid-template-columns: 1fr;
+    overflow-y: auto;
   }
 }
 
@@ -4623,7 +4637,7 @@ body {
 .mm-cs-page {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.5rem;
   padding: 1rem;
   background: #12171f;
   border: 1px solid #2a3441;
@@ -4631,10 +4645,92 @@ body {
   box-shadow:
     0 0 0 1px #1e2a38,
     0 4px 24px rgba(0, 0, 0, 0.6);
-  overflow-y: auto;
-  max-height: 72vh;
-  scrollbar-width: thin;
-  scrollbar-color: #2a3441 transparent;
+  overflow: hidden;
+  min-height: 0;
+  flex: 1;
+}
+
+/* Section block inside a page */
+.mm-cs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  min-height: 0;
+}
+
+/* Fill section takes remaining vertical space and clips overflow */
+.mm-cs-section--fill {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Responsive font/spacing reduction */
+@media (max-height: 700px) {
+  .mm-content--charsheet {
+    padding: 0.2rem 1rem;
+    gap: 0.2rem;
+  }
+  .mm-cs-page {
+    padding: 0.6rem;
+    gap: 0.35rem;
+  }
+  .mm-cs-section {
+    gap: 0.2rem;
+  }
+  .mm-cs-namebar {
+    padding: 0 0.6rem;
+  }
+  .mm-cs-namebar-input {
+    font-size: 1.1rem !important;
+  }
+  .mm-ability-box--edit {
+    min-height: 3.2rem;
+  }
+  .mm-ability-base {
+    font-size: 0.9rem;
+  }
+  .mm-ability-final {
+    font-size: 1.1rem;
+  }
+  .mm-cs-combat-val {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-height: 600px) {
+  .mm-cs-page {
+    padding: 0.4rem;
+    gap: 0.25rem;
+  }
+  .mm-cs-section {
+    gap: 0.15rem;
+  }
+  .mm-cs-section-label {
+    font-size: 0.58rem;
+    padding-bottom: 0.12rem;
+    margin-top: 0;
+  }
+  .mm-sheet-pill {
+    padding: 0.18rem 0.6rem;
+    font-size: 0.72rem;
+  }
+  .mm-cs-class-desc {
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .mm-content--charsheet {
+    padding: 0.2rem 0.5rem;
+    gap: 0.2rem;
+  }
+  .mm-cs-page {
+    padding: 0.5rem;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+  }
 }
 
 /* ─ Identity block ───────────────────────────────────────────────────────────── */
@@ -4860,7 +4956,7 @@ body {
 /* ─ Interactive ability boxes (edit mode) ───────────────────────────────────── */
 
 .mm-ability-box--edit {
-  min-height: 6.2rem;
+  min-height: 4rem;
   justify-content: space-between;
   padding: 0.4rem 0.18rem 0.35rem;
   cursor: default;

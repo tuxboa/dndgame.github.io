@@ -1145,34 +1145,44 @@ function _renderCharForm(wrap) {
       <!-- ── Left page: Abilities · Saves ── -->
       <div class="mm-cs-page">
 
-        <div class="mm-cs-section-label">⚔️ Choose Class</div>
-        <div class="mm-sheet-pills mm-cs-pills">${pills}</div>
-        <div class="mm-cs-class-desc">${classDef.desc}</div>
+        <div class="mm-cs-section">
+          <div class="mm-cs-section-label">⚔️ Choose Class</div>
+          <div class="mm-sheet-pills mm-cs-pills">${pills}</div>
+          <div class="mm-cs-class-desc">${classDef.desc}</div>
+        </div>
 
-        <div class="mm-cs-section-label">🌍 Choose Race</div>
-        <div class="mm-sheet-pills mm-cs-pills">${racePills}</div>
-        <div class="mm-cs-class-desc">${raceDef.desc}</div>
+        <div class="mm-cs-section">
+          <div class="mm-cs-section-label">🌍 Choose Race</div>
+          <div class="mm-sheet-pills mm-cs-pills">${racePills}</div>
+          <div class="mm-cs-class-desc">${raceDef.desc}</div>
+        </div>
 
-        <div class="mm-cs-section-label">🧠 Ability Scores</div>
-        ${pointsBar}
-        <div class="mm-ability-grid" id="mm-ability-grid">${abilityBoxes}</div>
+        <div class="mm-cs-section">
+          <div class="mm-cs-section-label">🧠 Ability Scores</div>
+          ${pointsBar}
+          <div class="mm-ability-grid" id="mm-ability-grid">${abilityBoxes}</div>
+        </div>
 
-        <div class="mm-cs-section-label">🎲 Saving Throws</div>
-        <ul class="mm-cs-throw-list">${saveRows}</ul>
+        <div class="mm-cs-section mm-cs-section--fill">
+          <div class="mm-cs-section-label">🎲 Saving Throws</div>
+          <ul class="mm-cs-throw-list">${saveRows}</ul>
+        </div>
 
-        <div class="mm-cs-section-label">📋 Proficiencies &amp; Languages</div>
-        <div class="mm-cs-prof-block">
-          <div class="mm-cs-prof-row">
-            <span class="mm-cs-prof-tag">Weapons</span>
-            <span class="mm-cs-prof-val">${WEAPON_PROFS[cls]}</span>
-          </div>
-          <div class="mm-cs-prof-row">
-            <span class="mm-cs-prof-tag">Armor</span>
-            <span class="mm-cs-prof-val">${ARMOR_PROFS[cls]}</span>
-          </div>
-          <div class="mm-cs-prof-row">
-            <span class="mm-cs-prof-tag">Languages</span>
-            <span class="mm-cs-prof-val">${LANGUAGES}</span>
+        <div class="mm-cs-section">
+          <div class="mm-cs-section-label">📋 Proficiencies &amp; Languages</div>
+          <div class="mm-cs-prof-block">
+            <div class="mm-cs-prof-row">
+              <span class="mm-cs-prof-tag">Weapons</span>
+              <span class="mm-cs-prof-val">${WEAPON_PROFS[cls]}</span>
+            </div>
+            <div class="mm-cs-prof-row">
+              <span class="mm-cs-prof-tag">Armor</span>
+              <span class="mm-cs-prof-val">${ARMOR_PROFS[cls]}</span>
+            </div>
+            <div class="mm-cs-prof-row">
+              <span class="mm-cs-prof-tag">Languages</span>
+              <span class="mm-cs-prof-val">${LANGUAGES}</span>
+            </div>
           </div>
         </div>
 
@@ -1181,43 +1191,51 @@ function _renderCharForm(wrap) {
       <!-- ── Right page: Combat · Skills · Features · Gear ── -->
       <div class="mm-cs-page">
 
-        <div class="mm-cs-section-label">⚡ Combat Statistics</div>
-        <div class="mm-cs-combat-row">
-          <div class="mm-cs-combat-box mm-cs-combat-box--hp">
-            <div class="mm-cs-combat-val">${maxHp}</div>
-            <div class="mm-cs-combat-sub">d${hd}</div>
-            <div class="mm-cs-combat-label">Hit Points</div>
-          </div>
-          <div class="mm-cs-combat-box">
-            <div class="mm-cs-combat-val">${ac}</div>
-            <div class="mm-cs-combat-label">Armor Class</div>
-          </div>
-          <div class="mm-cs-combat-box">
-            <div class="mm-cs-combat-val">${initStr}</div>
-            <div class="mm-cs-combat-label">Initiative</div>
-          </div>
-          <div class="mm-cs-combat-box">
-            <div class="mm-cs-combat-val">${speed}<span class="mm-cs-combat-unit">ft</span></div>
-            <div class="mm-cs-combat-label">Speed</div>
-          </div>
-          <div class="mm-cs-combat-box">
-            <div class="mm-cs-combat-val">+2</div>
-            <div class="mm-cs-combat-label">Prof. Bonus</div>
-          </div>
-          <div class="mm-cs-combat-box">
-            <div class="mm-cs-combat-val">${gold}<span class="mm-cs-combat-unit">gp</span></div>
-            <div class="mm-cs-combat-label">Gold</div>
+        <div class="mm-cs-section">
+          <div class="mm-cs-section-label">⚡ Combat Statistics</div>
+          <div class="mm-cs-combat-row">
+            <div class="mm-cs-combat-box mm-cs-combat-box--hp">
+              <div class="mm-cs-combat-val">${maxHp}</div>
+              <div class="mm-cs-combat-sub">d${hd}</div>
+              <div class="mm-cs-combat-label">Hit Points</div>
+            </div>
+            <div class="mm-cs-combat-box">
+              <div class="mm-cs-combat-val">${ac}</div>
+              <div class="mm-cs-combat-label">Armor Class</div>
+            </div>
+            <div class="mm-cs-combat-box">
+              <div class="mm-cs-combat-val">${initStr}</div>
+              <div class="mm-cs-combat-label">Initiative</div>
+            </div>
+            <div class="mm-cs-combat-box">
+              <div class="mm-cs-combat-val">${speed}<span class="mm-cs-combat-unit">ft</span></div>
+              <div class="mm-cs-combat-label">Speed</div>
+            </div>
+            <div class="mm-cs-combat-box">
+              <div class="mm-cs-combat-val">+2</div>
+              <div class="mm-cs-combat-label">Prof. Bonus</div>
+            </div>
+            <div class="mm-cs-combat-box">
+              <div class="mm-cs-combat-val">${gold}<span class="mm-cs-combat-unit">gp</span></div>
+              <div class="mm-cs-combat-label">Gold</div>
+            </div>
           </div>
         </div>
 
-        <div class="mm-cs-section-label">🎯 Skills</div>
-        <ul class="mm-cs-skill-list">${skillRows}</ul>
+        <div class="mm-cs-section mm-cs-section--fill">
+          <div class="mm-cs-section-label">🎯 Skills</div>
+          <ul class="mm-cs-skill-list">${skillRows}</ul>
+        </div>
 
-        <div class="mm-cs-section-label">✨ Class Features</div>
-        <div class="mm-cs-features">${featureCards}</div>
+        <div class="mm-cs-section">
+          <div class="mm-cs-section-label">✨ Class Features</div>
+          <div class="mm-cs-features">${featureCards}</div>
+        </div>
 
-        <div class="mm-cs-section-label">🎒 Starting Equipment</div>
-        <div class="mm-cs-gear">${gearItems}</div>
+        <div class="mm-cs-section">
+          <div class="mm-cs-section-label">🎒 Starting Equipment</div>
+          <div class="mm-cs-gear">${gearItems}</div>
+        </div>
 
       </div>
     `;
