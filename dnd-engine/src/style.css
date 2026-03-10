@@ -1357,6 +1357,14 @@ body {
   transform: translateX(0);
 }
 
+/* On wide screens: lock inventory to the right gutter, never cover content */
+@media (min-width: 1300px) {
+  #inventory-panel {
+    left: calc(50% + 430px);
+    width: auto;
+  }
+}
+
 .inv-header {
   display: flex;
   align-items: center;
@@ -1606,6 +1614,14 @@ body {
 }
 #char-sheet-panel.open {
   transform: translateX(0);
+}
+
+/* On wide screens: lock char sheet to the left gutter, never cover content */
+@media (min-width: 1300px) {
+  #char-sheet-panel {
+    right: calc(50% + 430px);
+    width: auto;
+  }
 }
 
 /* Header */
