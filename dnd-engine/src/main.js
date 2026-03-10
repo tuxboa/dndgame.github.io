@@ -639,6 +639,11 @@ function subscribeToStore() {
       const existing = document.querySelector(".narrative-dm-thinking");
       if (pending && !existing) appendNarration("…", "dm-thinking");
       if (!pending && existing) existing.remove();
+
+      // Also disable/enable action bar buttons to prevent double-submit
+      document
+        .querySelectorAll("#action-bar .action-btn")
+        .forEach((b) => (b.disabled = pending));
     },
   );
 
@@ -693,7 +698,9 @@ function renderActionBar(actions = []) {
 
   bar.querySelectorAll(".action-btn").forEach((btn) => {
     btn.addEventListener("click", async () => {
+      if (gameStore.getState().dm.pendingResponse) return;
       const text = btn.dataset.action;
+      bar.querySelectorAll(".action-btn").forEach((b) => (b.disabled = true));
       await processTurn(text);
     });
   });

@@ -18,7 +18,9 @@ import { addQuest } from "../systems/questSystem.js";
  * @param {string} [path]
  * @returns {Promise<CampaignData>}
  */
-export async function loadCampaign(path = "/campaigns/campaign.json") {
+export async function loadCampaign(
+  path = `${import.meta.env.BASE_URL}campaigns/campaign.json`,
+) {
   let raw;
 
   try {
