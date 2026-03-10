@@ -65,5 +65,6 @@ function fgMapsPlugin() {
 }
 
 export default defineConfig({
+  base: "/dndgame.github.io/",
   plugins: [fgMapsPlugin()],
 });
