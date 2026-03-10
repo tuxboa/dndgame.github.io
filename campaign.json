@@ -1,0 +1,917 @@
+{
+  "layers": [
+    {
+      "name": "World Layer",
+      "type": "world",
+      "prompt": "You are an AI story generator. The world is a dark, gritty fantasy realm called Eldrasil — a land of failing empires, contested borderlands, and magic that is rare enough to be feared. There are no chosen heroes. Power is bought, stolen, or inherited. Three factions shape the known world: the Crimson Order (militaristic, expansionist, brutal efficiency), the Silver Circle (scholarly, secretive, morally ambiguous), and the Free Clans (independent, honour-bound, perpetually underestimated). Cities are walled and suspicious. Roads are dangerous. Trust is a currency that runs short. Tone: immersive, gritty, slightly archaic. No modern slang. Rich descriptive language. Moral ambiguity in every interaction."
+    },
+    {
+      "name": "Campaign Layer",
+      "type": "campaign",
+      "prompt": "The main campaign revolves around a war between the Crimson Order and the Silver Circle, fought through proxies, coin, and manipulation rather than open battle. The Free Clans are being used by both sides without their full knowledge. Key NPCs: Lord Vaelin (Crimson Order commander of Ironhold — pragmatic, ruthless, hides genuine shame behind authority), Lady Selene (Silver Circle operative and manipulator — brilliant, charming, dangerous, plays every faction), Master Thalos (Silver Circle arcanist in Veilspire — distracted genius, secret Clan contact, genuinely wants peace), Warchief Draven (Free Clans war-leader — honour-bound, weary, no patience for deception). The central MacGuffin is the Vault Shard — an ancient compact-magic artefact that can bind faction obligations. Whoever controls it controls the shape of the next war."
+    },
+    {
+      "name": "Page Layer Ironhold",
+      "type": "page",
+      "prompt": "Generate a self-contained adventure for Ironhold city. Tone: dark, tense, political. The players arrive as outsiders. Lord Vaelin needs proof of Selene's involvement with Free Clan funding. Three beats: road ambush by Free Clan scouts, barracks infiltration for evidence, vault confrontation with Selene's agent Mordecai who has just stolen the Vault Shard. Every encounter offers combat, negotiation, and deception paths. No clear good/evil.",
+      "adventure": {
+        "id": "ironhold_shadows",
+        "title": "Shadows Over Ironhold",
+        "subtitle": "A dark tale of treachery and faction war in Eldrasil",
+        "description": "The walled city of Ironhold groans under the iron fist of Lord Vaelin and his Crimson Order. Free Clan raiders have grown bold on the roads, coin from unknown sources filling their war-chests. Whispers place Lady Selene at the centre — but whispers do not move armies. You have been sent to learn the truth, before the city tears itself apart.",
+        "difficulty": "Medium",
+        "level": "2-4",
+        "duration": "3-4 hours",
+        "players": "3-5",
+        "icon": "🏰",
+        "startLocation": "ironhold_gate",
+        "autoStartQuests": ["ironhold_investigate"],
+        "startDescription": "You arrive at Ironhold's eastern gate as dusk bleeds across the battlements. The guards are tense, hands close to their weapons. Something has unsettled this city — you can feel it in the way the torchlight flickers and no one meets your gaze.",
+        "locations": {
+          "ironhold_gate": {
+            "name": "🏰 Ironhold — Eastern Gate",
+            "emoji": "🏰",
+            "type": "safe_zone",
+            "description": "The gatehouse of Ironhold is manned by Crimson Order soldiers who watch the road with undisguised suspicion. Beyond the portcullis, narrow streets wind between stone buildings. Lord Vaelin's keep looms on the hill above. A market stall is still open despite the hour — the merchant within looks relieved to see travellers.",
+            "npcs": ["Lord Vaelin", "Merchant"],
+            "paths": {
+              "clan_ambush_road": {
+                "targetId": "clan_ambush_road",
+                "requirement": null,
+                "description": "🌑 Head south along the Redford Road"
+              },
+              "crimson_barracks": {
+                "targetId": "crimson_barracks",
+                "requirement": {
+                  "type": "skill_check",
+                  "skill": "persuasion",
+                  "dc": 12
+                },
+                "description": "🔴 Gain entry to the Crimson Order barracks (Persuasion DC 12)",
+                "failurePenalty": {
+                  "hpLoss": 0,
+                  "triggerCombat": false,
+                  "message": "The guard blocks your path with a gauntleted hand. 'This quarter is restricted. Move along.'"
+                }
+              }
+            }
+          },
+          "clan_ambush_road": {
+            "name": "🌑 Redford Road — Ambush Point",
+            "emoji": "🌑",
+            "type": "dungeon_room",
+            "enemyType": "free_clan_scout",
+            "description": "The road south of Ironhold narrows as it enters a shallow ravine. Bleached bones of a pack animal lie in the ditch — warning signs that others have missed. You are halfway through when the first arrow strikes the road stone ahead of you. Then a second. Then a voice from the dark ridge above: 'Tarry here and pay the toll — or tarry here and bleed.'",
+            "npcs": [],
+            "paths": {
+              "ironhold_gate": {
+                "targetId": "ironhold_gate",
+                "requirement": null,
+                "description": "🏰 Return to Ironhold"
+              },
+              "crimson_barracks": {
+                "targetId": "crimson_barracks",
+                "requirement": null,
+                "description": "🔴 Press on to the Crimson Order barracks"
+              }
+            }
+          },
+          "crimson_barracks": {
+            "name": "🔴 Crimson Order Barracks",
+            "emoji": "🔴",
+            "type": "dungeon_room",
+            "enemyType": "crimson_guard",
+            "description": "Inside the barracks, the air smells of oil, steel, and old fear. Racks of polished arms line the walls. You find what you were looking for in a locked side office — letters in a cipher you do not recognise, tallies of coin disbursements to 'unnamed auxiliary forces'. A guard notices your presence and draws his blade without a word.",
+            "npcs": [],
+            "paths": {
+              "ironhold_gate": {
+                "targetId": "ironhold_gate",
+                "requirement": null,
+                "description": "🏰 Return to the gate"
+              },
+              "vault_approach": {
+                "targetId": "vault_approach",
+                "requirement": {
+                  "type": "skill_check",
+                  "skill": "investigation",
+                  "dc": 13
+                },
+                "description": "🔍 Search for the vault entrance (Investigation DC 13)",
+                "failurePenalty": {
+                  "hpLoss": 4,
+                  "triggerCombat": false,
+                  "message": "You trigger a concealed alarm glyph. A shock of arcane force throws you back. The guards will notice soon."
+                }
+              }
+            }
+          },
+          "vault_approach": {
+            "name": "🗝️ The Keep Vault — Lower Chamber",
+            "emoji": "🗝️",
+            "type": "boss_room",
+            "enemyType": "selene_agent",
+            "description": "The vault's lower chamber is lit by a cold blue lantern that casts no shadows. Stone shelves hold iron coffers, sealed scrolls, and one empty mounting bracket still bearing the outline of something that was recently removed — something roughly the shape of a shard. At the far end of the chamber, a cloaked figure turns slowly, a wrapped bundle clutched to their chest. They assess you with the calm of someone who has been caught before.",
+            "npcs": ["Agent Mordecai"],
+            "paths": {
+              "crimson_barracks": {
+                "targetId": "crimson_barracks",
+                "requirement": null,
+                "description": "🔴 Return through the barracks"
+              },
+              "ironhold_gate": {
+                "targetId": "ironhold_gate",
+                "requirement": null,
+                "description": "🏰 Return to Ironhold gate"
+              }
+            }
+          }
+        },
+        "npcs": {
+          "Agent Mordecai": {
+            "sprite": "bandit",
+            "dialogue": "...So. You caught me. I did not think Lady Selene's faith in me was misplaced — turns out she was right not to trust anyone. Including you, I suspect. What do you want — my life, or my knowledge?",
+            "options": [
+              {
+                "text": "Tell us everything about Selene's plan",
+                "action": "dialogue",
+                "response": "She intends to use the Vault Shard to invoke an old binding compact — one that would obligate the Free Clans to fight for her if the Silver Circle commands it. She plays all sides. She always has."
+              },
+              {
+                "text": "Let him go in exchange for the Vault Shard",
+                "action": "lootGold",
+                "amount": 35
+              },
+              {
+                "text": "Draw steel — he does not leave with the shard",
+                "action": "battle",
+                "enemy": "selene_agent",
+                "rewardGold": 35
+              },
+              { "text": "Step back and let events decide", "action": "back" }
+            ]
+          },
+          "Lord Vaelin": {
+            "sprite": "guard",
+            "dialogue": "Your timing is convenient. Speak plainly — I have a city to hold.",
+            "options": [
+              {
+                "text": "Report the plot at the vault",
+                "action": "dialogue",
+                "response": "By the forge-gods... if Selene truly moved the Vault Shard, the compact must already be in play. I owe you a debt. Name a favour — within reason."
+              },
+              {
+                "text": "Ask about the Free Clan raids",
+                "action": "dialogue",
+                "response": "They grow bolder by the week. Someone with coin is behind it. Follow the gold."
+              },
+              { "text": "Take your leave", "action": "back" }
+            ]
+          },
+          "Merchant": {
+            "sprite": "innkeeper",
+            "dialogue": "Thank the old gods you look like travellers of some capability. The roads have been closed since last tenday — I am practically giving goods away.",
+            "options": [
+              { "text": "Browse wares", "action": "openShop" },
+              {
+                "text": "Buy a Health Potion (25g)",
+                "action": "buyItem",
+                "item": "Health Potion",
+                "cost": 25
+              },
+              { "text": "Depart", "action": "back" }
+            ]
+          }
+        },
+        "quests": {
+          "ironhold_investigate": {
+            "id": "ironhold_investigate",
+            "title": "Uncover the Ironhold Plot",
+            "giver": "Lord Vaelin",
+            "description": "Gain entry to the Crimson Order barracks, find evidence of the conspiracy, and confront Lady Selene's operative before the Vault Shard leaves the city.",
+            "objectives": [
+              {
+                "id": "clear_road",
+                "type": "kill",
+                "target": "free_clan_scout",
+                "count": 1,
+                "currentCount": 0
+              },
+              {
+                "id": "clear_barracks",
+                "type": "kill",
+                "target": "crimson_guard",
+                "count": 1,
+                "currentCount": 0
+              }
+            ],
+            "reward": { "xp": 400, "gold": 120 },
+            "status": "inactive"
+          },
+          "recover_vault_shard": {
+            "id": "recover_vault_shard",
+            "title": "Recover the Vault Shard",
+            "giver": "Lord Vaelin",
+            "description": "The Vault Shard has been taken from the keep's lower vault. Locate Selene's agent and either recover it by negotiation or force.",
+            "objectives": [
+              {
+                "id": "find_agent",
+                "type": "kill",
+                "target": "selene_agent",
+                "count": 1,
+                "currentCount": 0
+              }
+            ],
+            "reward": { "xp": 300, "gold": 80 },
+            "status": "inactive"
+          }
+        },
+        "readAloud": [
+          {
+            "title": "Arrival at Ironhold (Read to Players)",
+            "text": "You arrive at Ironhold's eastern gate as dusk bleeds across the battlements. The guards wear the deep crimson livery of Lord Vaelin's Order — polished, armoured, and unspeaking. A placard beside the gate reads: BY ORDER OF THE CRIMSON COMMAND — NO UNNANNOUNCED ASSEMBLY. The city beyond is hushed in a way that cities should not be."
+          },
+          {
+            "title": "The Ambush on Redford Road",
+            "text": "The road narrows in the ravine. You hear nothing before the first arrow — then everything at once: the crack of bowstrings, boots on stone above, and a rough voice barking orders in a dialect that is half-trade-tongue, half-something older. The Free Clans do not waste arrows on warning shots. These were aimed."
+          },
+          {
+            "title": "Inside the Crimson Barracks",
+            "text": "The barracks smell of rendered tallow and iron. It is the smell of an army that has been waiting a long time. In the side office, on a desk that still holds a half-drunk cup of cold tea, you find the letters. They are written in a neat hand, but the cipher is layered — someone spent time on this. Someone who understood that discovery was always possible."
+          },
+          {
+            "title": "The Vault — Empty Bracket",
+            "text": "The mounting bracket is iron, bolted into solid stone, and still bears the faint imprint of something that rested here for a very long time. Whatever was here was old. Whatever was here is no longer. At the far end of the chamber, a cloaked figure stands utterly still, watching you with a patience that is somehow more unsettling than aggression."
+          }
+        ]
+      },
+      "enemies": {
+        "free_clan_scout": {
+          "name": "Free Clan Scout",
+          "sprite": "goblin",
+          "baseHp": 22,
+          "baseDmg": 5,
+          "damageDie": "1d6",
+          "ac": 13,
+          "attackBonus": 3,
+          "xpReward": 75,
+          "goldReward": 8,
+          "onHit": { "status": "Bleeding", "chance": 0.25, "duration": 1 },
+          "lootTable": [
+            { "item": "Gold Coin", "chance": 0.7, "quantity": 4 },
+            { "item": "Dagger", "chance": 0.3, "quantity": 1 }
+          ]
+        },
+        "crimson_guard": {
+          "name": "Crimson Order Guard",
+          "sprite": "guard",
+          "baseHp": 30,
+          "baseDmg": 7,
+          "damageDie": "1d8",
+          "ac": 16,
+          "attackBonus": 4,
+          "xpReward": 100,
+          "goldReward": 15,
+          "lootTable": [
+            { "item": "Gold Coin", "chance": 0.8, "quantity": 7 },
+            { "item": "Iron Armor", "chance": 0.2, "quantity": 1 }
+          ]
+        },
+        "selene_agent": {
+          "name": "Lady Selene's Agent",
+          "sprite": "bandit",
+          "baseHp": 27,
+          "baseDmg": 6,
+          "damageDie": "1d6",
+          "ac": 14,
+          "attackBonus": 5,
+          "xpReward": 150,
+          "goldReward": 35,
+          "onHit": { "status": "Poisoned", "chance": 0.35, "duration": 2 },
+          "lootTable": [
+            { "item": "Gold Coin", "chance": 0.9, "quantity": 15 },
+            { "item": "Dagger", "chance": 0.5, "quantity": 1 }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Page Layer Veilspire",
+      "type": "page",
+      "prompt": "Generate a self-contained adventure for Veilspire city. Tone: dark, mysterious, arcane. The players must navigate Master Thalos's tower to reach the rogue mage Lyris, then discover a secret Silver Circle / Free Clans alliance at the top. Three beats: arcane construct gauntlet, negotiation or combat with Lyris, exposure of the alliance chamber guarded by a planted Crimson Order enforcer. Intellectual and moral choices matter as much as combat.",
+      "adventure": {
+        "id": "veilspire_towers",
+        "title": "The Towers of Veilspire",
+        "subtitle": "Arcane intrigue among the spires of Eldrasil's scholar city",
+        "description": "Veilspire is a city of glass and old formulae — every street a ward, every rooftop a laboratory. Master Thalos governs its Silver Circle chapter with a distracted hand and a brilliant mind. But someone in his tower has gone rogue, and the Clans have made contact with the Circle in secret. You must navigate both layers of deception before the compact is sealed.",
+        "difficulty": "Hard",
+        "level": "3-5",
+        "duration": "3-4 hours",
+        "players": "3-5",
+        "icon": "🔮",
+        "startLocation": "veilspire_gates",
+        "autoStartQuests": ["veilspire_tower_access"],
+        "startDescription": "Veilspire's towers rise from the low morning mist like the fingers of a buried giant. Silver-warded lanterns cast the cobblestones in cold blue. You have come seeking Master Thalos — and whatever secret he has agreed to keep for the Free Clans.",
+        "locations": {
+          "veilspire_gates": {
+            "name": "🔮 Veilspire — Scholar's Gate",
+            "emoji": "🔮",
+            "type": "safe_zone",
+            "description": "The Scholar's Gate is a low arch of pale stone, engraved with the Silver Circle's sigil — an ouroboros in chalk-white relief. The gatekeeper is a tired scribe who stamps entry papers with mechanical disinterest. Beyond is a maze of narrow streets and humming towers. Somewhere in the tallest one, Master Thalos waits.",
+            "npcs": ["Master Thalos"],
+            "paths": {
+              "arcane_corridor": {
+                "targetId": "arcane_corridor",
+                "requirement": null,
+                "description": "🌀 Enter the Tower of Thalos — ground floor"
+              }
+            }
+          },
+          "arcane_corridor": {
+            "name": "🌀 Thalos Tower — Arcane Corridor",
+            "emoji": "🌀",
+            "type": "dungeon_room",
+            "enemyType": "arcane_construct",
+            "description": "The corridor stretches forty feet from the stairwell arch to a reinforced door. The walls pulse with dull amber light — a ward-sequence in progress. Three constructs of copper and bound lightning patrol the space with slow, geometric precision. They are not malicious. They do not need to be.",
+            "npcs": [],
+            "paths": {
+              "veilspire_gates": {
+                "targetId": "veilspire_gates",
+                "requirement": null,
+                "description": "🔮 Retreat to the Scholar's Gate"
+              },
+              "mage_sanctum": {
+                "targetId": "mage_sanctum",
+                "requirement": {
+                  "type": "skill_check",
+                  "skill": "arcana",
+                  "dc": 14
+                },
+                "description": "✨ Deactivate the upper ward and advance (Arcana DC 14)",
+                "failurePenalty": {
+                  "hpLoss": 8,
+                  "triggerCombat": false,
+                  "message": "The ward activates. A pulse of force flings you into the far wall. The constructs turn toward the disturbance."
+                }
+              }
+            }
+          },
+          "mage_sanctum": {
+            "name": "✨ The Rogue Mage's Sanctum",
+            "emoji": "✨",
+            "type": "dungeon_room",
+            "enemyType": "rogue_mage",
+            "description": "The sanctum is a controlled chaos of chalk-dusted tomes, floating geometric shapes, and glyphs that rearrange themselves whenever you stop looking at them. At the centre stands a woman in ash-grey robes with ink-stained hands and the expression of someone perpetually interrupted. She does not appear surprised to see you.",
+            "npcs": ["Rogue Mage Lyris"],
+            "paths": {
+              "arcane_corridor": {
+                "targetId": "arcane_corridor",
+                "requirement": null,
+                "description": "🌀 Return down the corridor"
+              },
+              "alliance_chamber": {
+                "targetId": "alliance_chamber",
+                "requirement": null,
+                "description": "🤝 Ascend to the Alliance Chamber — top floor"
+              }
+            }
+          },
+          "alliance_chamber": {
+            "name": "🤝 The Secret Alliance Chamber",
+            "emoji": "🤝",
+            "type": "boss_room",
+            "enemyType": "iron_captain",
+            "description": "The top floor of Thalos Tower opens into a broad circular chamber with a long table laid with maps, clan sigils, and a wax seal you recognise — the Free Clans' mark. Around the table stand Circle scholars and Clan emissaries in equal number. At the head sits no one. When you enter, a Crimson Order enforcer steps forward from behind a tapestry. He was already here. He saw everything.",
+            "npcs": [],
+            "paths": {
+              "mage_sanctum": {
+                "targetId": "mage_sanctum",
+                "requirement": null,
+                "description": "✨ Descend to the sanctum"
+              },
+              "veilspire_gates": {
+                "targetId": "veilspire_gates",
+                "requirement": null,
+                "description": "🔮 Return to street level"
+              }
+            }
+          }
+        },
+        "npcs": {
+          "Master Thalos": {
+            "sprite": "innkeeper",
+            "dialogue": "Careful — the third chalk ring is still active. Now. Who sent you, and what do you want?",
+            "options": [
+              {
+                "text": "We need access to the upper tower",
+                "action": "dialogue",
+                "response": "Get past the constructs without wrecking them and I will consider it. They are expensive."
+              },
+              {
+                "text": "Confront him about the Clans alliance",
+                "action": "dialogue",
+                "response": "...Sit. I will explain. And I ask that you tell no one who wears red. The Silver Circle does not know either."
+              },
+              {
+                "text": "Ask about Rogue Mage Lyris",
+                "action": "dialogue",
+                "response": "Brilliant. Wayward. Do not threaten her. Offer her a question she cannot yet answer — that is the only currency she respects."
+              },
+              { "text": "Leave the arcanist", "action": "back" }
+            ]
+          },
+          "Rogue Mage Lyris": {
+            "sprite": "innkeeper",
+            "dialogue": "You are not here on Thalos's behalf. Interesting. The fourth glyph left explodes. Do not test it.",
+            "options": [
+              {
+                "text": "Offer information about the Crimson Order",
+                "action": "dialogue",
+                "response": "Now that is interesting. Come — tell me what you know, and I will walk you to the third landing myself."
+              },
+              {
+                "text": "Attempt to negotiate safe passage",
+                "action": "dialogue",
+                "response": "Coin is pedestrian. Give me something I cannot find in a book."
+              },
+              {
+                "text": "Draw weapons",
+                "action": "battle",
+                "enemy": "rogue_mage",
+                "rewardGold": 120
+              },
+              { "text": "Retreat", "action": "back" }
+            ]
+          }
+        },
+        "quests": {
+          "veilspire_tower_access": {
+            "id": "veilspire_tower_access",
+            "title": "Breach the Tower of Thalos",
+            "giver": "Master Thalos",
+            "description": "Navigate the arcane construct gauntlet in the tower corridor and reach the upper sanctum. Thalos will not stop you — his constructs will.",
+            "objectives": [
+              {
+                "id": "defeat_construct",
+                "type": "kill",
+                "target": "arcane_construct",
+                "count": 1,
+                "currentCount": 0
+              }
+            ],
+            "reward": { "xp": 350, "gold": 90 },
+            "status": "inactive"
+          },
+          "expose_circle_alliance": {
+            "id": "expose_circle_alliance",
+            "title": "Expose the Secret Alliance",
+            "giver": "Master Thalos",
+            "description": "Ascend to the top floor of the tower and confront whoever guards the Alliance Chamber. The truth of the Silver Circle's dealings with the Free Clans must come to light.",
+            "objectives": [
+              {
+                "id": "clear_chamber",
+                "type": "kill",
+                "target": "iron_captain",
+                "count": 1,
+                "currentCount": 0
+              }
+            ],
+            "reward": { "xp": 500, "gold": 150 },
+            "status": "inactive"
+          }
+        },
+        "readAloud": [
+          {
+            "title": "Arrival at Veilspire (Read to Players)",
+            "text": "Veilspire's towers rise from the morning mist like the fingers of a buried giant. Silver-warded lanterns cast the cobblestones in cold blue. You have come seeking Master Thalos — and whatever secret he has agreed to keep for the Free Clans. The Scholar's Gate scribe stamps your papers without a word. No one here asks questions. That, too, is suspicious."
+          },
+          {
+            "title": "The Arcane Corridor",
+            "text": "The corridor is forty feet of amber-lit precision. Three constructs of copper and bound lightning move with the mathematical patience of mechanisms that have never been wrong. They do not track you with eyes — they track you with ward-sense. The air smells of ozone and old parchment. You notice the fourth glyph on the left wall first. It is not like the others."
+          },
+          {
+            "title": "Rogue Mage Lyris — First Sight",
+            "text": "She stands in the centre of her own chaos — tomes stacked at odd angles, glyphs rearranging themselves at the edge of vision, a half-finished formula revolving slowly in the air beside her left ear. She does not look up when you enter. She finishes the equation first. Then she looks at you."
+          },
+          {
+            "title": "The Alliance Chamber",
+            "text": "The table is long enough to seat twelve. The maps spread across it show every road between Veilspire and the eastern reaches — Clan territory, annotated in a neat hand beside Circle notation. A wax seal of the Free Clans holds one folded letter closed. You have perhaps four seconds before the man stepping out from behind the tapestry reaches you."
+          }
+        ]
+      },
+      "enemies": {
+        "arcane_construct": {
+          "name": "Arcane Construct",
+          "sprite": "skeleton",
+          "baseHp": 35,
+          "baseDmg": 9,
+          "damageDie": "1d10",
+          "ac": 15,
+          "attackBonus": 4,
+          "xpReward": 200,
+          "goldReward": 0,
+          "lootTable": [
+            { "item": "Arcane Focus", "chance": 0.4, "quantity": 1 }
+          ]
+        },
+        "rogue_mage": {
+          "name": "Rogue Mage Lyris",
+          "sprite": "skeleton",
+          "baseHp": 45,
+          "baseDmg": 10,
+          "damageDie": "1d10",
+          "ac": 13,
+          "attackBonus": 6,
+          "xpReward": 450,
+          "goldReward": 120,
+          "onHit": { "status": "Burning", "chance": 0.4, "duration": 2 },
+          "lootTable": [
+            { "item": "Gold Coin", "chance": 1.0, "quantity": 70 },
+            { "item": "Arcane Focus", "chance": 1.0, "quantity": 1 }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Page Layer Ravenmarch",
+      "type": "page",
+      "prompt": "Generate a self-contained adventure in the Ravenmarch region. Tone: gritty, tense, morally grey. The players must cross war-torn territory held by Free Clan patrols, reach the parley ground to negotiate or fight Warchief Draven's champion, then locate and secure the hidden Crimson Order supply cache. Every encounter has a brutal cost regardless of path chosen. No clean victories.",
+      "adventure": {
+        "id": "ravenmarch_blood",
+        "title": "Blood & Smoke: Ravenmarch",
+        "subtitle": "Survive the war-torn reaches south of Ironhold",
+        "description": "Ravenmarch is the contested land between the Crimson Order's southern fortifications and Free Clan territory — a belt of burned farmsteads, churned roads, and the kind of air that tastes like old fires. Warchief Draven's forces are moving. A hidden Crimson Order supply cache could tip the balance of the war. You must find it first.",
+        "difficulty": "Hard",
+        "level": "4-6",
+        "duration": "3-4 hours",
+        "players": "3-5",
+        "icon": "🩸",
+        "startLocation": "ravenmarch_crossroads",
+        "autoStartQuests": ["ravenmarch_survive"],
+        "startDescription": "The Ravenmarch crossroads is marked by a blackened signpost and three freshly dug graves. You arrive at midday and the sky is the colour of hammered tin. Somewhere ahead, Warchief Draven is marshalling forces. Behind you, Ironhold is burning something you cannot name.",
+        "locations": {
+          "ravenmarch_crossroads": {
+            "name": "🩸 Ravenmarch Crossroads",
+            "emoji": "🩸",
+            "type": "safe_zone",
+            "description": "The crossroads is a brutally practical place — four roads, a blackened signpost, and a ring of scorched earth where a farmstead once stood. A Free Clan scout flag has been planted in the centre of the road, staked with a Crimson Order sword. Someone left this deliberately. Warchief Draven's camp lies half a league south along the western road. The cache, Selene's informant claimed, is east — beneath the old supply fort.",
+            "npcs": ["Warchief Draven"],
+            "paths": {
+              "southern_road": {
+                "targetId": "southern_road",
+                "requirement": null,
+                "description": "⚔️ Move south toward Free Clan patrol territory"
+              },
+              "crimson_cache": {
+                "targetId": "crimson_cache",
+                "requirement": {
+                  "type": "skill_check",
+                  "skill": "survival",
+                  "dc": 13
+                },
+                "description": "🔎 Track the supply route east (Survival DC 13)",
+                "failurePenalty": {
+                  "hpLoss": 0,
+                  "triggerCombat": false,
+                  "message": "You lose the trail in the churned mud. You will need to double back and try a different approach."
+                }
+              }
+            }
+          },
+          "southern_road": {
+            "name": "⚔️ Southern Road — Clan Patrol",
+            "emoji": "⚔️",
+            "type": "dungeon_room",
+            "enemyType": "free_clan_scout",
+            "description": "The southern road has been half-swallowed by the encroaching mire — mud and old frost and the prints of many boots. A Clan patrol of four scouts appears ahead without warning, moving with the efficient silence of people who have done this before. One raises a fist. They stop. They look at you with the flat calculation of soldiers who have learned not to ask too many questions.",
+            "npcs": [],
+            "paths": {
+              "ravenmarch_crossroads": {
+                "targetId": "ravenmarch_crossroads",
+                "requirement": null,
+                "description": "🩸 Return to the crossroads"
+              },
+              "parley_ground": {
+                "targetId": "parley_ground",
+                "requirement": null,
+                "description": "🌾 Advance to the parley ground"
+              }
+            }
+          },
+          "parley_ground": {
+            "name": "🌾 The Parley Ground",
+            "emoji": "🌾",
+            "type": "dungeon_room",
+            "enemyType": "free_clan_champion",
+            "description": "The parley ground is an old threshing field, overgrown but level enough for two sides to stand and shout at each other without significant tactical disadvantage. A fire pit in the centre has been extinguished recently — the ash is still warm. Warchief Draven's champion, a broad figure in banded iron, stands on the far side. There is no flag of truce. There is no flag at all.",
+            "npcs": ["Warchief Draven"],
+            "paths": {
+              "southern_road": {
+                "targetId": "southern_road",
+                "requirement": null,
+                "description": "⚔️ Return south"
+              },
+              "crimson_cache": {
+                "targetId": "crimson_cache",
+                "requirement": null,
+                "description": "🔎 Move east to the old fort"
+              }
+            }
+          },
+          "crimson_cache": {
+            "name": "🔎 The Crimson Order Supply Fort",
+            "emoji": "🔎",
+            "type": "boss_room",
+            "enemyType": "iron_captain",
+            "description": "The supply fort is not on any map you were given — it sits behind a low hogback ridge, a squat stone building with no windows and a reinforced door still bearing the Crimson Order seal. A captain stands outside in full plate, arms crossed, and the expression of someone who knew this day would eventually come. Behind them, through the cracked door, you can see neat stacks of supply crates and, in the back, a sealed iron chest that shouldn't exist.",
+            "npcs": [],
+            "paths": {
+              "parley_ground": {
+                "targetId": "parley_ground",
+                "requirement": null,
+                "description": "🌾 Return to the parley ground"
+              },
+              "ravenmarch_crossroads": {
+                "targetId": "ravenmarch_crossroads",
+                "requirement": null,
+                "description": "🩸 Return to the crossroads"
+              }
+            }
+          }
+        },
+        "npcs": {
+          "Warchief Draven": {
+            "sprite": "orc",
+            "dialogue": "You ride under no banner I respect — and yet you breathe. Bold, or fast. I respect both. Speak your purpose and speak it true.",
+            "options": [
+              {
+                "text": "Propose a truce: Vaelin releases Redford grain stores",
+                "action": "dialogue",
+                "response": "If Vaelin releases the grain stores seized at Redford Crossing, I pull my scouts from the southern road. That is my price. Not a single grain less."
+              },
+              {
+                "text": "Offer Thalos's navigational charts in exchange for alliance",
+                "action": "dialogue",
+                "response": "The Circle understands equal trade. Hold the eastern pass in exchange for the charts — no debt, no ceremony. Tell Thalos we are agreed."
+              },
+              {
+                "text": "Attempt deception about your allegiance",
+                "action": "dialogue",
+                "response": "Your eyes shift when you name your master. I have seen too many liars to be fooled by a steady voice. Leave my camp. I will not offer this courtesy again."
+              },
+              {
+                "text": "Challenge the champion to earn Draven's respect",
+                "action": "battle",
+                "enemy": "free_clan_champion",
+                "rewardGold": 60
+              },
+              { "text": "Withdraw from the parley", "action": "back" }
+            ]
+          }
+        },
+        "quests": {
+          "ravenmarch_survive": {
+            "id": "ravenmarch_survive",
+            "title": "Survive the Ravenmarch",
+            "giver": "Lord Vaelin",
+            "description": "Move south through Free Clan patrol territory. Avoid or defeat the scouts blocking the road and reach the parley ground.",
+            "objectives": [
+              {
+                "id": "clear_scouts",
+                "type": "kill",
+                "target": "free_clan_scout",
+                "count": 1,
+                "currentCount": 0
+              }
+            ],
+            "reward": { "xp": 300, "gold": 80 },
+            "status": "inactive"
+          },
+          "secure_crimson_cache": {
+            "id": "secure_crimson_cache",
+            "title": "Secure the Crimson Supply Cache",
+            "giver": "Lord Vaelin",
+            "description": "The hidden Crimson Order supply fort east of the crossroads holds arms and coin enough to sustain a season of war. Defeat the Iron Captain guarding it and seize its contents before Draven's forces arrive.",
+            "objectives": [
+              {
+                "id": "defeat_captain",
+                "type": "kill",
+                "target": "iron_captain",
+                "count": 1,
+                "currentCount": 0
+              }
+            ],
+            "reward": { "xp": 600, "gold": 200 },
+            "status": "inactive"
+          }
+        },
+        "readAloud": [
+          {
+            "title": "Arrival at Ravenmarch Crossroads (Read to Players)",
+            "text": "The crossroads is marked by a blackened signpost and three freshly dug graves without markers. The air here is old smoke and wet stone — the smell of a war that has been running long enough to forget what it started over. Someone has planted a Free Clan scout flag in the road, staked with a Crimson Order shortsword. It has been here long enough to lean in the wind."
+          },
+          {
+            "title": "The Clan Patrol",
+            "text": "They appear between one step and the next — four scouts in muted colours, moving with the quiet of people who have practised it until it is instinct. The lead scout raises a fist and the group halts. They look at you with the flat eyes of soldiers who have learned that hesitation costs more than decisiveness. They are deciding. Quickly."
+          },
+          {
+            "title": "The Parley Ground",
+            "text": "The old threshing field smells of ash and winter. The fire pit at its centre has been extinguished recently — you can feel residual heat rising from the ash. On the far side stands the champion: tall, armoured in banded iron that has been repaired many times with iron that does not quite match. There is no flag of truce between you. There is not even a road. Just the field."
+          },
+          {
+            "title": "The Supply Fort",
+            "text": "No map you were given shows this place. It sits behind a low hogback ridge as though someone pressed it into the earth to hide it — a squat, windowless stone building still bearing the Crimson Order seal above its reinforced door. The Iron Captain stands before it with the self-assurance of someone who has not yet decided to be afraid. Behind the cracked door, you see the reason. There is enough in there to buy a small army."
+          }
+        ]
+      },
+      "enemies": {
+        "free_clan_champion": {
+          "name": "Free Clan Champion",
+          "sprite": "orc",
+          "baseHp": 52,
+          "baseDmg": 11,
+          "damageDie": "1d12",
+          "ac": 14,
+          "attackBonus": 5,
+          "xpReward": 500,
+          "goldReward": 60,
+          "onHit": { "status": "Bleeding", "chance": 0.3, "duration": 2 },
+          "lootTable": [
+            { "item": "Gold Coin", "chance": 1.0, "quantity": 50 },
+            { "item": "Longsword", "chance": 0.5, "quantity": 1 }
+          ]
+        },
+        "iron_captain": {
+          "name": "Iron Captain",
+          "sprite": "guard",
+          "baseHp": 65,
+          "baseDmg": 12,
+          "damageDie": "1d12",
+          "ac": 18,
+          "attackBonus": 6,
+          "xpReward": 600,
+          "goldReward": 80,
+          "lootTable": [
+            { "item": "Gold Coin", "chance": 1.0, "quantity": 70 },
+            { "item": "Iron Armor", "chance": 0.6, "quantity": 1 }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Page Layer Secret Hooks",
+      "type": "module",
+      "prompt": "Generate NPC interactions and plot hooks that span all three Eldrasil modules. These NPCs carry information, motives, and secrets that connect Ironhold, Veilspire, and Ravenmarch into a single narrative. Key: Lady Selene manipulates all three factions simultaneously. Lord Vaelin's ruthlessness hides shame. Master Thalos wants peace but uses dangerous means. Warchief Draven can be ally or enemy depending on player choices. Every NPC has at least one secret they will share only if the players earn their trust.",
+      "npcs": {
+        "Lord Vaelin": {
+          "sprite": "guard",
+          "dialogue": "Your timing is... convenient. I trust you are not here on behalf of that silver-tongued sorceress? Speak plainly — I have a city to hold and very little patience for riddles.",
+          "options": [
+            {
+              "text": "I seek information about the recent unrest",
+              "action": "dialogue",
+              "response": "Unrest. A polite word for what amounts to treachery. The Free Clans have been emboldened — someone with coin is funding their raids. Follow the gold, and you will find Lady Selene's fingerprints before long."
+            },
+            {
+              "text": "What do you know of Lady Selene's activities?",
+              "action": "dialogue",
+              "response": "She smiles, she flatters, and she empties your vault while you admire her grace. I know she met with a Clans emissary three nights past. Prove it, and you earn my considerable gratitude."
+            },
+            {
+              "text": "Report what was found at the vault",
+              "action": "dialogue",
+              "response": "By the forge-gods... if she truly moved the Vault Shard, then the compact must already be in play. I owe you a debt I will not forget. Name a favour — within reason."
+            },
+            { "text": "Take your leave of the lord", "action": "back" }
+          ]
+        },
+        "Lady Selene": {
+          "sprite": "innkeeper",
+          "dialogue": "How... unexpected. And here I thought myself unobserved. You have sharper instincts than most — I shall have to account for that. Shall we speak as civilised people, or have you already judged me guilty of something?",
+          "options": [
+            {
+              "text": "We know about the artifact. Return it",
+              "action": "dialogue",
+              "response": "Ah. Blunt. I appreciate that, truly. The artifact belongs to anyone with the wit to use it — which Lord Vaelin most certainly does not. Help me secure it, and a portion of its power becomes yours."
+            },
+            {
+              "text": "What is your true aim here?",
+              "action": "dialogue",
+              "response": "My aim? Survival — a cause I suspect you share. Vaelin's Crimson Order will devour this city whole if left unchecked. The Silver Circle must counterbalance that grip. I merely... accelerate the inevitable."
+            },
+            {
+              "text": "Warn her that you have informed Lord Vaelin",
+              "action": "dialogue",
+              "response": "Her expression does not change — but her fingers tighten on the edge of the table. 'Then we are at an impasse. How unfortunate. For you.' She rings a small bell. Footsteps echo in the corridor."
+            },
+            { "text": "End the conversation", "action": "back" }
+          ]
+        },
+        "Master Thalos": {
+          "sprite": "innkeeper",
+          "dialogue": "Careful — do not step on the chalk lines. Third experiment this week, and I will NOT have it ruined by muddy boots. Now. Who let you past the second ward? Actually — no, never mind that. What do you want?",
+          "options": [
+            {
+              "text": "We need access to the upper tower",
+              "action": "dialogue",
+              "response": "The upper tower. Of course you do. Everyone needs the upper tower. Very well — navigate the constructs without destroying them and I will consider granting you passage. They are expensive, and I am not a wealthy man."
+            },
+            {
+              "text": "We know of your alliance with the Free Clans",
+              "action": "dialogue",
+              "response": "...Well. That is rather inconvenient. Sit down. I will explain — and I will ask that you not repeat this to anyone who wears red. The Silver Circle does not know either. Let us keep it that way, shall we?"
+            },
+            {
+              "text": "What are you researching?",
+              "action": "dialogue",
+              "response": "Binding theory — specifically, whether ancient compact-magic can neutralise factional violence without bloodshed. Poetic, is it not? The arcanist who ends the war through paperwork rather than pyrotechnics."
+            },
+            {
+              "text": "Ask about the rogue mage in the upper floors",
+              "action": "dialogue",
+              "response": "Lyris. Yes. She was a student, before she severed the compact with the Silver Circle. She is brilliant and entirely unpredictable. Do not threaten her — she responds very poorly to threats. Offer her a question she cannot answer. That is the only currency she respects."
+            },
+            { "text": "Leave the arcanist to his work", "action": "back" }
+          ]
+        },
+        "Warchief Draven": {
+          "sprite": "orc",
+          "dialogue": "You ride under no banner I respect — and yet you breathe. That tells me either you are very fast, or very bold. I respect both. Speak your purpose and speak it true. We do not have long before my outriders return.",
+          "options": [
+            {
+              "text": "We seek a truce between the Clans and Ironhold",
+              "action": "dialogue",
+              "response": "Ironhold bleeds us dry in trade, then calls us savages when we bleed back. A truce requires concession — not words. If Vaelin releases the grain stores seized at Redford Crossing, I will pull my scouts from the southern road. That is my price."
+            },
+            {
+              "text": "We come on behalf of the Silver Circle",
+              "action": "dialogue",
+              "response": "Thalos's people. Clever ones — they understand that knowledge and food matter more than flags. Tell the Circle this: we will hold the eastern pass if they share the navigational charts. Equal trade. No debt."
+            },
+            {
+              "text": "Attempt to deceive him about your allegiance",
+              "action": "dialogue",
+              "response": "Your eyes shift when you name your master. I have seen too many liars to be fooled by a steady voice. Speak truth or leave my camp. I will not offer this courtesy a second time."
+            },
+            {
+              "text": "Challenge the warchief to prove your worth",
+              "action": "battle",
+              "enemy": "free_clan_champion",
+              "rewardGold": 60
+            },
+            { "text": "Leave the warchief's camp", "action": "back" }
+          ]
+        },
+        "Agent Mordecai": {
+          "sprite": "bandit",
+          "dialogue": "...So. You caught me. I did not think Lady Selene's faith in me was misplaced — turns out she was right not to trust anyone. Including you, I suspect. What do you want — my life, or my knowledge?",
+          "options": [
+            {
+              "text": "Tell us everything about Selene's plan",
+              "action": "dialogue",
+              "response": "She intends to use the Vault Shard to invoke an old binding compact — one that would obligate the Free Clans to fight for her if the Silver Circle commands it. She plays all sides. She always has."
+            },
+            {
+              "text": "Turn him over to Lord Vaelin",
+              "action": "dialogue",
+              "response": "He stiffens. 'Vaelin will execute me. Is that the justice you deal?' He meets your gaze and does not flinch. The choice rests with you."
+            },
+            {
+              "text": "Let him go in exchange for the artifact",
+              "action": "lootGold",
+              "amount": 35
+            },
+            { "text": "Step back and let him run", "action": "back" }
+          ]
+        },
+        "Rogue Mage Lyris": {
+          "sprite": "innkeeper",
+          "dialogue": "Another errand sent by Thalos? No — your clothes are wrong. Interesting. I have not had an unscripted visitor in months. Be careful, though — the fourth glyph on your left will detonate on a ten-foot radius. Do not test it.",
+          "options": [
+            {
+              "text": "We mean you no harm. We need passage",
+              "action": "dialogue",
+              "response": "Passage. Through my tower that I have carefully warded against exactly this kind of intrusion. Give me a reason not to simply redirect you back out through the ceiling."
+            },
+            {
+              "text": "Offer information about the Crimson Order for safe passage",
+              "action": "dialogue",
+              "response": "Now that is interesting. You know something useful — I can see it in the way you chose your words carefully. Come then. Tell me what you know, and I will walk you to the third landing myself."
+            },
+            {
+              "text": "Challenge her to single combat",
+              "action": "battle",
+              "enemy": "rogue_mage",
+              "rewardGold": 120
+            },
+            { "text": "Retreat from the chamber", "action": "back" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Style Layer",
+      "type": "style",
+      "prompt": "All generated content for pages and modules must follow these style rules: (1) Tone is dark, immersive, gritty, and slightly archaic — avoid modern slang entirely. (2) Use rich descriptive language in location text and read-aloud passages — 2-3 sentence atmospheric descriptions minimum. (3) Every NPC interaction must offer at least three meaningful paths: combat, negotiation, and deception/stealth. (4) Moral ambiguity is mandatory — no faction is purely good or purely evil. (5) Consequences matter: player choices should create faction ripple effects (Crimson Order favour, Silver Circle favour, Free Clans favour). (6) Pacing: alternate between tension and brief relief. Every dungeon room should have environmental detail beyond just the enemy. (7) NPCs speak with distinct voices — Vaelin is clipped and formal, Selene is precise and layered, Thalos is distracted and verbose, Draven is blunt and honour-bound, Lyris is curious and unpredictable."
+    }
+  ]
+}

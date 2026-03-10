@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Local env / secrets — NEVER commit
+*.local
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sw?
+.vscode/*
+!.vscode/extensions.json
+
+# C# build artifacts
+**/DiceRoller/bin/
+**/DiceRoller/obj/
+*.pidb
+
+# VS solution
+dnd-game.sln
+
+# Scratch / temp files in workspace root
+inventory_update.txt
+New Text Document.txt
+New Text Document.html
+jo.html
+jo - Copy.html
+proba.html
+
+# Large binary files not needed for the web app
+A_GREAT_UPHEAVAL.pdf

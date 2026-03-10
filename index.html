@@ -1,0 +1,3531 @@
+!doctype html
+html lang=hu
+  head
+    meta charset=UTF-8 
+    meta name=viewport content=width=device-width, initial-scale=1.0 
+    title🐉 Text Adventure - The Silver Horn Questtitle
+    style
+      root {
+        --bg-dark #1a1a1d;
+        --bg-panel #2c2c2e;
+        --accent #c3073f;
+        --accent-hover #950740;
+        --text-main #e2e8f0;
+        --text-muted #94a3b8;
+        --border #4e4e50;
+        --card-bg #38383a;
+      }
+
+       {
+        box-sizing border-box;
+      }
+
+      body {
+        font-family Segoe UI, Tahoma, Geneva, Verdana, sans-serif;
+        background-color var(--bg-dark);
+        color var(--text-main);
+        margin 0;
+        padding 0;
+        height 100vh;
+        display grid;
+        grid-template-columns 250px 1fr 320px;
+        grid-template-rows 60px 1fr;
+        overflow hidden;
+      }
+
+      header,
+      main,
+      aside,
+      #game-log-sidebar {
+        display none;
+      }
+
+      header {
+        grid-column 1  -1;
+        background-color var(--bg-panel);
+        border-bottom 2px solid var(--accent);
+        display flex;
+        align-items center;
+        padding 0 20px;
+        justify-content space-between;
+        box-shadow 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        margin 0;
+        font-size 1.3rem;
+        color var(--accent);
+        text-transform uppercase;
+        letter-spacing 1px;
+      }
+
+       LEFT SIDEBAR - GAME LOG 
+      #game-log-sidebar {
+        background-color var(--bg-panel);
+        border-right 1px solid var(--border);
+        padding 15px;
+        overflow-y auto;
+        display flex;
+        flex-direction column;
+        gap 10px;
+      }
+
+      .log-entry {
+        background rgba(0, 0, 0, 0.3);
+        padding 8px;
+        border-left 3px solid var(--accent);
+        border-radius 3px;
+        font-size 0.85rem;
+        line-height 1.4;
+        color var(--text-muted);
+      }
+
+      .log-entry.important {
+        color #eab308;
+        border-left-color #eab308;
+      }
+
+       MAIN CONTENT 
+      main {
+        padding 15px;
+        overflow-y auto;
+        background linear-gradient(135deg, #0f0f12 0%, #1a1a1d 100%);
+        display flex;
+        flex-direction column;
+        gap 15px;
+      }
+
+       UNIFIED LOCATION VIEW 
+      #location-view {
+        display flex;
+        flex-direction column;
+        gap 14px;
+        width 100%;
+      }
+
+       WORLD MAP STRIP 
+      #world-map-strip {
+        background var(--card-bg);
+        border 2px solid var(--border);
+        border-radius 8px;
+        padding 12px 14px;
+        display flex;
+        flex-wrap wrap;
+        gap 8px;
+        align-items center;
+      }
+
+      .map-node {
+        display flex;
+        align-items center;
+        gap 5px;
+        padding 5px 10px;
+        border-radius 20px;
+        font-size 0.78rem;
+        font-weight 600;
+        cursor pointer;
+        border 1.5px solid var(--border);
+        background rgba(255,255,255,0.04);
+        color var(--text-muted);
+        transition all 0.2s;
+        white-space nowrap;
+      }
+
+      .map-nodehover {
+        border-color var(--accent);
+        color var(--text-primary);
+        background rgba(195,7,63,0.15);
+      }
+
+      .map-node.current {
+        background var(--accent);
+        border-color #eab308;
+        color white;
+        box-shadow 0 0 10px rgba(195,7,63,0.5);
+      }
+
+      .map-node.visited {
+        border-color #4e4e50;
+        color #94a3b8;
+      }
+
+      .map-node-connector {
+        color #4e4e50;
+        font-size 0.8rem;
+        pointer-events none;
+      }
+
+       CURRENT LOCATION CARD 
+      #current-location-card {
+        background var(--card-bg);
+        border 2px solid var(--accent);
+        border-radius 8px;
+        padding 20px 24px;
+        display flex;
+        align-items flex-start;
+        gap 18px;
+      }
+
+      .loc-emoji-big {
+        font-size 3rem;
+        line-height 1;
+        flex-shrink 0;
+        filter drop-shadow(0 0 8px rgba(195,7,63,0.5));
+      }
+
+      .loc-info { flex 1; }
+
+      .loc-name {
+        font-size 1.3rem;
+        font-weight bold;
+        color #d4af37;
+        margin-bottom 4px;
+      }
+
+      .loc-type-badge {
+        display inline-block;
+        font-size 0.7rem;
+        font-weight 700;
+        text-transform uppercase;
+        letter-spacing 1px;
+        padding 2px 8px;
+        border-radius 12px;
+        margin-bottom 8px;
+      }
+
+      .loc-type-badge.safe   { background rgba(34,197,94,0.2);  color #4ade80; border 1px solid #4ade80; }
+      .loc-type-badge.danger { background rgba(239,68,68,0.2);  color #f87171; border 1px solid #f87171; }
+      .loc-type-badge.boss   { background rgba(168,85,247,0.2); color #c084fc; border 1px solid #c084fc; }
+
+      .loc-desc {
+        color var(--text-muted);
+        font-size 0.88rem;
+        line-height 1.6;
+      }
+
+       ACTIONS + TRAVEL GRID 
+      .loc-section-title {
+        font-size 0.72rem;
+        font-weight 700;
+        text-transform uppercase;
+        letter-spacing 1.5px;
+        color var(--text-muted);
+        margin-bottom 8px;
+        padding-bottom 4px;
+        border-bottom 1px solid var(--border);
+      }
+
+      .loc-actions-grid {
+        display flex;
+        flex-wrap wrap;
+        gap 8px;
+      }
+
+       TRAVEL CARDS 
+      .travel-cards-grid {
+        display grid;
+        grid-template-columns repeat(auto-fill, minmax(170px, 1fr));
+        gap 10px;
+      }
+
+      .travel-card {
+        background rgba(15,42,74,0.6);
+        border 1.5px solid #1e3a5f;
+        border-radius 8px;
+        padding 12px 14px;
+        cursor pointer;
+        transition all 0.2s;
+        position relative;
+        overflow hidden;
+      }
+
+      .travel-cardhover {
+        border-color #60a5fa;
+        background rgba(15,42,74,0.9);
+        transform translateY(-2px);
+        box-shadow 0 4px 16px rgba(96,165,250,0.2);
+      }
+
+      .travel-card.has-check {
+        border-color #78350f;
+        background rgba(30,20,5,0.7);
+      }
+
+      .travel-card.has-checkhover {
+        border-color #f59e0b;
+        box-shadow 0 4px 16px rgba(245,158,11,0.2);
+      }
+
+      .travel-card-emoji { font-size 1.6rem; margin-bottom 4px; }
+
+      .travel-card-name {
+        font-size 0.88rem;
+        font-weight 700;
+        color #93c5fd;
+        margin-bottom 4px;
+      }
+
+      .travel-card.has-check .travel-card-name { color #fbbf24; }
+
+      .travel-card-req {
+        font-size 0.72rem;
+        color #f59e0b;
+        background rgba(245,158,11,0.1);
+        border 1px solid rgba(245,158,11,0.3);
+        border-radius 4px;
+        padding 2px 6px;
+        display inline-block;
+        margin-top 2px;
+      }
+
+      .travel-card-visited {
+        position absolute;
+        top 6px;
+        right 8px;
+        font-size 0.65rem;
+        color #4ade80;
+        opacity 0.7;
+      }
+
+      .travel-card-arrow {
+        position absolute;
+        bottom 6px;
+        right 8px;
+        font-size 0.75rem;
+        color #475569;
+      }
+
+      .map-location-emoji {
+        font-size 1.8rem;
+        display block;
+        margin-bottom 5px;
+      }
+
+       ADVENTURE TEXT AREA 
+      #adventure-container {
+        background var(--card-bg);
+        border 2px solid var(--border);
+        border-radius 8px;
+        padding 15px;
+        flex 1;
+        overflow-y auto;
+        display flex;
+        flex-direction column;
+      }
+
+      #story-text {
+        flex 1;
+        line-height 1.7;
+        font-size 0.95rem;
+        margin-bottom 15px;
+        white-space pre-wrap;
+        color var(--text-main);
+      }
+
+      .interactive-popup {
+        position fixed;
+        top 50%;
+        left 50%;
+        transform translate(-50%, -50%);
+        background var(--card-bg);
+        border 3px solid var(--accent);
+        border-radius 12px;
+        padding 25px;
+        max-width 500px;
+        width 90%;
+        max-height 70vh;
+        overflow-y auto;
+        z-index 1000;
+        box-shadow 0 10px 40px rgba(0, 0, 0, 0.8);
+        animation slideIn 0.3s ease-out;
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity 0;
+          transform translate(-50%, -60%);
+        }
+        to {
+          opacity 1;
+          transform translate(-50%, -50%);
+        }
+      }
+
+      .modal-overlay {
+        position fixed;
+        top 0;
+        left 0;
+        right 0;
+        bottom 0;
+        background rgba(0, 0, 0, 0.7);
+        z-index 999;
+      }
+
+      .popup-title {
+        font-size 1.3rem;
+        font-weight bold;
+        color var(--accent);
+        margin-bottom 15px;
+        border-bottom 2px solid var(--border);
+        padding-bottom 10px;
+      }
+
+      .popup-content {
+        font-size 0.95rem;
+        line-height 1.6;
+        color var(--text-main);
+        margin-bottom 15px;
+      }
+
+      .popup-choices {
+        display flex;
+        flex-direction column;
+        gap 8px;
+      }
+
+      .popup-choice-btn {
+        background var(--accent);
+        color white;
+        border none;
+        padding 10px 15px;
+        border-radius 6px;
+        cursor pointer;
+        font-size 0.9rem;
+        transition all 0.2s;
+      }
+
+      .popup-choice-btnhover {
+        background var(--accent-hover);
+        transform translateX(5px);
+      }
+
+      .popup-close {
+        position absolute;
+        top 10px;
+        right 15px;
+        background var(--border);
+        color white;
+        border none;
+        border-radius 50%;
+        width 30px;
+        height 30px;
+        font-size 1.2rem;
+        cursor pointer;
+        transition 0.2s;
+      }
+
+      .popup-closehover {
+        background var(--accent);
+      }
+
+       RIGHT SIDEBAR - DASHBOARD 
+      aside {
+        background-color var(--bg-panel);
+        border-left 1px solid var(--border);
+        padding 15px;
+        overflow-y auto;
+        display flex;
+        flex-direction column;
+        gap 12px;
+      }
+
+      .dashboard-panel {
+        background var(--card-bg);
+        padding 12px;
+        border-radius 6px;
+        border 1px solid var(--border);
+      }
+
+      .panel-title {
+        font-size 0.9rem;
+        font-weight bold;
+        color var(--accent);
+        margin-bottom 8px;
+        text-transform uppercase;
+        letter-spacing 1px;
+      }
+
+      .stat-line {
+        font-size 0.8rem;
+        margin 5px 0;
+        display flex;
+        justify-content space-between;
+        align-items center;
+      }
+
+      .stat-label {
+        color var(--text-muted);
+      }
+
+      .stat-value {
+        color #eab308;
+        font-weight bold;
+      }
+
+      .hp-bar {
+        background var(--bg-dark);
+        border 1px solid var(--border);
+        height 18px;
+        border-radius 3px;
+        overflow hidden;
+        margin 5px 0;
+      }
+
+      .hp-fill {
+        height 100%;
+        background #16a34a;
+        transition width 0.3s;
+        display flex;
+        align-items center;
+        justify-content center;
+        font-size 0.65rem;
+        font-weight bold;
+        color white;
+      }
+
+      #inventory-list {
+        font-size 0.8rem;
+        max-height 120px;
+        overflow-y auto;
+      }
+
+      .inv-item {
+        background rgba(195, 7, 63, 0.2);
+        padding 4px 6px;
+        margin 3px 0;
+        border-radius 3px;
+        border-left 2px solid var(--accent);
+      }
+
+      #quest-list {
+        font-size 0.8rem;
+        max-height 100px;
+        overflow-y auto;
+      }
+
+      .quest-item {
+        padding 5px;
+        margin 3px 0;
+        background rgba(30, 144, 255, 0.15);
+        border-left 2px solid #1e90ff;
+        border-radius 3px;
+      }
+
+      .quest-item.completed {
+        background rgba(22, 163, 74, 0.15);
+        border-left-color #16a34a;
+        opacity 0.7;
+        text-decoration line-through;
+      }
+
+      input[type=number],
+      input[type=text],
+      select {
+        background var(--bg-dark);
+        border 1px solid var(--border);
+        color white;
+        padding 4px;
+        border-radius 3px;
+        font-size 0.8rem;
+        width 100%;
+      }
+
+      .ability-grid {
+        display grid;
+        grid-template-columns repeat(3, 1fr);
+        gap 6px;
+        margin-top 8px;
+      }
+
+      .ability-box {
+        background rgba(195, 7, 63, 0.15);
+        border 1px solid var(--accent);
+        border-radius 4px;
+        padding 6px;
+        text-align center;
+        font-size 0.75rem;
+      }
+
+      .ability-name {
+        font-weight bold;
+        color var(--accent);
+        font-size 0.7rem;
+        text-transform uppercase;
+      }
+
+      .ability-score {
+        font-weight bold;
+        font-size 1rem;
+        color white;
+        margin 2px 0;
+      }
+
+      .ability-mod {
+        color #eab308;
+        font-size 0.75rem;
+      }
+
+       UNDERTALE BATTLE UI 
+      .battle-screen {
+        position fixed;
+        top 0;
+        left 0;
+        width 100%;
+        height 100%;
+        background linear-gradient(135deg, #000 0%, #1a1a2e 50%, #16213e 100%);
+        z-index 2000;
+        display flex;
+        flex-direction column;
+        justify-content space-between;
+        padding 20px;
+        font-family Courier New, monospace;
+        overflow hidden;
+      }
+
+      .battle-top {
+        flex 1;
+        display flex;
+        justify-content space-around;
+        align-items flex-start;
+        margin-bottom 40px;
+        padding-top 30px;
+        gap 60px;
+      }
+
+      .player-display {
+        display flex;
+        flex-direction column;
+        align-items center;
+        color white;
+      }
+
+      .enemy-display {
+        text-align center;
+        color white;
+        display flex;
+        flex-direction column;
+        align-items center;
+      }
+
+      .enemy-sprite {
+        font-size 4rem;
+        margin-bottom 15px;
+        filter drop-shadow(0 0 10px rgba(255, 0, 0, 0.5));
+        animation enemyBob 2s ease-in-out infinite;
+      }
+
+      @keyframes enemyBob {
+        0%,
+        100% {
+          transform translateY(0);
+        }
+        50% {
+          transform translateY(-10px);
+        }
+      }
+
+      .enemy-name {
+        font-size 1.5rem;
+        font-weight bold;
+        margin-bottom 10px;
+        text-shadow 2px 2px 4px rgba(0, 0, 0, 0.8);
+      }
+
+      .enemy-hp-bar {
+        width 220px;
+        height 28px;
+        background linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%);
+        border 3px solid #d4af37;
+        border-radius 4px;
+        margin-bottom 12px;
+        position relative;
+        box-shadow
+          0 0 15px rgba(212, 175, 55, 0.5),
+          inset 0 1px 3px rgba(0, 0, 0, 0.8);
+      }
+
+      .enemy-hp-fill {
+        height 100%;
+        background linear-gradient(
+          90deg,
+          #00d000 0%,
+          #00ff00 25%,
+          #ffff00 60%,
+          #ff4400 100%
+        );
+        width 100%;
+        transition width 0.3s ease;
+        border-radius 2px;
+        box-shadow
+          inset 0 1px 3px rgba(255, 255, 255, 0.3),
+          0 0 10px rgba(255, 100, 0, 0.4);
+      }
+
+      .enemy-hp-text {
+        position absolute;
+        top 50%;
+        left 50%;
+        transform translate(-50%, -50%);
+        color #ffff00;
+        font-weight bold;
+        font-size 0.85rem;
+        text-shadow
+          1px 1px 3px rgba(0, 0, 0, 0.9),
+          0 0 5px rgba(255, 255, 0, 0.5);
+        z-index 10;
+        font-family Arial, sans-serif;
+      }
+
+      .player-heart {
+        font-size 2.5rem;
+        margin-bottom 15px;
+        animation heartBeat 0.6s ease-in-out infinite;
+        filter drop-shadow(0 0 10px rgba(255, 0, 0, 0.8));
+      }
+
+      @keyframes heartBeat {
+        0%,
+        100% {
+          transform scale(1);
+        }
+        50% {
+          transform scale(1.15);
+        }
+      }
+
+      .player-hp-display {
+        font-size 0.95rem;
+        font-weight bold;
+        color #ffff00;
+        text-shadow
+          1px 1px 2px rgba(0, 0, 0, 0.9),
+          0 0 5px rgba(0, 255, 0, 0.5);
+      }
+
+      .battle-middle {
+        flex 0;
+        text-align center;
+        margin-bottom 40px;
+      }
+
+      .battle-log {
+        background rgba(0, 0, 0, 0.7);
+        border 3px solid white;
+        padding 20px;
+        min-height 100px;
+        color #00ff00;
+        font-weight bold;
+        text-shadow 0 0 5px #00ff00;
+        margin-bottom 20px;
+        overflow-y auto;
+        max-height 180px;
+        border-radius 4px;
+        box-shadow inset 0 0 10px rgba(0, 255, 0, 0.1);
+      }
+
+      .battle-log-text {
+        text-align left;
+        font-size 0.9rem;
+        line-height 2;
+        word-spacing 2px;
+      }
+
+      @keyframes attackFlash {
+        0% {
+          opacity 1;
+        }
+        50% {
+          opacity 0.5;
+          filter brightness(1.5);
+        }
+        100% {
+          opacity 1;
+        }
+      }
+
+      @keyframes hitShake {
+        0%,
+        100% {
+          transform translateX(0);
+        }
+        25% {
+          transform translateX(-5px);
+        }
+        75% {
+          transform translateX(5px);
+        }
+      }
+
+      @keyframes damagePopup {
+        0% {
+          transform translateY(0) scale(1);
+          opacity 1;
+        }
+        100% {
+          transform translateY(-30px) scale(0.8);
+          opacity 0;
+        }
+      }
+
+      .battle-damage-number {
+        position absolute;
+        font-weight bold;
+        font-size 1.5rem;
+        color #ff0000;
+        text-shadow 2px 2px 4px rgba(0, 0, 0, 0.8);
+        animation damagePopup 1.2s ease-out forwards;
+        pointer-events none;
+      }
+
+      .battle-bottom {
+        flex 0;
+      }
+
+      .battle-actions {
+        display grid;
+        grid-template-columns repeat(2, 1fr);
+        gap 20px;
+        max-width 520px;
+        margin 0 auto;
+        padding 20px;
+      }
+
+      .battle-btn {
+        background linear-gradient(135deg, #c3073f 0%, #950740 100%);
+        border 3px solid white;
+        color white;
+        padding 25px;
+        font-size 1.1rem;
+        font-weight bold;
+        cursor pointer;
+        transition all 0.3s;
+        text-transform uppercase;
+        letter-spacing 1px;
+        font-family Courier New, monospace;
+        text-shadow 1px 1px 2px rgba(0, 0, 0, 0.8);
+        border-radius 4px;
+        box-shadow 0 4px 8px rgba(0, 0, 0, 0.4);
+      }
+
+      .battle-btnhovernot(disabled) {
+        background linear-gradient(135deg, #e83a56 0%, #b01052 100%);
+        transform translateY(-2px);
+        box-shadow
+          0 0 20px rgba(195, 7, 63, 0.9),
+          0 6px 12px rgba(0, 0, 0, 0.5);
+      }
+
+      .battle-btnactivenot(disabled) {
+        transform scale(0.98);
+      }
+
+      .battle-btn.selected {
+        background #ffff00;
+        color #000;
+        box-shadow 0 0 25px rgba(255, 255, 0, 0.9);
+      }
+
+      .battle-btndisabled {
+        opacity 0.5;
+        cursor not-allowed;
+      }
+
+       CHARACTER PORTRAIT FRAMES 
+      .sprite-container {
+        position relative;
+        display inline-flex;
+        align-items center;
+        justify-content center;
+      }
+
+      .sprite-portrait {
+        width 140px;
+        height 140px;
+        border-radius 50%;
+        background radial-gradient(
+          circle at 35% 35%,
+          #ffdb8d 0%,
+          #e6b834 40%,
+          #9d7d2a 100%
+        );
+        border 8px solid #d4af37;
+        box-shadow
+          0 0 0 2px #3d3d3d,
+          0 0 0 4px #8b7355,
+          0 0 30px rgba(212, 175, 55, 0.7),
+          inset 0 0 20px rgba(0, 0, 0, 0.4),
+          inset -5px -5px 15px rgba(0, 0, 0, 0.3);
+        display flex;
+        align-items center;
+        justify-content center;
+        position relative;
+        overflow hidden;
+        filter drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
+      }
+
+      .sprite-portraitbefore {
+        content ;
+        position absolute;
+        top 0;
+        left 0;
+        right 0;
+        bottom 0;
+        background radial-gradient(
+          circle at 50% 50%,
+          transparent 30%,
+          rgba(0, 0, 0, 0.1) 100%
+        );
+        pointer-events none;
+        border-radius 50%;
+      }
+
+      .sprite-portraitafter {
+        content ;
+        position absolute;
+        top -3px;
+        left -3px;
+        right -3px;
+        bottom -3px;
+        border-radius 50%;
+        background repeating-conic-gradient(
+          from 0deg,
+          #d4af37 0deg 10deg,
+          #f0d060 10deg 20deg
+        );
+        z-index -1;
+        opacity 0.6;
+      }
+
+      .sprite-stats {
+        position absolute;
+        bottom -30px;
+        left 50%;
+        transform translateX(-50%);
+        background #1a1a1d;
+        border 2px solid #ffaa00;
+        padding 4px 8px;
+        border-radius 3px;
+        font-size 0.7rem;
+        white-space nowrap;
+        color #eab308;
+        font-weight bold;
+      }
+
+       Smooth sprite rendering 
+      svg.pixel-sprite {
+        image-rendering auto;
+        filter drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+      }
+
+      .player-portrait-large {
+        position relative;
+        width 180px;
+        text-align center;
+      }
+
+      .player-name-tag {
+        background #2c2c2e;
+        border 2px solid #ffaa00;
+        padding 8px;
+        margin-top 10px;
+        border-radius 4px;
+        font-weight bold;
+        color #eab308;
+        font-size 0.9rem;
+      }
+
+      .npc-portrait-small {
+        width 60px;
+        height 60px;
+        border-radius 50%;
+        background radial-gradient(circle at 30% 30%, #ffcc99, #cc7722);
+        border 2px solid #ffaa00;
+        display flex;
+        align-items center;
+        justify-content center;
+        font-size 2rem;
+        box-shadow 0 0 10px rgba(255, 170, 0, 0.5);
+      }
+
+       ============= START MENU ============= 
+      #start-menu {
+        position fixed;
+        top 0;
+        left 0;
+        width 100%;
+        height 100%;
+        background linear-gradient(135deg, #0f0f12 0%, #1a1a1d 100%);
+        display flex;
+        flex-direction column;
+        align-items center;
+        justify-content center;
+        z-index 3000;
+        gap 30px;
+        padding 20px;
+      }
+
+      .start-menu-content {
+        text-align center;
+        max-width 600px;
+      }
+
+      .start-menu-title {
+        font-size 3.5rem;
+        color var(--accent);
+        margin 0 0 10px;
+        text-shadow 0 0 20px rgba(195, 7, 63, 0.8);
+        letter-spacing 2px;
+      }
+
+      .start-menu-subtitle {
+        font-size 1.2rem;
+        color var(--text-muted);
+        margin-bottom 30px;
+      }
+
+      .start-menu-buttons {
+        display flex;
+        gap 15px;
+        justify-content center;
+        flex-wrap wrap;
+      }
+
+      .start-btn {
+        background linear-gradient(135deg, var(--accent) 0%, #950740 100%);
+        color white;
+        border 2px solid var(--accent);
+        padding 18px 40px;
+        font-size 1.1rem;
+        font-weight 600;
+        border-radius 6px;
+        cursor pointer;
+        transition all 0.3s;
+        text-transform uppercase;
+        letter-spacing 1px;
+        box-shadow 0 0 20px rgba(195, 7, 63, 0.3);
+      }
+
+      .start-btnhover {
+        background linear-gradient(135deg, #950740 0%, var(--accent) 100%);
+        box-shadow 0 0 30px rgba(195, 7, 63, 0.6);
+        transform translateY(-2px);
+      }
+
+       ============= CHARACTER SELECTIONCREATION ============= 
+      #char-select-menu {
+        position fixed;
+        top 0;
+        left 0;
+        width 100%;
+        height 100%;
+        background linear-gradient(135deg, #0f0f12 0%, #1a1a1d 100%);
+        display none;
+        flex-direction column;
+        align-items center;
+        justify-content center;
+        z-index 3000;
+        overflow-y auto;
+        padding 40px 20px;
+        gap 30px;
+      }
+
+      .char-menu-header {
+        text-align center;
+      }
+
+      .char-menu-title {
+        font-size 2.5rem;
+        color var(--accent);
+        margin 0 0 10px;
+        text-shadow 0 0 15px rgba(195, 7, 63, 0.8);
+      }
+
+      .char-menu-subtitle {
+        color var(--text-muted);
+        font-size 1.1rem;
+      }
+
+      .char-grid {
+        display grid;
+        grid-template-columns repeat(auto-fit, minmax(280px, 1fr));
+        gap 20px;
+        width 100%;
+        max-width 900px;
+      }
+
+      .char-card {
+        background var(--card-bg);
+        border 2px solid var(--border);
+        border-radius 8px;
+        padding 20px;
+        text-align center;
+        cursor pointer;
+        transition all 0.3s;
+        display flex;
+        flex-direction column;
+        gap 15px;
+      }
+
+      .char-cardhover {
+        border-color var(--accent);
+        box-shadow 0 0 20px rgba(195, 7, 63, 0.5);
+        transform translateY(-3px);
+      }
+
+      .char-card-sprite {
+        height 120px;
+        display flex;
+        align-items center;
+        justify-content center;
+      }
+
+      .char-card-name {
+        font-size 1.3rem;
+        font-weight 600;
+        color #eab308;
+      }
+
+      .char-card-class {
+        color var(--text-muted);
+        font-size 0.95rem;
+      }
+
+      .char-card-stats {
+        background rgba(0, 0, 0, 0.3);
+        padding 10px;
+        border-radius 5px;
+        font-size 0.85rem;
+        color var(--text-main);
+        text-align left;
+      }
+
+      .char-card-actions {
+        display flex;
+        gap 10px;
+        justify-content center;
+      }
+
+      .char-action-btn {
+        flex 1;
+        background var(--accent);
+        color white;
+        border none;
+        padding 10px;
+        border-radius 4px;
+        cursor pointer;
+        font-weight 600;
+        transition all 0.2s;
+        font-size 0.9rem;
+      }
+
+      .char-action-btnhover {
+        background #950740;
+        box-shadow 0 0 15px rgba(195, 7, 63, 0.6);
+      }
+
+      .char-action-btn.delete {
+        background #660022;
+      }
+
+      .char-action-btn.deletehover {
+        background #990033;
+      }
+
+       ============= CHARACTER CREATION FORM ============= 
+      #char-create-menu {
+        position fixed;
+        top 0;
+        left 0;
+        width 100%;
+        height 100%;
+        background linear-gradient(135deg, #0f0f12 0%, #1a1a1d 100%);
+        display none;
+        flex-direction column;
+        align-items center;
+        justify-content center;
+        z-index 3000;
+        overflow-y auto;
+        padding 40px 20px;
+      }
+
+      .create-form-container {
+        background var(--card-bg);
+        border 2px solid var(--accent);
+        border-radius 8px;
+        padding 40px;
+        max-width 500px;
+        width 100%;
+        box-shadow 0 0 30px rgba(195, 7, 63, 0.3);
+      }
+
+      .create-form-title {
+        font-size 2rem;
+        color var(--accent);
+        text-align center;
+        margin-bottom 30px;
+        text-shadow 0 0 10px rgba(195, 7, 63, 0.8);
+      }
+
+      .form-group {
+        margin-bottom 20px;
+        display flex;
+        flex-direction column;
+        gap 8px;
+      }
+
+      .form-group label {
+        font-weight 600;
+        color #eab308;
+        font-size 0.95rem;
+      }
+
+      .form-group input,
+      .form-group select {
+        background rgba(0, 0, 0, 0.3);
+        border 2px solid var(--border);
+        color var(--text-main);
+        padding 10px;
+        border-radius 4px;
+        font-size 0.95rem;
+        transition all 0.2s;
+        font-family inherit;
+      }
+
+      .form-group inputfocus,
+      .form-group selectfocus {
+        border-color var(--accent);
+        box-shadow 0 0 10px rgba(195, 7, 63, 0.3);
+        outline none;
+      }
+
+      .ability-input-grid {
+        display grid;
+        grid-template-columns repeat(2, 1fr);
+        gap 10px;
+        margin-top 10px;
+      }
+
+      .ability-input-group {
+        display flex;
+        flex-direction column;
+        gap 5px;
+      }
+
+      .ability-input-group label {
+        font-size 0.85rem;
+        color #eab308;
+      }
+
+      .ability-input-group input {
+        padding 8px;
+        font-size 0.9rem;
+      }
+
+      .form-buttons {
+        display flex;
+        gap 10px;
+        margin-top 30px;
+      }
+
+      .form-buttons button {
+        flex 1;
+        padding 12px;
+        border none;
+        border-radius 4px;
+        font-weight 600;
+        cursor pointer;
+        transition all 0.2s;
+        text-transform uppercase;
+        letter-spacing 1px;
+      }
+
+      .form-buttons .create-btn {
+        background var(--accent);
+        color white;
+      }
+
+      .form-buttons .create-btnhover {
+        background #950740;
+        box-shadow 0 0 15px rgba(195, 7, 63, 0.6);
+      }
+
+      .form-buttons .cancel-btn {
+        background var(--border);
+        color var(--text-main);
+      }
+
+      .form-buttons .cancel-btnhover {
+        background #6a6a70;
+      }
+
+      .preset-presets {
+        display grid;
+        grid-template-columns repeat(auto-fit, minmax(120px, 1fr));
+        gap 10px;
+        margin 15px 0;
+      }
+
+      .preset-btn {
+        background rgba(195, 7, 63, 0.2);
+        border 2px solid var(--border);
+        color var(--text-main);
+        padding 10px;
+        border-radius 4px;
+        cursor pointer;
+        font-size 0.9rem;
+        transition all 0.2s;
+        font-weight 600;
+      }
+
+      .preset-btnhover {
+        border-color var(--accent);
+        background rgba(195, 7, 63, 0.3);
+      }
+
+       ============= PARTY JOIN MENU ============= 
+      #party-join-menu {
+        position fixed;
+        top 0;
+        left 0;
+        width 100%;
+        height 100%;
+        background linear-gradient(135deg, #0f0f12 0%, #1a1a1d 100%);
+        display none;
+        flex-direction column;
+        align-items center;
+        justify-content center;
+        z-index 3000;
+        gap 40px;
+        padding 20px;
+      }
+
+      .party-menu-content {
+        text-align center;
+        max-width 700px;
+      }
+
+      .party-menu-title {
+        font-size 2.5rem;
+        color var(--accent);
+        margin 0 0 15px;
+        text-shadow 0 0 20px rgba(195, 7, 63, 0.8);
+        letter-spacing 1px;
+      }
+
+      .party-menu-subtitle {
+        font-size 1.2rem;
+        color var(--text-muted);
+        margin-bottom 30px;
+        line-height 1.6;
+      }
+
+      .party-options {
+        display grid;
+        grid-template-columns repeat(auto-fit, minmax(250px, 1fr));
+        gap 20px;
+        width 100%;
+        max-width 600px;
+        margin 0 auto;
+      }
+
+      .party-option-card {
+        background var(--card-bg);
+        border 2px solid var(--border);
+        border-radius 8px;
+        padding 30px;
+        cursor pointer;
+        transition all 0.3s;
+        display flex;
+        flex-direction column;
+        gap 15px;
+      }
+
+      .party-option-cardhover {
+        border-color var(--accent);
+        box-shadow 0 0 25px rgba(195, 7, 63, 0.5);
+        transform translateY(-3px);
+      }
+
+      .party-icon {
+        font-size 3rem;
+        line-height 1;
+      }
+
+      .party-option-title {
+        font-size 1.4rem;
+        font-weight 600;
+        color #eab308;
+      }
+
+      .party-option-desc {
+        color var(--text-muted);
+        font-size 0.95rem;
+        line-height 1.5;
+      }
+
+       AP BAR 
+      .ap-bar {
+        background var(--bg-dark);
+        border 1px solid var(--border);
+        height 16px;
+        border-radius 3px;
+        overflow hidden;
+        margin 5px 0;
+      }
+      .ap-fill {
+        height 100%;
+        background linear-gradient(90deg, #6366f1, #8b5cf6);
+        transition width 0.3s;
+      }
+
+       EQUIPMENT 
+      .equipment-slot {
+        margin-bottom 8px;
+        padding 8px;
+        background var(--card-bg);
+        border-left 2px solid var(--accent);
+      }
+      .equipment-label {
+        font-size 0.75rem;
+        color var(--text-muted);
+        text-transform uppercase;
+        letter-spacing 0.5px;
+      }
+      .equipment-display {
+        font-size 0.9rem;
+        color var(--text-main);
+        margin-top 3px;
+        font-weight 500;
+      }
+
+       QUEST JOURNAL 
+      #quest-journal-content {
+        font-size 0.8rem;
+        max-height 150px;
+        overflow-y auto;
+      }
+      .quest-entry {
+        padding 8px;
+        margin-bottom 6px;
+        background var(--card-bg);
+        border-left 2px solid #d4af37;
+        border-radius 2px;
+      }
+      .quest-title {
+        color #d4af37;
+        font-weight bold;
+        font-size 0.85rem;
+        margin-bottom 4px;
+      }
+      .quest-objective {
+        color var(--text-muted);
+        font-size 0.75rem;
+        margin 2px 0;
+        margin-left 8px;
+      }
+
+       NAVIGATION BUTTONS 
+      .nav-btn {
+        background linear-gradient(135deg, #c3073f 0%, #950740 100%);
+        color white;
+        border 2px solid #d4af37;
+        padding 12px 20px;
+        border-radius 6px;
+        cursor pointer;
+        font-weight 600;
+        font-size 0.95rem;
+        transition all 0.3s;
+        text-shadow 0 2px 4px rgba(0,0,0,0.5);
+      }
+      .nav-btnhover {
+        background linear-gradient(135deg, #950740 0%, #c3073f 100%);
+        box-shadow 0 0 20px rgba(212,175,55,0.6);
+        transform translateY(-2px);
+      }
+      .nav-btnactive { transform translateY(0); }
+
+       LOCATION PANELS 
+      #location-display {
+        text-align center;
+        padding 24px 20px 16px;
+      }
+      #location-display h2 {
+        color #d4af37;
+        margin 15px 0 10px 0;
+        font-size 2rem;
+      }
+      .location-panel {
+        background var(--bg-panel);
+        border 1px solid var(--border);
+        border-radius 8px;
+        padding 18px 20px;
+        margin 14px 0;
+      }
+      .location-panel-title {
+        font-size 0.75rem;
+        text-transform uppercase;
+        letter-spacing 1.5px;
+        font-weight 700;
+        margin 0 0 12px;
+        padding-bottom 8px;
+        border-bottom 1px solid var(--border);
+      }
+      .location-panel.actions .location-panel-title { color #eab308; border-color #eab308; }
+      .location-panel.exits   .location-panel-title { color #60a5fa; border-color #60a5fa; }
+      .location-panel-grid {
+        display flex;
+        gap 8px;
+        flex-wrap wrap;
+      }
+
+       ITEM MANAGEMENT MODAL 
+      #item-modal {
+        position fixed; top 0; left 0; width 100%; height 100%;
+        background rgba(0,0,0,0.7);
+        display none; flex-direction column;
+        align-items center; justify-content center;
+        z-index 2500;
+      }
+      .item-modal-content {
+        background var(--card-bg);
+        border 3px solid var(--accent);
+        border-radius 8px;
+        padding 25px;
+        max-width 360px;
+        width 90%;
+        box-shadow 0 0 30px rgba(195,7,63,0.5);
+      }
+      .item-modal-title { font-size1.6rem; font-weightbold; color#d4af37; text-aligncenter; margin-bottom15px; letter-spacing1px; }
+      .item-modal-header { text-aligncenter; margin-bottom15px; border-bottom2px solid var(--border); padding-bottom12px; }
+      .item-modal-sprite { margin-bottom12px; }
+      .item-modal-sprite svg { width90px; height90px; }
+      .item-modal-name { font-size1.5rem; color#eab308; font-weight600; margin10px 0; }
+      .item-modal-description { colorvar(--text-muted); font-size0.95rem; margin15px 0; line-height1.5; }
+      .item-modal-quantity { text-aligncenter; colorvar(--text-main); margin15px 0; font-weight600; }
+      .item-modal-actions { displayflex; flex-directioncolumn; gap10px; margin-top20px; }
+      .item-action-btn {
+        background var(--accent); color white; border none;
+        padding 10px 15px; border-radius 4px; cursor pointer;
+        font-weight 600; transition all 0.2s; font-size 0.9rem;
+      }
+      .item-action-btnhover { background #950740; box-shadow 0 0 15px rgba(195,7,63,0.6); }
+      .item-action-btn.drop { background #660022; }
+      .item-action-btn.drophover { background #990033; }
+      .item-action-btn.close { background var(--border); color var(--text-main); }
+      .item-action-btn.closehover { background #6a6a70; }
+
+       TRADE MODAL 
+      #trade-modal {
+        position fixed; top 0; left 0; width 100%; height 100%;
+        background rgba(0,0,0,0.8);
+        display none; z-index 2600; overflow-y auto; padding 20px;
+      }
+      .trade-modal-content {
+        background var(--card-bg); border 2px solid var(--accent);
+        border-radius 8px; padding 30px; max-width 600px;
+        margin 50px auto; box-shadow 0 0 40px rgba(195,7,63,0.5);
+      }
+      .trade-modal-header { text-aligncenter; margin-bottom25px; border-bottom2px solid var(--border); padding-bottom15px; }
+      .trade-modal-title { font-size1.8rem; colorvar(--accent); margin0 0 5px; }
+      .trade-partner-name { color#eab308; font-size1.1rem; font-weight600; }
+      .trade-sections { displaygrid; grid-template-columns1fr 1fr; gap20px; margin20px 0; }
+      .trade-section { backgroundrgba(0,0,0,0.3); border1px solid var(--border); border-radius6px; padding15px; }
+      .trade-section-title { color#eab308; font-weight600; margin-bottom15px; border-bottom1px solid var(--border); padding-bottom10px; }
+      .trade-item-list { max-height250px; overflow-yauto; displayflex; flex-directioncolumn; gap8px; }
+      .trade-item { backgroundrgba(195,7,63,0.2); padding10px; border-radius4px; cursorpointer; border-left3px solid var(--accent); transitionall 0.2s; font-size0.9rem; displayflex; justify-contentspace-between; align-itemscenter; }
+      .trade-itemhover { backgroundrgba(195,7,63,0.4); transformtranslateX(3px); }
+      .trade-item.selected { backgroundrgba(195,7,63,0.6); box-shadow0 0 10px rgba(195,7,63,0.5); }
+      .trade-item-qty { color#eab308; font-size0.8rem; }
+      .trade-buttons { displayflex; gap10px; margin-top25px; }
+      .trade-btn { flex1; padding12px; bordernone; border-radius4px; font-weight600; cursorpointer; transitionall 0.2s; font-size0.95rem; }
+      .trade-btn.accept { backgroundvar(--accent); colorwhite; }
+      .trade-btn.accepthover { background#950740; box-shadow0 0 15px rgba(195,7,63,0.6); }
+      .trade-btn.cancel { backgroundvar(--border); colorvar(--text-main); }
+      .trade-btn.cancelhover { background#6a6a70; }
+
+       BACKPACK MODAL 
+      #backpack-modal {
+        position fixed; top0; left0; width100%; height100%;
+        background rgba(0,0,0,0.8);
+        display none; flex-directioncolumn;
+        align-itemscenter; justify-contentcenter; z-index2600;
+      }
+      .backpack-modal-content {
+        background linear-gradient(135deg,#2a2a2e,#1a1a1d);
+        border 3px solid #c3073f; border-radius8px; padding30px;
+        max-width600px; width90%; max-height80vh; overflow-yauto;
+        box-shadow0 0 40px rgba(195,7,63,0.6);
+      }
+      .backpack-header { displayflex; justify-contentspace-between; align-itemscenter; margin-bottom25px; border-bottom2px solid #c3073f; padding-bottom15px; }
+      .backpack-title { font-size1.8rem; font-weightbold; color#d4af37; letter-spacing1px; }
+      .backpack-close-btn { backgroundnone; bordernone; color#c3073f; font-size2rem; cursorpointer; padding0; transitioncolor 0.2s; }
+      .backpack-close-btnhover { color#e84458; }
+      .backpack-grid { displaygrid; grid-template-columnsrepeat(auto-fill,minmax(100px,1fr)); gap15px; }
+      .backpack-item {
+        backgroundrgba(195,7,63,0.15); border2px solid var(--border);
+        border-radius6px; padding12px; cursorpointer; transitionall 0.2s;
+        displayflex; flex-directioncolumn; align-itemscenter; gap8px; text-aligncenter;
+      }
+      .backpack-itemhover { border-color#c3073f; backgroundrgba(195,7,63,0.3); box-shadow0 0 15px rgba(195,7,63,0.4); transformtranslateY(-2px); }
+      .backpack-item-sprite { width60px; height60px; displayflex; align-itemscenter; justify-contentcenter; }
+      .backpack-item-sprite svg { width100%; height100%; }
+      .backpack-item-name { font-size0.85rem; color#eab308; font-weight600; word-breakbreak-word; }
+      .backpack-item-qty { font-size0.75rem; colorvar(--text-muted); }
+
+       INV ITEM (for hidden list) 
+      .inv-item {
+        background rgba(195,7,63,0.2); padding6px 8px; margin3px 0;
+        border-radius4px; border-left3px solid var(--accent);
+        cursorpointer; transitionall 0.2s;
+        displayflex; justify-contentspace-between; align-itemscenter; font-size0.8rem;
+      }
+      .inv-itemhover { backgroundrgba(195,7,63,0.4); }
+
+       ITEM SPRITE 
+      svg.item-sprite { filter drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+    style
+  head
+  body
+    !-- START MENU --
+    div id=start-menu
+      div class=start-menu-content
+        h1 class=start-menu-title🐉 THE SILVER HORN QUESTh1
+        p class=start-menu-subtitle
+          A text adventure in the world of Harmatfalu
+        p
+        div class=start-menu-buttons
+          button class=start-btn onclick=showCharacterSelect()
+            Begin Adventure
+          button
+          button class=start-btn onclick=showCredits()Creditsbutton
+        div
+        p
+          style=margin-top 40px; color var(--text-muted); font-size 0.9rem
+        
+          v1.0 • D&D 5E System
+        p
+      div
+    div
+
+    !-- CHARACTER SELECTION MENU --
+    div id=char-select-menu
+      div class=char-menu-header
+        h2 class=char-menu-title⚔️ Select Your Heroh2
+        p class=char-menu-subtitle
+          Choose an existing character or create a new one
+        p
+      div
+      div class=char-grid id=char-griddiv
+      button class=start-btn onclick=showCharacterCreate()
+        Create New Character
+      button
+      button
+        class=start-btn
+        style=
+          margin-top 20px;
+          background var(--border);
+          border-color var(--border);
+        
+        onclick=showStartMenu()
+      
+        Back to Menu
+      button
+    div
+
+    !-- CHARACTER CREATION MENU --
+    div id=char-create-menu
+      div class=create-form-container
+        h2 class=create-form-titleCreate Your Characterh2
+
+        div class=form-group
+          labelCharacter Namelabel
+          input
+            type=text
+            id=char-name-input
+            placeholder=Enter your character name
+            maxlength=30
+          
+        div
+
+        div class=form-group
+          labelClasslabel
+          select id=char-class-input
+            option value=fighterFighteroption
+            option value=rogueRogueoption
+            option value=clericClericoption
+            option value=wizardWizardoption
+            option value=paladinPaladinoption
+            option value=rangerRangeroption
+          select
+        div
+
+        p style=color #eab308; font-weight 600; margin-top 20px
+          Preset Builds
+        p
+        div class=preset-presets
+          button class=preset-btn onclick=loadPreset('warrior')
+            Warrior
+          button
+          button class=preset-btn onclick=loadPreset('rogue')
+            Rogue
+          button
+          button class=preset-btn onclick=loadPreset('cleric')
+            Cleric
+          button
+          button class=preset-btn onclick=loadPreset('wizard')
+            Wizard
+          button
+        div
+
+        p style=color #eab308; font-weight 600
+          Ability Scores (or randomize)
+        p
+        div class=ability-input-grid
+          div class=ability-input-group
+            labelSTRlabel
+            input type=number id=ability-str value=15 min=3 max=20 
+          div
+          div class=ability-input-group
+            labelDEXlabel
+            input type=number id=ability-dex value=14 min=3 max=20 
+          div
+          div class=ability-input-group
+            labelCONlabel
+            input type=number id=ability-con value=13 min=3 max=20 
+          div
+          div class=ability-input-group
+            labelINTlabel
+            input type=number id=ability-int value=10 min=3 max=20 
+          div
+          div class=ability-input-group
+            labelWISlabel
+            input type=number id=ability-wis value=12 min=3 max=20 
+          div
+          div class=ability-input-group
+            labelCHAlabel
+            input type=number id=ability-cha value=11 min=3 max=20 
+          div
+        div
+
+        div class=form-buttons
+          button class=create-btn onclick=createCharacter()
+            Create Character
+          button
+          button class=cancel-btn onclick=showCharacterSelect()
+            Cancel
+          button
+        div
+      div
+    div
+
+    !-- PARTY JOIN MENU --
+    div id=party-join-menu
+      div class=party-menu-content
+        h2 class=party-menu-title⚔️ Join a Partyh2
+        p class=party-menu-subtitle
+          You can join an existing party group for a more social adventure
+          experience, or brave the journey solo.
+        p
+        div class=party-options
+          div class=party-option-card onclick=joinParty()
+            div class=party-icon👥div
+            div class=party-option-titleJoin Partydiv
+            div class=party-option-desc
+              Team up with other adventurers and share your story
+            div
+          div
+          div class=party-option-card onclick=skipParty()
+            div class=party-icon🗡️div
+            div class=party-option-titleGo Solodiv
+            div class=party-option-desc
+              Adventure alone and make your own decisions
+            div
+          div
+        div
+      div
+    div
+
+    !-- ITEM MANAGEMENT MODAL --
+    div id=item-modal
+      div class=item-modal-content
+        div class=item-modal-title🎒 Backpackdiv
+        div class=item-modal-header
+          div class=item-modal-sprite id=item-sprite-display style=height100px;displayflex;align-itemscenter;justify-contentcenter;margin-bottom10px;div
+          div class=item-modal-name id=item-nameItem Namediv
+          div class=item-modal-quantity id=item-quantityQty 1div
+        div
+        div class=item-modal-description id=item-descriptionItem description goes here.div
+        div class=item-modal-actions
+          button class=item-action-btn id=btn-item-use onclick=useItem()Use Itembutton
+          button class=item-action-btn id=btn-item-trade onclick=startTrade()TradeGivebutton
+          button class=item-action-btn drop id=btn-item-drop onclick=dropItem()Drop Itembutton
+          button class=item-action-btn close onclick=closeItemModal()Closebutton
+        div
+      div
+    div
+
+    !-- TRADE MODAL --
+    div id=trade-modal
+      div class=trade-modal-content
+        div class=trade-modal-header
+          div class=trade-modal-title⚔️ Negotiate Tradediv
+          div class=trade-partner-name id=trade-partner-nameMerchantdiv
+        div
+        div class=trade-sections
+          div class=trade-section
+            div class=trade-section-title📦 Your Offerdiv
+            div class=trade-item-list id=your-items-listdiv
+          div
+          div class=trade-section
+            div class=trade-section-title💰 Their Offerdiv
+            div class=trade-item-list id=their-items-listdiv
+          div
+        div
+        div class=trade-buttons
+          button class=trade-btn accept id=btn-confirm-trade onclick=confirmTrade()Confirm Tradebutton
+          button class=trade-btn cancel onclick=closeTradeModal()Cancelbutton
+        div
+      div
+    div
+
+    !-- BACKPACK INVENTORY MODAL --
+    div id=backpack-modal
+      div class=backpack-modal-content
+        div class=backpack-header
+          div class=backpack-title🎒 Your Backpackdiv
+          div style=displayflex;align-itemscenter;gap10px;
+            span id=backpack-page-label style=colorvar(--text-muted);font-size0.85rem;Page 1  1span
+            button class=backpack-close-btn onclick=closeBackpackModal()✕button
+          div
+        div
+        div class=backpack-grid id=backpack-items-griddiv
+        div id=backpack-pagination style=displayflex;justify-contentcenter;align-itemscenter;gap12px;padding12px 0 4px;
+          button id=backpack-prev onclick=backpackChangePage(-1) style=backgroundvar(--card-bg);border1px solid var(--border);colorvar(--text-main);padding6px 18px;border-radius4px;cursorpointer;font-size1rem;◀ Prevbutton
+          div id=backpack-dots style=displayflex;gap6px;div
+          button id=backpack-next onclick=backpackChangePage(1) style=backgroundvar(--card-bg);border1px solid var(--border);colorvar(--text-main);padding6px 18px;border-radius4px;cursorpointer;font-size1rem;Next ▶button
+        div
+      div
+    div
+
+    !-- HEADER --
+    header
+      h1🐉 The Silver Horn Questh1
+      div style=font-size 0.85rem; color var(--text-muted)
+        span id=game-timeHarmatfalu - Dawnspan
+      div
+    header
+
+    !-- LEFT SIDEBAR - GAME LOG --
+    div id=game-log-sidebar
+      div
+        style=
+          font-weight bold;
+          color var(--accent);
+          margin-bottom 5px;
+          font-size 0.9rem;
+        
+      
+        📜 GAME LOG
+      div
+      div id=game-logdiv
+    div
+
+    !-- MAIN CONTENT --
+    main
+      div id=location-view
+        !-- filled by renderLocationView() --
+      div
+    main
+
+    !-- RIGHT SIDEBAR - DASHBOARD --
+    aside
+      !-- CHARACTER STATS --
+      div class=dashboard-panel
+        div class=panel-title⚔️ CHARACTERdiv
+        div style=text-align center; margin-bottom 12px
+          div
+            id=player-sprite-small
+            style=
+              display inline-block;
+              width 80px;
+              height 80px;
+              border-radius 50%;
+              background radial-gradient(circle at 30% 30%, #ffcc99, #cc7722);
+              border 3px solid #ffaa00;
+              box-shadow 0 0 10px rgba(255, 170, 0, 0.5);
+              display flex;
+              align-items center;
+              justify-content center;
+            
+          div
+        div
+        div class=stat-line
+          span class=stat-labelNamespan
+          span class=stat-value id=char-nameAdventurerspan
+        div
+        div class=stat-line
+          span class=stat-labelLevelspan
+          span class=stat-value id=char-level1span
+        div
+        div class=stat-line
+          span class=stat-labelExperiencespan
+          span class=stat-value id=char-exp0span
+        div
+        div style=margin-top 8px
+          div class=stat-line
+            span class=stat-labelHealthspan
+            span class=stat-valuespan id=char-hp100span100span
+          div
+          div class=hp-bar
+            div class=hp-fill id=hp-fill style=width 100%100100div
+          div
+          div class=stat-line style=margin-top10px;
+            span class=stat-labelAction Pointsspan
+            span class=stat-valuespan id=char-ap6span6span
+          div
+          div class=ap-bar
+            div class=ap-fill id=ap-fill style=width100%div
+          div
+        div
+      div
+
+      !-- INVENTORY BUTTON --
+      div class=dashboard-panel
+        button onclick=openBackpackModal() style=
+          width100%; backgroundlinear-gradient(135deg,#2c2c2e,#38383a);
+          border2px solid var(--accent); border-radius6px;
+          colorvar(--text-main); font-size1rem; font-weight600;
+          padding12px 16px; cursorpointer;
+          displayflex; align-itemscenter; justify-contentspace-between;
+          transitionall 0.2s;
+         onmouseover=this.style.background='linear-gradient(135deg,#3a3a3c,#4a4a4c)' onmouseout=this.style.background='linear-gradient(135deg,#2c2c2e,#38383a)'
+          span🎒 Inventoryspan
+          span id=inv-count-badge style=backgroundvar(--accent);colorwhite;border-radius10px;padding2px 8px;font-size0.75rem;font-weightbold;0span
+        button
+        div id=inventory-list style=displaynonediv
+        div id=empty-inv style=displaynonediv
+      div
+
+      !-- GOLD --
+      div class=dashboard-panel
+        div class=stat-line
+          span class=stat-label💰 Goldspan
+          span class=stat-value id=char-gold50span
+        div
+      div
+
+      !-- ACTIVE QUEST --
+      div class=dashboard-panel
+        div class=panel-title⚡ OBJECTIVEdiv
+        div
+          id=current-objective
+          style=font-size 0.8rem; color #eab308; line-height 1.4
+        
+          Find the stolen Silver Horn of Harmatfalu
+        div
+      div
+
+      !-- QUESTS --
+      div class=dashboard-panel
+        div class=panel-title📋 QUESTSdiv
+        div id=quest-listdiv
+      div
+
+      !-- ABILITY SCORES --
+      div class=dashboard-panel
+        div class=panel-title📊 ABILITIESdiv
+        div class=ability-grid
+          div class=ability-box
+            div class=ability-nameSTRdiv
+            div class=ability-score id=score-str15div
+            div class=ability-mod id=mod-str+2div
+          div
+          div class=ability-box
+            div class=ability-nameDEXdiv
+            div class=ability-score id=score-dex14div
+            div class=ability-mod id=mod-dex+2div
+          div
+          div class=ability-box
+            div class=ability-nameCONdiv
+            div class=ability-score id=score-con13div
+            div class=ability-mod id=mod-con+1div
+          div
+          div class=ability-box
+            div class=ability-nameINTdiv
+            div class=ability-score id=score-int10div
+            div class=ability-mod id=mod-int+0div
+          div
+          div class=ability-box
+            div class=ability-nameWISdiv
+            div class=ability-score id=score-wis12div
+            div class=ability-mod id=mod-wis+1div
+          div
+          div class=ability-box
+            div class=ability-nameCHAdiv
+            div class=ability-score id=score-cha11div
+            div class=ability-mod id=mod-cha+0div
+          div
+        div
+      div
+
+      !-- COMBAT STATS --
+      div class=dashboard-panel
+        div class=panel-title⚔️ COMBATdiv
+        div class=stat-line
+          span class=stat-labelACspan
+          span class=stat-value id=char-ac14span
+        div
+        div class=stat-line
+          span class=stat-labelProf. Bonusspan
+          span class=stat-value id=prof-bonus+2span
+        div
+        div class=stat-line
+          span class=stat-labelInitiativespan
+          span class=stat-value id=initiative+2span
+        div
+      div
+
+      !-- EQUIPMENT PANEL --
+      div class=dashboard-panel
+        div class=panel-title🛡️ EQUIPMENTdiv
+        div class=equipment-slot
+          div class=equipment-labelWeapondiv
+          div class=equipment-display id=equipped-weaponNonediv
+        div
+        div class=equipment-slot
+          div class=equipment-labelArmordiv
+          div class=equipment-display id=equipped-armorNonediv
+        div
+        div class=equipment-slot
+          div class=equipment-labelAccessorydiv
+          div class=equipment-display id=equipped-accessoryNonediv
+        div
+      div
+
+      !-- QUEST JOURNAL --
+      div class=dashboard-panel
+        div class=panel-title📜 QUEST JOURNALdiv
+        div id=quest-journal-content
+          div style=colorvar(--text-muted);font-size0.85rem;No active questdiv
+        div
+      div
+    aside
+
+    script
+       ============= PIXEL ART SPRITES =============
+      const sprites = {
+        player () = `
+          svg class=pixel-sprite viewBox=0 0 64 64 width=120 height=120
+            rect x=24 y=8 width=16 height=16 fill=#ffcc99
+            rect x=28 y=12 width=2 height=2 fill=#000
+            rect x=34 y=12 width=2 height=2 fill=#000
+            rect x=30 y=18 width=4 height=2 fill=#cc5555
+            rect x=16 y=24 width=32 height=20 fill=#4a4a6a
+            rect x=16 y=24 width=32 height=4 fill=#6a6a8a
+            rect x=8 y=26 width=8 height=14 fill=#ffcc99
+            rect x=48 y=26 width=8 height=14 fill=#ffcc99
+            rect x=52 y=20 width=4 height=20 fill=#c0c0c0
+            rect x=50 y=18 width=8 height=4 fill=#ffaa00
+            rect x=20 y=44 width=6 height=12 fill=#333333
+            rect x=38 y=44 width=6 height=12 fill=#333333
+          svg`,
+        kobold () = `
+          svg class=pixel-sprite viewBox=0 0 64 64 width=120 height=120
+            rect x=20 y=6 width=24 height=18 fill=#669933
+            rect x=26 y=12 width=3 height=3 fill=#ff0000
+            rect x=35 y=12 width=3 height=3 fill=#ff0000
+            rect x=28 y=19 width=8 height=2 fill=#000000
+            rect x=16 y=24 width=32 height=16 fill=#558833
+            rect x=6 y=28 width=10 height=12 fill=#669933
+            rect x=48 y=28 width=10 height=12 fill=#669933
+            rect x=4 y=38 width=3 height=4 fill=#333333
+            rect x=57 y=38 width=3 height=4 fill=#333333
+            rect x=18 y=40 width=8 height=16 fill=#335511
+            rect x=38 y=40 width=8 height=16 fill=#335511
+          svg`,
+        guard () = `
+          svg class=pixel-sprite viewBox=0 0 64 64 width=120 height=120
+            rect x=18 y=4 width=28 height=10 fill=#a9a9a9
+            rect x=14 y=10 width=4 height=6 fill=#c0c0c0
+            rect x=46 y=10 width=4 height=6 fill=#c0c0c0
+            rect x=22 y=14 width=20 height=10 fill=#ffcc99
+            rect x=28 y=16 width=2 height=2 fill=#000
+            rect x=34 y=16 width=2 height=2 fill=#000
+            rect x=14 y=24 width=36 height=18 fill=#9090a0
+            rect x=12 y=26 width=40 height=4 fill=#b0b0c0
+            rect x=54 y=20 width=4 height=24 fill=#c0c0c0
+            rect x=52 y=18 width=8 height=4 fill=#ffaa00
+            rect x=4 y=26 width=10 height=14 fill=#ff0000
+            rect x=6 y=30 width=2 height=2 fill=#ffff00
+            rect x=20 y=42 width=6 height=14 fill=#333333
+            rect x=38 y=42 width=6 height=14 fill=#333333
+          svg`,
+        sailor () = `
+          svg class=pixel-sprite viewBox=0 0 64 64 width=120 height=120
+            rect x=16 y=2 width=32 height=6 fill=#0066cc
+            rect x=14 y=8 width=36 height=2 fill=#0066cc
+            rect x=20 y=10 width=24 height=12 fill=#ffcc99
+            rect x=26 y=14 width=2 height=3 fill=#0000ff
+            rect x=36 y=14 width=2 height=3 fill=#0000ff
+            rect x=30 y=20 width=4 height=2 fill=#ff0000
+            rect x=12 y=22 width=40 height=16 fill=#0099ff
+            rect x=12 y=22 width=40 height=3 fill=#ffffff
+            rect x=2 y=26 width=10 height=12 fill=#ffcc99
+            rect x=52 y=26 width=10 height=12 fill=#ffcc99
+            rect x=54 y=32 width=6 height=8 fill=#00aa00
+            rect x=20 y=38 width=6 height=16 fill=#330000
+            rect x=38 y=38 width=6 height=16 fill=#330000
+          svg`,
+        innkeeper () = `
+          svg class=pixel-sprite viewBox=0 0 64 64 width=120 height=120
+            rect x=22 y=6 width=20 height=14 fill=#ffcc99
+            rect x=26 y=12 width=3 height=2 fill=#000
+            rect x=35 y=12 width=3 height=2 fill=#000
+            rect x=28 y=18 width=8 height=2 fill=#ff6699
+            rect x=14 y=20 width=36 height=18 fill=#8b4513
+            rect x=10 y=22 width=44 height=3 fill=#ffffff
+            rect x=28 y=20 width=2 height=16 fill=#ffffff
+            rect x=34 y=20 width=2 height=16 fill=#ffffff
+            rect x=4 y=26 width=10 height=12 fill=#ffcc99
+            rect x=50 y=26 width=10 height=12 fill=#ffcc99
+            rect x=20 y=38 width=6 height=16 fill=#000000
+            rect x=38 y=38 width=6 height=16 fill=#000000
+          svg`,
+      };
+
+      function getSpriteHtml(spriteType) {
+        return sprites[spriteType]  sprites[spriteType]()  sprites.player();
+      }
+
+       ============= ITEM SPRITES =============
+      const itemSprites = {
+        Longsword () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100rect x=28 y=2 width=8 height=60 fill=#c0c0c0 stroke=#666 stroke-width=0.5rect x=22 y=28 width=20 height=6 fill=#ffaa00 stroke=#aa6600 stroke-width=0.5rect x=26 y=28 width=12 height=4 fill=#8B4513 stroke=#666 stroke-width=0.5svg`,
+        Leather Armor () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100rect x=16 y=10 width=32 height=24 fill=#8B4513 rx=2circle cx=24 cy=25 r=2 fill=#FFD700circle cx=40 cy=25 r=2 fill=#FFD700path d=M 18 34 L 22 44 L 42 44 L 46 34 fill=#654321svg`,
+        Bread () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100ellipse cx=32 cy=32 rx=24 ry=20 fill=#D2B48C stroke=#8B7355 stroke-width=1ellipse cx=32 cy=28 rx=22 ry=18 fill=#DEB887svg`,
+        Map () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100rect x=10 y=12 width=44 height=40 fill=#D4A574 stroke=#8B6914 stroke-width=1.5 rx=2circle cx=32 cy=32 r=3 fill=#FF4500svg`,
+        Rope () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100path d=M 32 10 Q 28 20 32 30 Q 36 40 32 50 Q 28 55 32 60 fill=none stroke=#D2691E stroke-width=4 stroke-linecap=roundsvg`,
+        Potion () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100rect x=22 y=24 width=20 height=24 fill=#ff4444 stroke=#333 stroke-width=1 rx=2rect x=26 y=20 width=12 height=6 fill=#8B7355rect x=28 y=18 width=8 height=4 fill=#D2B48Ccircle cx=32 cy=30 r=2 fill=rgba(255,255,255,0.6)svg`,
+        Health Potion () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100rect x=22 y=24 width=20 height=24 fill=#ff6b9d stroke=#333 stroke-width=1 rx=2rect x=26 y=20 width=12 height=6 fill=#8B7355rect x=28 y=18 width=8 height=4 fill=#D2B48Ccircle cx=32 cy=30 r=2 fill=rgba(255,255,255,0.6)svg`,
+        Mana Potion () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100rect x=22 y=24 width=20 height=24 fill=#6b9dff stroke=#333 stroke-width=1 rx=2rect x=26 y=20 width=12 height=6 fill=#8B7355rect x=28 y=18 width=8 height=4 fill=#D2B48Csvg`,
+        Gold Coin () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100circle cx=32 cy=32 r=20 fill=#FFD700 stroke=#8B6914 stroke-width=1text x=32 y=38 font-size=16 font-weight=bold fill=#8B6914 text-anchor=middle$textsvg`,
+        Ring () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100circle cx=32 cy=28 r=18 fill=none stroke=#FFD700 stroke-width=4circle cx=32 cy=14 r=6 fill=#FFD700polygon points=32,10 35,13 32,16 29,13 fill=#FF1493 opacity=0.8svg`,
+        Silver Horn () = `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100path d=M 8 40 L 56 20 L 56 32 L 8 52 Z fill=#C0C0C0 stroke=#888 stroke-width=1circle cx=10 cy=46 r=4 fill=#d4af37svg`,
+      };
+
+      function getItemSpriteHtml(itemName) {
+        return itemSprites[itemName]  itemSprites[itemName]()  `svg class=item-sprite viewBox=0 0 64 64 width=100 height=100rect x=16 y=16 width=32 height=32 fill=#888 stroke=#333 stroke-width=1 rx=4text x=32 y=40 font-size=20 fill=#fff text-anchor=middletextsvg`;
+      }
+
+       ============= D&D 5E MECHANICS =============
+      const calcMod = (score) = Math.floor((score - 10)  2);
+      const rollD20 = () = Math.floor(Math.random()  20) + 1;
+      const rollDice = (sides) = Math.floor(Math.random()  sides) + 1;
+
+       ============= GAME STATE =============
+      const gameState = {
+        currentLocation inn,
+        name Adventurer,
+        class fighter,
+        level 1,
+        exp 0,
+        hitDice 8,
+        abilities { str 15, dex 14, con 13, int 10, wis 12, cha 11 },
+        hp 10 + calcMod(13),
+        maxHp 10 + calcMod(13),
+        ac 10 + calcMod(14),
+        proficiencyBonus 2,
+        skills {
+          acrobatics { ability dex, proficient false },
+          animalHandling { ability wis, proficient false },
+          arcana { ability int, proficient false },
+          athletics { ability str, proficient true },
+          deception { ability cha, proficient false },
+          history { ability int, proficient false },
+          insight { ability wis, proficient false },
+          intimidation { ability cha, proficient true },
+          investigation { ability int, proficient false },
+          medicine { ability wis, proficient false },
+          nature { ability int, proficient false },
+          perception { ability wis, proficient true },
+          performance { ability cha, proficient false },
+          persuasion { ability cha, proficient false },
+          sleightOfHand { ability dex, proficient false },
+          stealth { ability dex, proficient false },
+          survival { ability wis, proficient false },
+        },
+        gold 50,
+        inventory [
+          { name Longsword, quantity 1 },
+          { name Leather Armor, quantity 1 },
+          { name Bread, quantity 3 },
+          { name Map, quantity 1 },
+          { name Rope, quantity 1 },
+        ],
+        equipped { weapon null, armor null, accessory null },
+        currentAP 6,
+        maxAP 6,
+        statusEffects [],
+        quests [],
+        completedQuests [],
+        activeQuestId null,
+        xpThresholds [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000],
+        visited new Set(),
+        log [],
+        inParty false,
+      };
+
+       ============= LOCATIONS =============
+      const locations = {
+        inn {
+          name 🏨 Harmatfalu Inn, emoji 🏨, type safe_zone,
+          description A cozy room in the local inn. You wake with sunlight streaming through the window.,
+          npcs [Innkeeper, Mysterious Traveler],
+          paths {
+            square { targetId square, requirement null },
+            stable { targetId stable, requirement null },
+          },
+        },
+        square {
+          name 🏢 Town Square, emoji 🏢, type safe_zone,
+          description The bustling town square. Locals gather around the fountain, whispering about the missing Silver Horn.,
+          npcs [Mayor Barnabas, Town Guard, Merchant],
+          paths {
+            inn { targetId inn, requirement null },
+            forest { targetId forest, requirement { type skill_check, skill perception, dc 10 }, description 🌲 Head towards Dark Forest (Perception DC 10) },
+            tavern { targetId tavern, requirement null },
+          },
+        },
+        tavern {
+          name 🍺 Tavern, emoji 🍺, type safe_zone,
+          description A dimly lit tavern. The barkeeper is polishing glasses.,
+          npcs [Bartender, Drunk Sailor],
+          paths { square { targetId square, requirement null } },
+        },
+        forest {
+          name 🌲 Dark Forest, emoji 🌲, type dungeon_room, enemyType wolf,
+          description You enter the dense forest. Strange tracks lead deeper into the woods. You sense danger...,
+          npcs [Forest Hermit],
+          paths {
+            square { targetId square, requirement null },
+            quarry { targetId quarry, requirement { type skill_check, skill stealth, dc 12 }, description ⛏️ Sneak towards Quarry (Stealth DC 12), failurePenalty { hpLoss 5, triggerCombat false, message You step on a branch! A trap activates! } },
+          },
+        },
+        quarry {
+          name ⛏️ Abandoned Quarry, emoji ⛏️, type boss_room, enemyType koboldLeader,
+          description An old quarry. Kobolds guard something shiny the Silver Horn!,
+          npcs [Kobold Leader],
+          paths { forest { targetId forest, requirement null } },
+        },
+        stable {
+          name 🐴 Stable, emoji 🐴, type safe_zone,
+          description The town's stable. Horses neigh softly.,
+          npcs [Stableman],
+          paths { inn { targetId inn, requirement null } },
+        },
+      };
+
+       ============= NPC DATA =============
+      const npcs = {
+        Innkeeper {
+          sprite innkeeper,
+          dialogue Ah, good morning! Have you heard The Silver Horn is missing! The Mayor is offering a reward.,
+          options [
+            { text Tell me about the theft, action startQuest, questName Find the Silver Horn },
+            { text What was the horn used for, action dialogue, response It was blown at festivals and ceremonies. Very historically important! },
+          ],
+        },
+        Mayor Barnabas {
+          sprite innkeeper,
+          dialogue Thank the gods! The horn was taken from our treasury last night. We suspect kobolds from the quarry. Reward 500 gold!,
+          options [
+            { text I'll find it for you, action acceptQuest, questId findHorn, questName Find the Silver Horn, reward 500 },
+            { text Where was it last seen, action dialogue, response In the town hall treasury. Strange blue dust was left behind. },
+          ],
+        },
+        Kobold Leader {
+          sprite kobold,
+          dialogue Hehehehe! You want the shiny horn Come fight for it, human!,
+          options [
+            { text Draw your sword!, action battle, enemy Kobold Leader, rewardGold 500 },
+            { text Try to reason with them, action dialogue, response Kobolds do not reason... they attack! },
+          ],
+        },
+        Merchant {
+          sprite innkeeper,
+          dialogue I sell fine goods! Need a health potion 25 gold.,
+          options [
+            { text Browse shop, action openShop },
+            { text Buy Health Potion (25g), action buyItem, item Health Potion, cost 25 },
+            { text No thanks, action back },
+          ],
+        },
+        Forest Hermit {
+          sprite innkeeper,
+          dialogue I saw kobold tracks heading to the quarry. They seemed excited about something shiny.,
+          options [{ text Thank you for the information, action back }],
+        },
+        Drunk Sailor {
+          sprite sailor,
+          dialogue hiccup I saw goblins or kobolds with some treasure... maybe gold horn I dunno...,
+          options [{ text Forget about this guy, action back }],
+        },
+        Town Guard {
+          sprite guard,
+          dialogue We've locked down the town. We found tracks heading to the forest.,
+          options [
+            { text I'll investigate the forest, action goLocation, location forest },
+            { text Return to town, action back },
+          ],
+        },
+        Bartender {
+          sprite innkeeper,
+          dialogue The mood here is grim. Everyone's worried about the Horn.,
+          options [
+            { text Buy a drink, action dialogue, response Here's an ale! That'll be 5 gold. },
+            { text Leave the bar, action back },
+          ],
+        },
+        Stableman {
+          sprite innkeeper,
+          dialogue I heard strange scratching sounds near the forest road at night.,
+          options [{ text Thank you, action back }],
+        },
+        Mysterious Traveler {
+          sprite innkeeper,
+          dialogue Psst... the kobolds took the horn to their quarry lair. Be careful - they're vicious!,
+          options [{ text Helpful information!, action back }],
+        },
+      };
+
+       ============= ENEMY BESTIARY =============
+      const enemyBestiary = {
+        goblin       { name Goblin,        sprite kobold,    baseHp 7,  baseDmg 4, xpReward 50,  goldReward 15,  lootTable [{ item Gold Coin, chance 0.7, quantity () = rollDice(4)+1 }] },
+        wolf         { name Wolf,           sprite kobold,    baseHp 11, baseDmg 6, xpReward 100, goldReward 25,  lootTable [{ item Gold Coin, chance 0.6, quantity () = rollDice(6)+2 }] },
+        skeleton     { name Skeleton,       sprite guard,     baseHp 13, baseDmg 7, xpReward 120, goldReward 30,  lootTable [{ item Gold Coin, chance 0.5, quantity () = rollDice(8)+3 }] },
+        koboldLeader { name Kobold Leader,  sprite kobold,    baseHp 22, baseDmg 8, xpReward 250, goldReward 100, lootTable [{ item Gold Coin, chance 0.8, quantity () = rollDice(20)+50 }, { item Silver Horn, chance 0.9, quantity 1 }] },
+      };
+
+       ============= QUEST DEFINITIONS =============
+      const questDefinitions = {
+        findHorn {
+          id findHorn, title Find the Silver Horn, giver Innkeeper,
+          description The Silver Horn has been stolen by kobolds. Travel to the Quarry and retrieve it.,
+          objectives [
+            { id hunt_kobold, type kill, target koboldLeader, count 1, currentCount 0 },
+            { id retrieve_horn, type obtain, item Silver Horn, obtained false },
+          ],
+          reward { xp 500, gold 500 },
+          status inactive,
+        },
+      };
+
+       ============= DIALOGUE NODES =============
+      const dialogueNodes = {
+        innkeeper_greeting {
+          text Ah, good morning! Have you heard The Silver Horn is missing! The Mayor is offering a reward.,
+          options [
+            { text Tell me about the theft, nextId innkeeper_theft },
+            { text I'll help!, action acceptQuest, questId findHorn, nextId null },
+            { text Goodbye, nextId null },
+          ],
+        },
+        innkeeper_theft {
+          text It was stolen last night from the town treasury. Strange blue dust was left behind. The guards suspect kobolds.,
+          options [
+            { text I'll investigate the forest, action acceptQuest, questId findHorn, nextId null },
+            { text Back, nextId innkeeper_greeting },
+          ],
+        },
+        merchant_greeting {
+          text Welcome, adventurer! I have fine goods for sale.,
+          options [
+            { text Browse shop, action openShop, nextId null },
+            { text Never mind, nextId null },
+          ],
+        },
+      };
+
+       ============= SHOP INVENTORY =============
+      const shopInventory = {
+        merchant [
+          { name Health Potion, cost 25, stock 10 },
+          { name Mana Potion,   cost 30, stock 5  },
+          { name Dagger,        cost 15, stock 3  },
+          { name Longsword,     cost 75, stock 2  },
+          { name Iron Armor,    cost 100, stock 1 },
+        ],
+      };
+
+       ============= ITEM DEFINITIONS =============
+      const itemDefinitions = {
+        Longsword      { type weapon,    description A well-crafted blade. Deals 1d8+STR damage., stats { weaponBonus2, damageBonus1 }, equipSlot weapon,    value 75  },
+        Leather Armor{ type armor,     description Light gear. AC +2.,                          stats { acBonus2 },                   equipSlot armor,     value 50  },
+        Dagger         { type weapon,    description A small blade. Deals 1d4+DEX damage.,        stats { weaponBonus1, damageBonus0 }, equipSlot weapon,    value 15  },
+        Iron Armor   { type armor,     description Heavy gear. AC +4.,                          stats { acBonus4 },                   equipSlot armor,     value 100 },
+        Bread          { type consumable,description Restores 2 HP when consumed.,                stats { healValue2 },                  value 5   },
+        Potion         { type consumable,description Restores 10 HP.,                             stats { healValue10 },                 value 25  },
+        Health Potion{ type consumable,description Restores 15 HP.,                             stats { healValue15 },                 value 25  },
+        Mana Potion  { type consumable,description Restores 5 AP.,                              stats { apRestore5 },                  value 30  },
+        Silver Horn  { type quest,     description The legendary Silver Horn of Harmatfalu.,    value 500 },
+        Wolf Fang    { type material,  description A wolf's fang. Might be valuable.,           value 10  },
+      };
+
+       ============= CHARACTER MANAGEMENT =============
+      const savedCharacters = JSON.parse(localStorage.getItem(savedCharacters))  [];
+
+      function showStartMenu() {
+        document.getElementById(start-menu).style.display = flex;
+        document.getElementById(char-select-menu).style.display = none;
+        document.getElementById(char-create-menu).style.display = none;
+      }
+
+      function showCharacterSelect() {
+        document.getElementById(start-menu).style.display = none;
+        document.getElementById(char-select-menu).style.display = flex;
+        document.getElementById(char-create-menu).style.display = none;
+        renderCharacterGrid();
+      }
+
+      function showCharacterCreate() {
+        document.getElementById(start-menu).style.display = none;
+        document.getElementById(char-select-menu).style.display = none;
+        document.getElementById(char-create-menu).style.display = flex;
+      }
+
+      function showCredits() {
+        alert(🐉 THE SILVER HORN QUESTnnDeveloped with D&D 5E RulesnnMay your rolls be true and your adventure legendary!);
+      }
+
+      function renderCharacterGrid() {
+        const charGrid = document.getElementById(char-grid);
+        charGrid.innerHTML = ;
+        if (savedCharacters.length === 0) {
+          charGrid.innerHTML = 'div style=grid-column1-1;text-aligncenter;colorvar(--text-muted);padding40px;No characters yet. Create one to begin!div';
+          return;
+        }
+        savedCharacters.forEach((char, index) = {
+          const card = document.createElement(div);
+          card.className = char-card;
+          card.innerHTML = `
+            div class=char-card-sprite${getSpriteHtml(player)}div
+            div class=char-card-name${char.name}div
+            div class=char-card-class${char.class}div
+            div class=char-card-stats
+              divHP ${char.hp}${char.maxHp}divdivAC ${char.ac}div
+              divSTR ${char.abilities.str}  DEX ${char.abilities.dex}  CON ${char.abilities.con}div
+              div style=color#eab308;margin-top5px;💰 Gold ${char.gold  50}div
+            div
+            div class=char-card-actions
+              button class=char-action-btn onclick=selectCharacter(${index})Playbutton
+              button class=char-action-btn delete onclick=deleteCharacter(${index})Deletebutton
+            div`;
+          charGrid.appendChild(card);
+        });
+      }
+
+      function selectCharacter(index) {
+        const char = savedCharacters[index];
+        gameState._charIndex = index;
+        gameState.name = char.name;
+        gameState.class = char.class;
+        gameState.abilities = { ...char.abilities };
+        gameState.hp = char.hp;
+        gameState.maxHp = char.maxHp;
+        gameState.ac = char.ac;
+        gameState.gold = char.gold  50;
+        gameState.inventory = [...char.inventory];
+        gameState.skills = { ...char.skills };
+        startGame();
+      }
+
+      function deleteCharacter(index) {
+        if (confirm(`Delete character ${savedCharacters[index].name} This cannot be undone.`)) {
+          savedCharacters.splice(index, 1);
+          localStorage.setItem(savedCharacters, JSON.stringify(savedCharacters));
+          renderCharacterGrid();
+        }
+      }
+
+      function createCharacter() {
+        const name = document.getElementById(char-name-input).value.trim();
+        const charClass = document.getElementById(char-class-input).value;
+        if (!name) { alert(Please enter a character name!); return; }
+        const abilities = {
+          str parseInt(document.getElementById(ability-str).value)  15,
+          dex parseInt(document.getElementById(ability-dex).value)  14,
+          con parseInt(document.getElementById(ability-con).value)  13,
+          int parseInt(document.getElementById(ability-int).value)  10,
+          wis parseInt(document.getElementById(ability-wis).value)  12,
+          cha parseInt(document.getElementById(ability-cha).value)  11,
+        };
+        const newCharacter = {
+          name, class charClass, abilities,
+          hp 10+calcMod(abilities.con), maxHp 10+calcMod(abilities.con),
+          ac 10+calcMod(abilities.dex), gold 50,
+          inventory [
+            { nameLongsword,quantity1},{ nameLeather Armor,quantity1},
+            { nameBread,quantity3},{ nameMap,quantity1},{ nameRope,quantity1},
+          ],
+          skills createDefaultSkills(),
+          created new Date().toISOString(),
+        };
+        savedCharacters.push(newCharacter);
+        localStorage.setItem(savedCharacters, JSON.stringify(savedCharacters));
+        selectCharacter(savedCharacters.length - 1);
+      }
+
+      function loadPreset(preset) {
+        const presets = {
+          warrior { str16,dex13,con15,int10,wis12,cha11 },
+          rogue   { str12,dex16,con13,int14,wis11,cha10 },
+          cleric  { str13,dex12,con14,int10,wis16,cha14 },
+          wizard  { str10,dex12,con12,int16,wis14,cha11 },
+        };
+        if (presets[preset]) {
+          const p = presets[preset];
+          [str,dex,con,int,wis,cha].forEach(a =
+            document.getElementById(ability-+a).value = p[a]);
+        }
+      }
+
+      function createDefaultSkills() {
+        return {
+          acrobatics{abilitydex,proficientfalse}, animalHandling{abilitywis,proficientfalse},
+          arcana{abilityint,proficientfalse}, athletics{abilitystr,proficienttrue},
+          deception{abilitycha,proficientfalse}, history{abilityint,proficientfalse},
+          insight{abilitywis,proficientfalse}, intimidation{abilitycha,proficientfalse},
+          investigation{abilityint,proficientfalse}, medicine{abilitywis,proficientfalse},
+          nature{abilityint,proficientfalse}, perception{abilitywis,proficientfalse},
+          performance{abilitycha,proficientfalse}, persuasion{abilitycha,proficientfalse},
+          sleightOfHand{abilitydex,proficientfalse}, stealth{abilitydex,proficientfalse},
+          survival{abilitywis,proficientfalse},
+        };
+      }
+
+      function startGame() {
+        document.getElementById(start-menu).style.display = none;
+        document.getElementById(char-select-menu).style.display = none;
+        document.getElementById(char-create-menu).style.display = none;
+        document.getElementById(party-join-menu).style.display = flex;
+      }
+
+      function joinParty()  { gameState.inParty = true;  proceedToGame(); }
+      function skipParty()  { gameState.inParty = false; proceedToGame(); }
+
+      function proceedToGame() {
+        document.getElementById(party-join-menu).style.display = none;
+        document.getElementById(game-log-sidebar).style.display = flex;
+        document.querySelector(main).style.display = flex;
+        document.querySelector(aside).style.display = flex;
+        document.querySelector(header).style.display = flex;
+        initGame();
+      }
+
+      function initGame() {
+        renderMap();
+        updateStats();
+        updateInventory();
+        updateQuests();
+        const playerSpriteSmall = document.getElementById(player-sprite-small);
+        if (playerSpriteSmall) playerSpriteSmall.innerHTML = getSpriteHtml(player);
+        addLog(📖 Your adventure begins...);
+        gameState.visited.add(gameState.currentLocation);
+        renderLocationView();
+      }
+
+       ============= UNIFIED MAP + LOCATION VIEW =============
+      function renderLocationView() {
+        const container = document.getElementById(location-view);
+        if (!container) return;
+        const loc = locations[gameState.currentLocation];
+        const cur = gameState.currentLocation;
+
+         ── World Map Strip ────────────────────────────────────────────────
+        const mapNodes = Object.entries(locations).map(([key, l], i, arr) = {
+          const isCurrent = key === cur;
+          const isVisited = gameState.visited.has(key);
+          const cls = isCurrent  map-node current  isVisited  map-node visited  map-node;
+          const connector = i  arr.length - 1  `span class=map-node-connector—span`  ;
+          return `span class=${cls} onclick=goToLocation('${key}')${l.emoji} ${l.name.replace(^[^s]+s,)}span${connector}`;
+        }).join();
+
+         ── Type badge ────────────────────────────────────────────────────
+        const typeBadge = { safe_zone [safe,✦ Safe Zone], dungeon_room [danger,⚔ Danger], boss_room [boss,☠ Boss Area] };
+        const [badgeCls, badgeTxt] = typeBadge[loc.type]  [safe,✦ Area];
+
+         ── Actions ───────────────────────────────────────────────────────
+        const actionBtns = [];
+        (loc.npcs  []).forEach(npc = {
+          actionBtns.push(`button class=nav-btn onclick=startDialogue('${npc}') style=backgroundlinear-gradient(135deg,#1c1a08,#2a2408);border-color#eab308;color#eab308;👤 ${npc}button`);
+        });
+        if ((loc.type === dungeon_room  loc.type === boss_room) && loc.enemyType) {
+          actionBtns.push(`button class=nav-btn onclick=startEncounter('${loc.enemyType}') style=backgroundlinear-gradient(135deg,#7f1d1d,#450a0a);border-color#ef4444;color#ef4444;⚔️ Encounter Enemybutton`);
+        }
+        if (loc.type === safe_zone) {
+          actionBtns.push(`button class=nav-btn onclick=restShort() style=backgroundlinear-gradient(135deg,#1b0e3d,#150b30);border-color#8b5cf6;color#a78bfa;💤 Short Restbutton`);
+          if (loc.name.includes(Inn))
+            actionBtns.push(`button class=nav-btn onclick=restLong() style=backgroundlinear-gradient(135deg,#1e1b4b,#12113a);border-color#6366f1;color#818cf8;🛌 Long Restbutton`);
+        }
+
+         ── Travel Cards ──────────────────────────────────────────────────
+        const travelCards = !loc.paths    Object.entries(loc.paths).map(([pathKey, pathData]) = {
+          const dest = locations[pathData.targetId];
+          if (!dest) return ;
+          const hasReq   = !!pathData.requirement;
+          const visited  = gameState.visited.has(pathData.targetId);
+          const reqLabel = hasReq
+             `span class=travel-card-req🎲 ${pathData.requirement.skill.replace(([A-Z])g, $1).trim()} DC ${pathData.requirement.dc}span`
+             ;
+          const visitedBadge = visited  `span class=travel-card-visited✓ visitedspan`  ;
+          return `
+            div class=travel-card ${hasReqhas-check} onclick=moveToRoom('${pathKey}')
+              ${visitedBadge}
+              div class=travel-card-emoji${dest.emoji}div
+              div class=travel-card-name${dest.name}div
+              ${reqLabel}
+              span class=travel-card-arrow→span
+            div`;
+        }).join();
+
+        const actionsSection = actionBtns.length  0  `
+          div
+            div class=loc-section-titleActionsdiv
+            div class=loc-actions-grid${actionBtns.join()}div
+          div`  ;
+
+        const travelSection = travelCards  `
+          div
+            div class=loc-section-title🗺 Travel Todiv
+            div class=travel-cards-grid${travelCards}div
+          div`  ;
+
+        container.innerHTML = `
+          div id=world-map-strip${mapNodes}div
+          div id=current-location-card
+            div class=loc-emoji-big${loc.emoji}div
+            div class=loc-info
+              div class=loc-name${loc.name}div
+              span class=loc-type-badge ${badgeCls}${badgeTxt}span
+              div class=loc-desc${loc.description}div
+            div
+          div
+          ${actionsSection}
+          ${travelSection}
+          div id=story-textdiv`;
+
+        gameState.visited.add(cur);
+      }
+
+      function renderMap()          { renderLocationView(); }
+      function updateLocationDisplay() { renderLocationView(); }
+
+       ============= DUNGEON MOVEMENT =============
+      function moveToRoom(targetPath) {
+        const currentLoc = locations[gameState.currentLocation];
+        const pathData = currentLoc.paths[targetPath];
+        if (!pathData) { addLog(❌ You cannot go that way.); return; }
+        if (!pathData.requirement) { performMove(pathData.targetId); return; }
+        performSkillCheck(pathData.requirement, pathData.targetId, pathData.failurePenalty);
+      }
+
+      function performSkillCheck(requirement, targetId, failurePenalty) {
+        if (requirement.type !== skill_check) return;
+        const skill = gameState.skills[requirement.skill];
+        if (!skill) { addLog(`❌ Unknown skill ${requirement.skill}`); return; }
+        const abilityScore = gameState.abilities[skill.ability]  10;
+        const abilityMod = calcMod(abilityScore);
+        const profBonus = skill.proficient  gameState.proficiencyBonus  0;
+        const roll = rollD20();
+        const total = roll + abilityMod + profBonus;
+        const success = total = requirement.dc;
+        const skillName = requirement.skill.replace(([A-Z])g,  $1).trim();
+        addLog(`📊 ${skillName.toUpperCase()} Check (DC ${requirement.dc})n🎲 Roll ${roll} + ${abilityMod} + ${profBonus} = ${total}n${success  ✅ SUCCESS!  ❌ FAILURE!}`);
+        if (success) {
+          setTimeout(() = performMove(targetId), 1500);
+        } else {
+          if (failurePenalty) {
+            if (failurePenalty.hpLoss) {
+              gameState.hp = Math.max(0, gameState.hp - failurePenalty.hpLoss);
+              addLog(`💥 ${failurePenalty.message} You took ${failurePenalty.hpLoss} damage!`);
+              updateStats();
+            }
+            if (failurePenalty.triggerCombat === false) {
+               don't move, just apply penalty
+            } else {
+              setTimeout(() = performMove(targetId), 2000);
+            }
+          }
+           if no failurePenalty defined, just block movement
+        }
+      }
+
+      function performMove(targetId) {
+        gameState.currentLocation = targetId;
+        addLog(`= Entered ${locations[targetId].name}`);
+        renderLocationView();
+      }
+
+      function goToLocation(locKey) {
+        gameState.currentLocation = locKey;
+        renderLocationView();
+        addLog(`Moved to ${locations[locKey].name}`);
+      }
+
+       ============= NPC DIALOGUE =============
+      function startDialogue(npcId) {
+        const npc = npcs[npcId];
+        if (!npc) { addLog(`❌ NPC not found ${npcId}`); return; }
+        const nodeKey = npcId.toLowerCase().replace(s+g, _) + _greeting;
+        if (dialogueNodes[nodeKey]) {
+          openDialogueUI(nodeKey, npcId);
+        } else {
+          showNPCDialog(npcId);
+        }
+      }
+
+      function openDialogueUI(nodeId, npcId) {
+        const node = dialogueNodes[nodeId];
+        if (!node) return;
+        const npc = npcs[npcId]  {};
+        const spriteHtml = npc.sprite  `div style=width70px;height70px;border-radius50%;backgroundradial-gradient(circle at 30% 30%,#ffcc99,#cc7722);border3px solid #ffaa00;displayflex;align-itemscenter;justify-contentcenter;flex-shrink0;overflowhidden;${getSpriteHtml(npc.sprite)}div`  ;
+
+        document.getElementById(dialogue-overlay).remove();
+        const modalOverlay = document.createElement(div);
+        modalOverlay.id = dialogue-overlay;
+        modalOverlay.style.cssText = positionfixed;top0;left0;width100%;height100%;backgroundrgba(0,0,0,0.75);displayflex;align-itemscenter;justify-contentcenter;z-index4000;;
+
+        const box = document.createElement(div);
+        box.style.cssText = backgroundlinear-gradient(135deg,#2a2a2e,#1a1a1d);border3px solid #c3073f;border-radius10px;padding28px 32px;max-width520px;width90%;box-shadow0 0 40px rgba(195,7,63,0.5);color#e2e8f0;;
+        box.innerHTML = `
+          div style=displayflex;align-itemscenter;gap16px;margin-bottom18px;${spriteHtml}divdiv style=color#d4af37;font-size1.25rem;font-weightbold;${npcId}divdiv style=color#94a3b8;font-size0.8rem;text-transformuppercase;letter-spacing1px;Speakingdivdivdiv
+          p style=color#e2e8f0;font-size1rem;line-height1.7;margin0 0 20px;padding14px 16px;backgroundrgba(255,255,255,0.04);border-left3px solid #d4af37;border-radius4px;${node.text}p
+          div id=dlg-options style=displayflex;flex-directioncolumn;gap8px;div`;
+
+        node.options.forEach(option = {
+          const btn = document.createElement(button);
+          btn.textContent = option.text;
+          btn.style.cssText = backgroundlinear-gradient(135deg,#c3073f,#950740);colorwhite;border1px solid #d4af37;padding11px 18px;border-radius6px;cursorpointer;font-weight600;font-size0.95rem;text-alignleft;transitionall 0.2s;;
+          btn.onmouseover = () = { btn.style.paddingLeft = 24px; };
+          btn.onmouseout  = () = { btn.style.paddingLeft = 18px; };
+          btn.onclick = () = {
+            modalOverlay.remove();
+            if (option.action) executeDialogueAction(option.action, option, npcId);
+            if (option.nextId) setTimeout(() = openDialogueUI(option.nextId, npcId), 200);
+          };
+          box.querySelector(#dlg-options).appendChild(btn);
+        });
+
+        modalOverlay.appendChild(box);
+        document.body.appendChild(modalOverlay);
+      }
+
+      function executeDialogueAction(action, option, npcId) {
+        switch (action) {
+          case acceptQuest acceptQuest(option.questId); break;
+          case openShop    openShop(merchant); break;
+          case dialogue    showResponsePopup(npcId, option.response); break;
+        }
+      }
+
+      function showNPCDialog(npcName) {
+        const npc = npcs[npcName];
+        if (!npc) return;
+        const spriteHtml = npc.sprite  `div style=width70px;height70px;border-radius50%;backgroundradial-gradient(circle at 30% 30%,#ffcc99,#cc7722);border3px solid #ffaa00;displayflex;align-itemscenter;justify-contentcenter;flex-shrink0;overflowhidden;${getSpriteHtml(npc.sprite)}div`  ;
+        const overlay = document.createElement(div);
+        overlay.className = npc-dialogue-overlay;
+        overlay.style.cssText = positionfixed;top0;left0;width100%;height100%;backgroundrgba(0,0,0,0.75);displayflex;align-itemscenter;justify-contentcenter;z-index4000;;
+        const popup = document.createElement(div);
+        popup.style.cssText = backgroundlinear-gradient(135deg,#2a2a2e,#1a1a1d);border3px solid #c3073f;border-radius10px;padding28px 32px;max-width520px;width90%;box-shadow0 0 40px rgba(195,7,63,0.5);color#e2e8f0;;
+        const choicesHtml = (npc.options  []).map((opt, i) =
+          `button onclick=handleNpcOption(${i},'${npcName}',this) style=backgroundlinear-gradient(135deg,#c3073f,#950740);colorwhite;border1px solid #d4af37;padding11px 18px;border-radius6px;cursorpointer;font-weight600;font-size0.95rem;text-alignleft;width100%;margin-bottom8px; onmouseover=this.style.paddingLeft='24px' onmouseout=this.style.paddingLeft='18px'${opt.text}button`
+        ).join();
+        popup.innerHTML = `
+          div style=displayflex;align-itemscenter;gap16px;margin-bottom18px;${spriteHtml}divdiv style=color#d4af37;font-size1.25rem;font-weightbold;${npcName}divdiv style=color#94a3b8;font-size0.8rem;text-transformuppercase;letter-spacing1px;Speakingdivdivdiv
+          p style=color#e2e8f0;font-size1rem;line-height1.7;margin0 0 20px;padding14px 16px;backgroundrgba(255,255,255,0.04);border-left3px solid #d4af37;border-radius4px;${npc.dialogue}p
+          div${choicesHtml}div`;
+        overlay.appendChild(popup);
+        overlay.onclick = (e) = { if (e.target === overlay) overlay.remove(); };
+        document.body.appendChild(overlay);
+      }
+
+      function handleNpcOption(index, npcName, btn) {
+        const npc = npcs[npcName];
+        if (!npc) return;
+        const opt = npc.options[index];
+        if (!opt) return;
+        const overlay = btn.closest(.npc-dialogue-overlay);
+        if (overlay) overlay.remove();
+        handleAction(opt.action, { ...opt, npcId npcName });
+      }
+
+      function showResponsePopup(npcId, responseText) {
+        const npc = npcs[npcId]  {};
+        const spriteHtml = npc.sprite  `div style=width60px;height60px;border-radius50%;backgroundradial-gradient(circle at 30% 30%,#ffcc99,#cc7722);border3px solid #ffaa00;displayflex;align-itemscenter;justify-contentcenter;flex-shrink0;overflowhidden;${getSpriteHtml(npc.sprite)}div`  ;
+        const overlay = document.createElement(div);
+        overlay.style.cssText = positionfixed;top0;left0;width100%;height100%;backgroundrgba(0,0,0,0.7);displayflex;align-itemscenter;justify-contentcenter;z-index4000;;
+        const box = document.createElement(div);
+        box.style.cssText = backgroundlinear-gradient(135deg,#2a2a2e,#1a1a1d);border3px solid #d4af37;border-radius10px;padding28px 32px;max-width480px;width90%;box-shadow0 0 30px rgba(212,175,55,0.3);color#e2e8f0;;
+        box.innerHTML = `
+          div style=displayflex;align-itemscenter;gap14px;margin-bottom16px;${spriteHtml}div style=color#d4af37;font-size1.1rem;font-weightbold;${npcId  NPC}divdiv
+          p style=color#e2e8f0;font-size1rem;line-height1.7;margin0 0 20px;padding14px 16px;backgroundrgba(255,255,255,0.04);border-left3px solid #d4af37;border-radius4px;${responseText}p
+          button onclick=this.closest('div[style]').parentElement.remove() style=backgroundlinear-gradient(135deg,#c3073f,#950740);colorwhite;border1px solid #d4af37;padding10px 28px;border-radius6px;cursorpointer;font-weight600;floatright;Closebutton`;
+        overlay.appendChild(box);
+        overlay.onclick = (e) = { if (e.target === overlay) overlay.remove(); };
+        document.body.appendChild(overlay);
+      }
+
+      function handleAction(action, data) {
+        switch (action) {
+          case dialogue
+            showResponsePopup(data.npcId  null, data.response);
+            break;
+          case startQuest
+            showResponsePopup(data.npcId  null, `📜 Quest available ${data.questName}. Speak to the Mayor to accept it.`);
+            break;
+          case acceptQuest
+            acceptQuest(data.questId  findHorn);
+            break;
+          case battle {
+            const enemyKeyMap = { Kobold Leader koboldLeader, Kobold goblin, Wolf wolf, Skeleton skeleton };
+            const key = enemyKeyMap[data.enemy]  goblin;
+            startBattleUI(key, data.rewardGold  50);
+            break;
+          }
+          case buyItem
+            if (gameState.gold = data.cost) {
+              gameState.gold -= data.cost;
+              saveGold();
+              addItemToInventory(data.item);
+              addLog(`🛒 Bought ${data.item} for ${data.cost}g`);
+              updateStats(); updateInventory();
+            } else {
+              showResponsePopup(data.npcId  null, `❌ Not enough gold! Need ${data.cost}g, have ${gameState.gold}g.`);
+            }
+            break;
+          case goLocation
+            goToLocation(data.location);
+            break;
+          case openShop
+            openShop(merchant);
+            break;
+          case back
+            break;
+        }
+      }
+
+      function saveGold() {
+        if (gameState._charIndex != null && savedCharacters[gameState._charIndex]) {
+          savedCharacters[gameState._charIndex].gold = gameState.gold;
+          localStorage.setItem(savedCharacters, JSON.stringify(savedCharacters));
+        }
+        const el = document.getElementById(char-gold);
+        if (el) el.textContent = gameState.gold;
+      }
+
+       ============= ACTION POINTS & REST =============
+      function useActionPoint(cost = 1) {
+        if (gameState.currentAP = cost) { gameState.currentAP -= cost; return true; }
+        addLog(`❌ Not enough Action Points! (Need ${cost}, have ${gameState.currentAP})`);
+        return false;
+      }
+
+      function restShort() {
+        gameState.hp = Math.min(gameState.hp + 5, gameState.maxHp);
+        gameState.currentAP = Math.min(gameState.currentAP + 2, gameState.maxAP);
+        addLog(🌙 You rest briefly and recover a bit.); updateStats();
+      }
+
+      function restLong() {
+        if (locations[gameState.currentLocation].type !== safe_zone) { addLog(❌ You can only rest safely in town!); return; }
+        gameState.hp = gameState.maxHp; gameState.currentAP = gameState.maxAP;
+        addLog(😴 You rest all night. Fully restored!); updateStats();
+      }
+
+       ============= QUEST SYSTEM =============
+      function acceptQuest(questId) {
+        const questDef = questDefinitions[questId];
+        if (!questDef) { addLog(❌ Quest not found); return; }
+        if (gameState.quests.some(q = q.id === questId)) { addLog(📜 Quest already active!); return; }
+        questDef.status = active;
+        gameState.activeQuestId = questId;
+        gameState.quests.push({ ...questDef, objectives questDef.objectives.map(o = ({...o})) });
+        addLog(`📜 QUEST ACCEPTED ${questDef.title}`);
+        updateQuests();
+      }
+
+      function updateQuestProgress(type, target, amount = 1) {
+        if (!gameState.activeQuestId) return;
+        const quest = gameState.quests.find(q = q.id === gameState.activeQuestId);
+        if (!quest) return;
+        quest.objectives.forEach(obj = {
+          if (obj.type === type && obj.target === target) {
+            obj.currentCount = Math.min(obj.currentCount + amount, obj.count);
+            if (obj.currentCount = obj.count) { addLog(`✅ Objective complete ${obj.id}`); checkQuestCompletion(quest); }
+          }
+        });
+        updateQuestPanel();
+      }
+
+      function obtainItem(itemName) {
+        const quest = gameState.quests.find(q = q.id === gameState.activeQuestId);
+        if (!quest) return;
+        quest.objectives.forEach(obj = {
+          if (obj.type === obtain && obj.item === itemName) { obj.obtained = true; addLog(`✅ Obtained ${itemName}`); checkQuestCompletion(quest); }
+        });
+        updateQuestPanel();
+      }
+
+      function checkQuestCompletion(quest) {
+        const allComplete = quest.objectives.every(obj = obj.type === obtain  obj.obtained  obj.currentCount = obj.count);
+        if (allComplete) completeQuest(quest.id);
+      }
+
+      function completeQuest(questId) {
+        const quest = gameState.quests.find(q = q.id === questId);
+        if (!quest) return;
+        quest.status = completed;
+        gameState.completedQuests.push(questId);
+        gameState.activeQuestId = null;
+        addLog(`🎉 QUEST COMPLETED ${quest.title}!`);
+        addLog(`Rewards ${quest.reward.xp} XP, ${quest.reward.gold} Gold`);
+        addExperience(quest.reward.xp);
+        gameState.gold += quest.reward.gold;
+        saveGold();
+        updateQuests(); updateStats();
+      }
+
+      function updateQuests() { updateQuestPanel(); }
+
+      function updateQuestPanel() {
+        const journalContent = document.getElementById(quest-journal-content);
+        if (!journalContent) return;
+        let html = ;
+        if (gameState.activeQuestId) {
+          const activeQuest = gameState.quests.find(q = q.id === gameState.activeQuestId);
+          if (activeQuest) {
+            html += `div class=quest-entrydiv class=quest-title📍 ${activeQuest.title}div`;
+            activeQuest.objectives.forEach(obj = {
+              const icon = obj.type === kill  ⚔️  📦;
+              const label = obj.type === kill  obj.target  obj.item;
+              const progress = obj.type === kill  `(${obj.currentCount}${obj.count})`  (obj.obtained  ✓  —);
+              html += `div class=quest-objective${icon} ${label} ${progress}div`;
+            });
+            html += `div`;
+          }
+        } else {
+          html = `div style=colorvar(--text-muted);font-size0.85rem;No active questdiv`;
+        }
+        if (gameState.completedQuests.length  0)
+          html += `div style=margin-top8px;colorvar(--text-muted);font-size0.75rem;✓ Completed ${gameState.completedQuests.length}div`;
+        journalContent.innerHTML = html;
+      }
+
+       ============= EXPERIENCE & LEVELING =============
+      function addExperience(amount) {
+        gameState.exp += amount;
+        addLog(`⭐ Gained ${amount} XP`);
+        while (gameState.level  10 && gameState.exp = gameState.xpThresholds[gameState.level]) levelUp();
+      }
+
+      function levelUp() {
+        gameState.level++;
+        gameState.proficiencyBonus = Math.ceil((gameState.level + 7)  4);
+        const hpGain = rollDice(gameState.hitDice) + calcMod(gameState.abilities.con);
+        gameState.maxHp += hpGain; gameState.hp = gameState.maxHp;
+        if (gameState.level % 4 === 0) { gameState.abilities.str += 2; gameState.abilities.dex += 2; gameState.abilities.con += 2; gameState.ac = 10 + calcMod(gameState.abilities.dex); }
+        gameState.maxAP = 4 + Math.floor(gameState.level  3); gameState.currentAP = gameState.maxAP;
+        addLog(`🎊 LEVEL UP! You are now level ${gameState.level}! Max HP ${gameState.maxHp}`);
+        updateStats();
+      }
+
+       ============= ENEMY SCALING =============
+      function getScaledEnemy(enemyKey) {
+        const base = enemyBestiary[enemyKey];
+        if (!base) return null;
+        const sf = 1 + (gameState.level - 1)  0.25;
+        return { ...base, hp Math.round(base.baseHp  sf), damage Math.round(base.baseDmg  sf), xpReward Math.round(base.xpReward  sf), gold Math.round(base.goldReward  sf) };
+      }
+
+      function generateLoot(enemyKey) {
+        const enemy = enemyBestiary[enemyKey];
+        const loot = [];
+        if (!enemy) return loot;
+        enemy.lootTable.forEach(entry = {
+          if (Math.random()  entry.chance) {
+            const qty = typeof entry.quantity === function  entry.quantity()  entry.quantity;
+            loot.push({ name entry.item, quantity qty });
+          }
+        });
+        return loot;
+      }
+
+      function startEncounter(enemyKey) {
+        const enemy = getScaledEnemy(enemyKey);
+        startBattleUI(enemyKey, enemy.gold  0);
+      }
+
+       ============= SHOP =============
+      function openShop(shopType) {
+        const inventory = shopInventory[shopType];
+        if (!inventory) return;
+        const overlay = document.createElement(div);
+        overlay.id = shop-overlay;
+        overlay.style.cssText = positionfixed;top0;left0;width100%;height100%;backgroundrgba(0,0,0,0.7);displayflex;align-itemscenter;justify-contentcenter;z-index3000;;
+        const shopBox = document.createElement(div);
+        shopBox.style.cssText = backgroundlinear-gradient(135deg,#2a2a2e,#1a1a1d);border3px solid #c3073f;border-radius8px;padding30px;max-width600px;width90%;max-height80vh;overflow-yauto;box-shadow0 0 40px rgba(195,7,63,0.6);;
+        const title = document.createElement(h3);
+        title.style.cssText = color#d4af37;margin-top0;text-aligncenter;;
+        title.textContent = `💰 Shop (Gold ${gameState.gold})`;
+        shopBox.appendChild(title);
+        inventory.forEach(item = {
+          const itemDiv = document.createElement(div);
+          itemDiv.style.cssText = backgroundrgba(195,7,63,0.1);border-left3px solid #c3073f;padding15px;margin10px 0;displayflex;justify-contentspace-between;align-itemscenter;;
+          itemDiv.innerHTML = `div style=color#eab308;font-weight600;${item.name}divdiv style=color#94a3b8;${item.cost}gdivbutton onclick=buyItem('${item.name}',${item.cost}) style=background#c3073f;colorwhite;bordernone;padding8px 15px;border-radius4px;cursorpointer;font-weight600;Buybutton`;
+          shopBox.appendChild(itemDiv);
+        });
+        const closeBtn = document.createElement(button);
+        closeBtn.textContent = Close Shop;
+        closeBtn.style.cssText = width100%;background#4e4e50;colorwhite;bordernone;padding12px;border-radius4px;cursorpointer;font-weight600;margin-top20px;;
+        closeBtn.onclick = () = overlay.remove();
+        shopBox.appendChild(closeBtn);
+        overlay.appendChild(shopBox);
+        document.body.appendChild(overlay);
+      }
+
+      function buyItem(itemName, cost) {
+        if (gameState.gold  cost) { addLog(`❌ Not enough gold! (Need ${cost}, have ${gameState.gold})`); return; }
+        gameState.gold -= cost;
+        saveGold();
+        addItemToInventory(itemName);
+        addLog(`✅ Bought ${itemName} for ${cost}g`);
+        document.getElementById(shop-overlay).remove();
+      }
+
+       ============= EQUIPMENT =============
+      function equipItem(itemIndex) {
+        const item = gameState.inventory[itemIndex];
+        if (!item) return;
+        const itemDef = itemDefinitions[item.name];
+        if (!itemDef  !itemDef.equipSlot) { addLog(❌ This item cannot be equipped); return; }
+        if (gameState.equipped[itemDef.equipSlot]) unequipItem(itemDef.equipSlot);
+        gameState.equipped[itemDef.equipSlot] = { ...item };
+        removeItem(itemIndex);
+        addLog(`✅ Equipped ${item.name}`);
+        recalculateStats(); updateInventory();
+      }
+
+      function unequipItem(slot) {
+        const item = gameState.equipped[slot];
+        if (!item) return;
+        gameState.equipped[slot] = null;
+        addItemToInventory(item.name);
+        addLog(`📦 Unequipped ${item.name}`);
+        recalculateStats(); updateInventory();
+      }
+
+      function recalculateStats() {
+        let acBonus = gameState.equipped.armor
+           (itemDefinitions[gameState.equipped.armor.name].stats.acBonus  0)
+           calcMod(gameState.abilities.dex);
+        gameState.ac = 10 + acBonus;
+        updateStats();
+      }
+
+       ============= STATUS EFFECTS =============
+      function addStatusEffect(effectName, duration = 1) {
+        gameState.statusEffects.push({ name effectName, duration });
+        addLog(`⚠️ Status effect ${effectName} (${duration} rounds)`);
+      }
+      function updateStatusEffects() {
+        gameState.statusEffects = gameState.statusEffects.filter(e = { e.duration--; if (e.duration = 0) { addLog(`✅ Effect ended ${e.name}`); return false; } return true; });
+      }
+      function hasStatusEffect(n) { return gameState.statusEffects.some(e = e.name === n); }
+
+       ============= BATTLE =============
+      function startBattleUI(enemyKey, rewardGold) {
+        const enemy = getScaledEnemy(enemyKey);
+        const enemyName = enemy.name;
+        document.querySelector(header).style.display = none;
+        document.querySelector(main).style.display = none;
+        document.querySelector(aside).style.display = none;
+        document.getElementById(game-log-sidebar).style.display = none;
+
+        const enemySpriteMap = { goblinkobold, wolfkobold, skeletonguard, koboldLeaderkobold };
+        const enemySprite = enemySpriteMap[enemyKey]  kobold;
+        const enemyMaxHp = Math.ceil(enemy.hp);
+
+        const battleScreen = document.createElement(div);
+        battleScreen.className = battle-screen; battleScreen.id = battle-screen;
+        battleScreen.innerHTML = `
+          div class=battle-top
+            div class=player-display
+              div class=sprite-portrait style=width100px;height100px;font-size2.5rem;${getSpriteHtml(player)}div
+              div style=margin-top20px;colorwhite;text-aligncenter;
+                div style=font-weightbold;${gameState.name}div
+                div class=player-hp-display id=battle-player-hp style=margin-top8px;${gameState.hp}${gameState.maxHp}div
+              div
+            div
+            div class=enemy-display
+              div class=sprite-portrait style=width100px;height100px;${getSpriteHtml(enemySprite)}div
+              div class=enemy-name style=margin-top15px;${enemyName}div
+              div class=enemy-hp-bar style=width220px;
+                div class=enemy-hp-fill id=enemy-hp-fill style=width100%div
+                div class=enemy-hp-text id=enemy-hp-text${enemyMaxHp}${enemyMaxHp}div
+              div
+            div
+          div
+          div class=battle-middle
+            div class=battle-logdiv class=battle-log-text id=battle-log-content${enemyName} appeared!divdiv
+          div
+          div class=battle-bottom
+            div class=battle-actions
+              button class=battle-btn id=btn-attackAttackbutton
+              button class=battle-btn id=btn-defendDefendbutton
+              button class=battle-btn id=btn-itemItembutton
+              button class=battle-btn id=btn-mercyMercybutton
+            div
+          div`;
+        document.body.appendChild(battleScreen);
+        const battleState = {
+          enemyKey, enemyName, enemySprite, enemyHp enemyMaxHp, enemyMaxHp,
+          enemyDamage Math.ceil(enemy.damage  enemy.baseDmg),
+          rewardGold rewardGold  Math.ceil(enemy.gold),
+          rewardXp Math.ceil(enemy.xpReward),
+          playerDefending false,
+          battleLog [enemyName +  appeared!],
+        };
+        document.getElementById(btn-attack).onclick = () = performAttack(battleState);
+        document.getElementById(btn-defend).onclick = () = performDefend(battleState);
+        document.getElementById(btn-item).onclick   = () = performItem(battleState);
+        document.getElementById(btn-mercy).onclick  = () = performMercy(battleState);
+      }
+
+      function performAttack(battleState) {
+        if (!useActionPoint(1)) return;
+        const buttons = document.querySelectorAll(.battle-btn);
+        buttons.forEach(b = b.disabled = true);
+        battleState.battleLog.push(` You prepare to attack... (AP ${gameState.currentAP}${gameState.maxAP})`);
+        updateBattleLog(battleState);
+        const enemyDisplay = document.querySelector(.enemy-display);
+        if (enemyDisplay) { enemyDisplay.style.animation = none; setTimeout(() = enemyDisplay.style.animation = hitShake 0.4s ease-in-out 1, 10); }
+        setTimeout(() = {
+          const attackRoll = rollD20() + calcMod(gameState.abilities.str) + gameState.proficiencyBonus;
+          let log = ` Attack roll ${attackRoll}`;
+          if (attackRoll = 12) {
+            let weaponBonus = 1;
+            if (gameState.equipped.weapon) weaponBonus = itemDefinitions[gameState.equipped.weapon.name].stats.damageBonus  1;
+            const dmg = rollDice(8) + calcMod(gameState.abilities.str) + weaponBonus;
+            battleState.enemyHp = Math.max(0, battleState.enemyHp - dmg);
+            log += `n💥 HIT! You dealt ${dmg} damage!`;
+            updateEnemyHpBar(battleState);
+            if (enemyDisplay) {
+              const num = document.createElement(div); num.className = battle-damage-number; num.textContent = `-${dmg}`;
+              num.style.left = 50%; num.style.top = 50%; enemyDisplay.style.position = relative;
+              enemyDisplay.appendChild(num); setTimeout(() = num.remove(), 1200);
+            }
+          } else { log += `n❌ Your attack missed!`; }
+          battleState.battleLog.push(log); updateBattleLog(battleState);
+          setTimeout(() = enemyTurn(battleState), 2500);
+        }, 1000);
+      }
+
+      function performDefend(battleState) {
+        if (!useActionPoint(1)) return;
+        const buttons = document.querySelectorAll(.battle-btn);
+        buttons.forEach(b = b.disabled = true);
+        battleState.playerDefending = true;
+        battleState.battleLog.push(` You take a defensive stance!n🛡️ Defense increased! (AP ${gameState.currentAP}${gameState.maxAP})`);
+        updateBattleLog(battleState);
+        setTimeout(() = { battleState.battleLog.push(` Awaiting ${battleState.enemyName}'s move...`); updateBattleLog(battleState); setTimeout(() = enemyTurn(battleState, true), 1500); }, 1500);
+      }
+
+      function performItem(battleState) {
+        if (gameState.inventory.length === 0) {
+          const buttons = document.querySelectorAll(.battle-btn); buttons.forEach(b = b.disabled = true);
+          battleState.battleLog.push(` Your inventory is empty!`); updateBattleLog(battleState);
+          setTimeout(() = buttons.forEach(b = b.disabled = false), 500); return;
+        }
+        window.currentBattleState = battleState;
+        openBackpackModal();
+      }
+
+      function performMercy(battleState) {
+        const buttons = document.querySelectorAll(.battle-btn); buttons.forEach(b = b.disabled = true);
+        battleState.battleLog.push(` You attempt to show mercy...`); updateBattleLog(battleState);
+        setTimeout(() = {
+          if (Math.random()  0.7) {
+            battleState.battleLog.push(` ${battleState.enemyName} was moved...n💚 Combat ended!`); updateBattleLog(battleState);
+            setTimeout(() = { gameState.gold += Math.floor(battleState.rewardGold  0.5); saveGold(); battleState.battleLog.push(`✨ Gained ${Math.floor(battleState.rewardGold  0.5)} gold (half)`); updateBattleLog(battleState); setTimeout(() = endBattle(), 1500); }, 1500);
+          } else {
+            battleState.battleLog.push(` ${battleState.enemyName} shows no mercy...`); updateBattleLog(battleState);
+            setTimeout(() = enemyTurn(battleState), 1500);
+          }
+        }, 1000);
+      }
+
+      function enemyTurn(battleState, playerDefended = false) {
+        if (battleState.enemyHp = 0) { winBattle(battleState); return; }
+        battleState.battleLog.push(` ${battleState.enemyName} prepares...`); updateBattleLog(battleState);
+        setTimeout(() = {
+          const attackRoll = rollD20() + 2;
+          const defenseMod = playerDefended  4  0;
+          battleState.battleLog.pop();
+          if (attackRoll = gameState.ac + defenseMod) {
+            const dmg = rollDice(6) + 1;
+            gameState.hp = Math.max(0, gameState.hp - dmg);
+            battleState.battleLog.push(` Attack roll ${attackRoll}`); updateBattleLog(battleState);
+            const playerDisplay = document.querySelector(.player-display);
+            if (playerDisplay) { playerDisplay.style.animation = none; setTimeout(() = playerDisplay.style.animation = hitShake 0.4s ease-in-out 1, 10); }
+            setTimeout(() = {
+              battleState.battleLog.push(`💔 ${battleState.enemyName}'s attack connects!nYou took ${dmg} damage!`); updateBattleLog(battleState); updatePlayerHpBar();
+              if (gameState.hp = 0) { setTimeout(() = loseBattle(battleState), 1000); }
+              else { setTimeout(() = { const buttons = document.querySelectorAll(.battle-btn); buttons.forEach(b = b.disabled = false); }, 500); }
+            }, 600);
+          } else {
+            battleState.battleLog.push(` Attack roll ${attackRoll}`); updateBattleLog(battleState);
+            setTimeout(() = { battleState.battleLog.push(`⚔️ ${battleState.enemyName}'s attack misses!`); updateBattleLog(battleState); setTimeout(() = { const buttons = document.querySelectorAll(.battle-btn); buttons.forEach(b = b.disabled = false); }, 500); }, 800);
+          }
+          battleState.playerDefending = false;
+        }, 1200);
+      }
+
+      function updateEnemyHpBar(battleState) {
+        const pct = (battleState.enemyHp  battleState.enemyMaxHp)  100;
+        document.getElementById(enemy-hp-fill).style.width = pct + %;
+        document.getElementById(enemy-hp-text).textContent = battleState.enemyHp +  + battleState.enemyMaxHp;
+      }
+      function updatePlayerHpBar() {
+        document.getElementById(battle-player-hp).textContent = gameState.hp +  + gameState.maxHp;
+      }
+      function updateBattleLog(battleState) {
+        const logElement = document.getElementById(battle-log-content);
+        logElement.textContent = battleState.battleLog.slice(-4).join(nn);
+        const battleLog = document.querySelector(.battle-log);
+        if (battleLog) setTimeout(() = battleLog.scrollTop = battleLog.scrollHeight, 0);
+      }
+
+      function winBattle(battleState) {
+        [btn-attack,btn-defend,btn-item,btn-mercy].forEach(id = document.getElementById(id).disabled = true);
+        setTimeout(() = {
+          const enemyDisplay = document.querySelector(.enemy-display);
+          if (enemyDisplay) { enemyDisplay.style.opacity = 0.5; enemyDisplay.style.filter = blur(2px); }
+          battleState.battleLog.push(`n⚡ ${battleState.enemyName} falls!`); updateBattleLog(battleState);
+          setTimeout(() = {
+            battleState.battleLog.push(`🏆 VICTORY!`); updateBattleLog(battleState);
+            setTimeout(() = {
+              addExperience(battleState.rewardXp);
+              gameState.gold += battleState.rewardGold;
+              saveGold();
+              battleState.battleLog.push(`n⭐ Gained ${battleState.rewardXp} XP, ${battleState.rewardGold} gold`); updateBattleLog(battleState);
+              const loot = generateLoot(battleState.enemyKey);
+              loot.forEach(item = {
+                if (item.name === Gold Coin) {
+                  gameState.gold += item.quantity;
+                  saveGold();
+                  battleState.battleLog.push(`💰 Found ${item.quantity} Gold Coins`);
+                } else {
+                  for (let i = 0; i  item.quantity; i++) addItemToInventory(item.name);
+                  battleState.battleLog.push(`📦 Found ${item.name}${item.quantity  1  ` x${item.quantity}`  }`);
+                }
+              });
+              if (loot.length  0) updateBattleLog(battleState);
+              if (battleState.enemyKey) {
+                updateQuestProgress(kill, battleState.enemyKey, 1);
+                if (battleState.enemyKey === koboldLeader) obtainItem(Silver Horn);
+              }
+              setTimeout(() = showBattleResult(win, battleState), 1000);
+            }, 1000);
+          }, 1200);
+        }, 500);
+      }
+
+      function loseBattle(battleState) {
+        [btn-attack,btn-defend,btn-item,btn-mercy].forEach(id = document.getElementById(id).disabled = true);
+        const playerDisplay = document.querySelector(.player-display);
+        if (playerDisplay) playerDisplay.style.animation = hitShake 0.6s ease-in-out;
+        battleState.battleLog.push(`n💀 You have been defeated...`); updateBattleLog(battleState);
+        setTimeout(() = {
+          if (playerDisplay) { playerDisplay.style.opacity = 0.3; playerDisplay.style.filter = grayscale(100%); }
+          gameState.hp = gameState.maxHp;
+          setTimeout(() = { battleState.battleLog.push(`nYou awaken at the inn...`); updateBattleLog(battleState); setTimeout(() = showBattleResult(lose, battleState), 2000); }, 1500);
+        }, 1000);
+      }
+
+      function showBattleResult(type, battleState) {
+        const overlay = document.createElement(div);
+        overlay.id = battle-result-overlay;
+        overlay.style.cssText = positionfixed;top0;left0;width100%;height100%;backgroundrgba(0,0,0,0.75);z-index9999;displayflex;align-itemscenter;justify-contentcenter;;
+        const isWin = type === win;
+        const popup = document.createElement(div);
+        popup.style.cssText = `backgroundlinear-gradient(135deg,#1a1a1d,#2c2c2e);border3px solid ${isWin  #d4af37  #c3073f};border-radius12px;padding40px 50px;text-aligncenter;max-width420px;width90%;box-shadow0 0 40px ${isWin  rgba(212,175,55,0.4)  rgba(195,7,63,0.4)};`;
+        const lootLines = isWin
+           `p style=color#94a3b8;font-size0.9rem;margin8px 0;⭐ ${battleState.rewardXp0} XP &nbsp;&nbsp; 💰 ${battleState.rewardGold0} Goldp`
+           `p style=color#94a3b8;font-size0.9rem;margin8px 0;You wake up at the inn with full health.p`;
+        popup.innerHTML = `div style=font-size3rem;margin-bottom10px;${isWin🏆💀}divh2 style=color${isWin#d4af37#c3073f};margin0 0 12px;font-size1.8rem;letter-spacing2px;${isWinVICTORY!DEFEATED}h2${lootLines}button id=battle-result-btn style=margin-top24px;backgroundlinear-gradient(135deg,${isWin#d4af37,#b8960f#c3073f,#950740});colorwhite;bordernone;padding14px 40px;font-size1rem;font-weightbold;border-radius6px;cursorpointer;text-transformuppercase;letter-spacing1px;${isWinContinueWake Up}button`;
+        overlay.appendChild(popup);
+        document.body.appendChild(overlay);
+        document.getElementById(battle-result-btn).onclick = () = { overlay.remove(); endBattle(); };
+      }
+
+      function endBattle() {
+        document.getElementById(battle-screen).remove();
+        document.querySelector(header).style.display = ;
+        document.querySelector(main).style.display = ;
+        document.querySelector(aside).style.display = ;
+        document.getElementById(game-log-sidebar).style.display = ;
+        updateStats(); updateInventory(); updateQuests();
+      }
+
+       ============= STATS =============
+      function updateStats() {
+        document.getElementById(char-hp).textContent = gameState.hp;
+        document.getElementById(hp-fill).style.width = (gameState.hp  gameState.maxHp  100) + %;
+        const apEl = document.getElementById(char-ap);
+        if (apEl) apEl.textContent = gameState.currentAP;
+        const apFill = document.getElementById(ap-fill);
+        if (apFill) apFill.style.width = (gameState.currentAP  gameState.maxAP  100) + %;
+        document.getElementById(char-gold).textContent = gameState.gold;
+        saveGold();
+        const charName = document.getElementById(char-name);
+        if (charName) charName.textContent = gameState.name;
+        const charLevel = document.getElementById(char-level);
+        if (charLevel) charLevel.textContent = gameState.level;
+        const charExp = document.getElementById(char-exp);
+        if (charExp) charExp.textContent = gameState.exp;
+        [str,dex,con,int,wis,cha].forEach(ability = {
+          const score = gameState.abilities[ability];
+          const mod = calcMod(score);
+          document.getElementById(`score-${ability}`).textContent = score;
+          document.getElementById(`mod-${ability}`).textContent = (mod = 0  +  ) + mod;
+        });
+        document.getElementById(char-ac).textContent = gameState.ac;
+        document.getElementById(prof-bonus).textContent = (gameState.proficiencyBonus = 0  +  ) + gameState.proficiencyBonus;
+        const init = calcMod(gameState.abilities.dex);
+        document.getElementById(initiative).textContent = (init = 0  +  ) + init;
+        updateEquipmentPanel();
+        updateQuestPanel();
+      }
+
+      function updateEquipmentPanel() {
+        const w = document.getElementById(equipped-weapon);
+        const a = document.getElementById(equipped-armor);
+        const x = document.getElementById(equipped-accessory);
+        if (w) w.textContent = gameState.equipped.weapon  gameState.equipped.weapon.name  gameState.equipped.weapon  None;
+        if (a) a.textContent = gameState.equipped.armor   gameState.equipped.armor.name   gameState.equipped.armor   None;
+        if (x) x.textContent = gameState.equipped.accessory  gameState.equipped.accessory.name  gameState.equipped.accessory  None;
+      }
+
+       ============= INVENTORY =============
+      function updateInventory() {
+        const invList = document.getElementById(inventory-list);
+        if (invList) {
+          invList.innerHTML = gameState.inventory.map((item, index) = {
+            const itemName = item.name  item;
+            const qty = item.quantity  1;
+            return `div class=inv-item onclick=openItemModal(${index})span${itemName}span${qty  1  `span style=color#eab308;font-size0.75rem;x${qty}span`  }div`;
+          }).join();
+        }
+        const badge = document.getElementById(inv-count-badge);
+        if (badge) badge.textContent = gameState.inventory.reduce((sum, item) = sum + (item.quantity  1), 0);
+      }
+
+      function addItemToInventory(itemName) {
+        const existing = gameState.inventory.find(item = (item.name  item) === itemName);
+        if (existing) { existing.quantity = (existing.quantity  1) + 1; }
+        else { gameState.inventory.push({ name itemName, quantity 1 }); }
+        updateInventory();
+      }
+
+      function removeItem(index) {
+        const item = gameState.inventory[index];
+        if (item.quantity && item.quantity  1) { item.quantity--; }
+        else { gameState.inventory.splice(index, 1); }
+        updateInventory();
+      }
+
+       ============= ITEM MODAL =============
+      let currentSelectedItem = null;
+      const itemDatabase = {
+        Longsword       { desc A well-crafted blade. Deals 1d8+STR damage., type weapon },
+        Leather Armor { desc Light protective armor. Provides AC 11+DEX.,  type armor },
+        Bread           { desc A hearty loaf. Restores 2 HP when eaten.,     type consumable },
+        Map             { desc A detailed map of the region.,                 type quest },
+        Rope            { desc 50 feet of sturdy rope.,                       type utility },
+        Potion          { desc Restores 10 HP when consumed.,                 type consumable },
+        Health Potion { desc Restores 15 HP when consumed.,                 type consumable },
+        Mana Potion   { desc Restores 5 AP when consumed.,                  type consumable },
+        Gold Coin     { desc Currency for trading.,                          type currency },
+        Silver Horn   { desc The legendary Silver Horn of Harmatfalu.,       type quest },
+      };
+
+      function openItemModal(index) {
+        currentSelectedItem = index;
+        const item = gameState.inventory[index];
+        const itemName = item.name  item;
+        const itemInfo = itemDatabase[itemName]  { desc An unknown item., type misc };
+        document.getElementById(item-sprite-display).innerHTML = getItemSpriteHtml(itemName);
+        document.getElementById(item-name).textContent = itemName;
+        document.getElementById(item-quantity).textContent = `Qty ${item.quantity  1}`;
+        document.getElementById(item-description).textContent = itemInfo.desc;
+        document.getElementById(btn-item-use).style.display = itemInfo.type === consumable  block  none;
+        document.getElementById(item-modal).style.display = flex;
+      }
+
+      function closeItemModal() {
+        document.getElementById(item-modal).style.display = none;
+        currentSelectedItem = null;
+      }
+
+      function useItem() {
+        const item = gameState.inventory[currentSelectedItem];
+        const itemName = item.name  item;
+        const itemDef = itemDefinitions[itemName];
+        if (itemDef.stats.healValue) {
+          gameState.hp = Math.min(gameState.hp + itemDef.stats.healValue, gameState.maxHp);
+          addLog(`✨ Used ${itemName} — restored ${itemDef.stats.healValue} HP!`);
+          updateStats();
+        } else if (itemDef.stats.apRestore) {
+          gameState.currentAP = Math.min(gameState.currentAP + itemDef.stats.apRestore, gameState.maxAP);
+          addLog(`✨ Used ${itemName} — restored ${itemDef.stats.apRestore} AP!`);
+          updateStats();
+        } else if (itemName === Bread) {
+          gameState.hp = Math.min(gameState.hp + 2, gameState.maxHp);
+          addLog(🍞 You consumed the Bread and restored 2 HP!); updateStats();
+        }
+        removeItem(currentSelectedItem);
+        closeItemModal();
+        if (window.currentBattleState) {
+          const bs = window.currentBattleState;
+          if (document.getElementById(battle-player-hp)) document.getElementById(battle-player-hp).textContent = gameState.hp +  + gameState.maxHp;
+          setTimeout(() = { const buttons = document.querySelectorAll(.battle-btn); buttons.forEach(b = b.disabled = false); enemyTurn(bs); }, 500);
+        }
+      }
+
+      function dropItem() {
+        const item = gameState.inventory[currentSelectedItem];
+        addLog(`📍 You dropped ${item.name  item} at ${gameState.currentLocation}.`);
+        removeItem(currentSelectedItem);
+        closeItemModal();
+      }
+
+       ============= BACKPACK MODAL =============
+      let backpackCurrentPage = 0;
+      const BACKPACK_PAGE_SIZE = 8;
+
+      function openBackpackModal() {
+        backpackCurrentPage = 0;
+        renderBackpackPage();
+        document.getElementById(backpack-modal).style.display = flex;
+      }
+
+      function renderBackpackPage() {
+        const inv = gameState.inventory;
+        const totalPages = Math.max(1, Math.ceil(inv.length  BACKPACK_PAGE_SIZE));
+        backpackCurrentPage = Math.min(backpackCurrentPage, totalPages - 1);
+        const start = backpackCurrentPage  BACKPACK_PAGE_SIZE;
+        const pageItems = inv.slice(start, start + BACKPACK_PAGE_SIZE);
+        const grid = document.getElementById(backpack-items-grid);
+        grid.innerHTML = pageItems.length === 0
+           `div style=colorvar(--text-muted);font-styleitalic;padding20px;grid-column1-1;text-aligncenter;Your backpack is empty.div`
+           pageItems.map((item, localIdx) = {
+              const realIndex = start + localIdx;
+              const itemName = item.name  item;
+              const qty = item.quantity  1;
+              const sprite = getItemSpriteHtml(itemName);
+              return `div class=backpack-item onclick=selectBackpackItem(${realIndex})div class=backpack-item-sprite${sprite}divdiv class=backpack-item-name${itemName}div${qty  1  `div class=backpack-item-qtyx${qty}div`  }div`;
+            }).join();
+        document.getElementById(backpack-page-label).textContent = `Page ${backpackCurrentPage + 1}  ${totalPages}`;
+        const prev = document.getElementById(backpack-prev); prev.disabled = backpackCurrentPage === 0; prev.style.opacity = prev.disabled  0.4  1;
+        const next = document.getElementById(backpack-next); next.disabled = backpackCurrentPage = totalPages - 1; next.style.opacity = next.disabled  0.4  1;
+        const dots = document.getElementById(backpack-dots);
+        dots.innerHTML = Array.from({ length totalPages }, (_, i) =
+          `div onclick=backpackGoToPage(${i}) style=width10px;height10px;border-radius50%;cursorpointer;background${i===backpackCurrentPagevar(--accent)var(--border)};transitionbackground 0.2s;div`
+        ).join();
+        document.getElementById(backpack-pagination).style.display = totalPages = 1  none  flex;
+      }
+
+      function backpackChangePage(dir) {
+        const totalPages = Math.max(1, Math.ceil(gameState.inventory.length  BACKPACK_PAGE_SIZE));
+        backpackCurrentPage = Math.max(0, Math.min(backpackCurrentPage + dir, totalPages - 1));
+        renderBackpackPage();
+      }
+      function backpackGoToPage(page) { backpackCurrentPage = page; renderBackpackPage(); }
+      function closeBackpackModal() { document.getElementById(backpack-modal).style.display = none; }
+      function selectBackpackItem(index) { closeBackpackModal(); openItemModal(index); }
+
+       ============= TRADE SYSTEM =============
+      let tradeData = { partner null, partnerItems [], playerSelectedItems [], partnerSelectedItems [] };
+
+      function startTrade() {
+        const item = gameState.inventory[currentSelectedItem];
+        const itemName = item.name  item;
+        const traders = { inn Innkeeper, merchant Merchant, shop Shopkeeper };
+        tradeData.partner = traders[gameState.currentLocation]  Trader;
+        tradeData.partnerItems = generateTradeOffers(itemName);
+        tradeData.playerSelectedItems = [currentSelectedItem];
+        tradeData.partnerSelectedItems = [];
+        renderTradeModal();
+        closeItemModal();
+      }
+
+      function generateTradeOffers(itemName) {
+        const offers = { Longsword [Gold Coin x5,Potion], Leather Armor [Gold Coin x8,Ring], Bread [Gold Coin x2], Map [Potion], Rope [Gold Coin x3], Potion [Gold Coin x5,Bread] };
+        return offers[itemName]  [Gold Coin x3];
+      }
+
+      function renderTradeModal() {
+        document.getElementById(your-items-list).innerHTML = gameState.inventory.map((item, index) = {
+          const itemName = item.name  item;
+          const isSelected = tradeData.playerSelectedItems.includes(index);
+          return `div class=trade-item ${isSelectedselected} onclick=togglePlayerItem(${index})span${itemName}spanspan class=trade-item-qtyx${item.quantity1}spandiv`;
+        }).join();
+        document.getElementById(their-items-list).innerHTML = tradeData.partnerItems.map((item, index) = {
+          const isSelected = tradeData.partnerSelectedItems.includes(index);
+          return `div class=trade-item ${isSelectedselected} onclick=togglePartnerItem(${index})span${item}spandiv`;
+        }).join();
+        document.getElementById(trade-partner-name).textContent = tradeData.partner;
+        document.getElementById(trade-modal).style.display = block;
+      }
+
+      function togglePlayerItem(index) { const idx = tradeData.playerSelectedItems.indexOf(index); idx  -1  tradeData.playerSelectedItems.splice(idx, 1)  tradeData.playerSelectedItems.push(index); renderTradeModal(); }
+      function togglePartnerItem(index) { const idx = tradeData.partnerSelectedItems.indexOf(index); idx  -1  tradeData.partnerSelectedItems.splice(idx, 1)  tradeData.partnerSelectedItems.push(index); renderTradeModal(); }
+
+      function confirmTrade() {
+        if (tradeData.playerSelectedItems.length === 0  tradeData.partnerSelectedItems.length === 0) { alert(Please select items from both sides!); return; }
+        [...tradeData.playerSelectedItems].sort((a,b)=b-a).forEach(idx = removeItem(idx));
+        tradeData.partnerSelectedItems.forEach(idx = addItemToInventory(tradeData.partnerItems[idx]));
+        addLog(`✅ Trade complete!`);
+        closeTradeModal();
+      }
+
+      function closeTradeModal() {
+        document.getElementById(trade-modal).style.display = none;
+        tradeData = { partner null, partnerItems [], playerSelectedItems [], partnerSelectedItems [] };
+      }
+
+       ============= SKILL CHECK =============
+      function makeSkillCheck(skillName) {
+        const skill = gameState.skills[skillName];
+        if (!skill) return null;
+        const abilityMod = calcMod(gameState.abilities[skill.ability]);
+        const profBonus = skill.proficient  gameState.proficiencyBonus  0;
+        const roll = rollD20(); const total = roll + abilityMod + profBonus;
+        addLog(`🎲 ${skillName} Rolled ${roll} + ${abilityMod} + ${profBonus} = ${total}`);
+        return { roll, total, success total = 10 };
+      }
+
+       ============= LOG =============
+      function addLog(message) {
+        gameState.log.unshift(message);
+        if (gameState.log.length  10) gameState.log.pop();
+        const logDiv = document.getElementById(game-log);
+        logDiv.innerHTML = gameState.log.map(msg = {
+          const isImportant = msg.includes(⚡)  msg.includes(✅)  msg.includes(🏆);
+          return `div class=log-entry ${isImportantimportant}${msg}div`;
+        }).join();
+      }
+
+      window.addEventListener(load, showStartMenu);
+    script
+  body
+html
