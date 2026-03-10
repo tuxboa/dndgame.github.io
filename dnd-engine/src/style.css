@@ -2285,7 +2285,7 @@ body {
 .ql-group-title--main {
   font-size: 0.72rem;
   color: var(--color-accent);
-  border-bottom-color: rgba(200,146,42,0.4);
+  border-bottom-color: rgba(200, 146, 42, 0.4);
   margin-bottom: 0.55rem;
   letter-spacing: 0.12em;
 }
@@ -2305,7 +2305,7 @@ body {
 .ql-list--nested {
   margin-top: 0.2rem;
   margin-left: 1.1rem;
-  border-left: 2px solid rgba(200,146,42,0.2);
+  border-left: 2px solid rgba(200, 146, 42, 0.2);
   padding-left: 0.5rem;
 }
 
@@ -2315,7 +2315,7 @@ body {
 }
 .ql-group--standalone .ql-group-title {
   color: #7aabcc;
-  border-bottom-color: rgba(122,171,204,0.3);
+  border-bottom-color: rgba(122, 171, 204, 0.3);
 }
 
 /* Done group */
@@ -2348,14 +2348,14 @@ body {
 /* Main quest — gold accent */
 .ql-quest--main.ql-quest--active {
   border-left-color: var(--color-accent);
-  background: rgba(200,146,42,0.07);
-  box-shadow: 0 0 10px rgba(200,146,42,0.07);
+  background: rgba(200, 146, 42, 0.07);
+  box-shadow: 0 0 10px rgba(200, 146, 42, 0.07);
 }
 
 /* Side quest nested */
 .ql-quest--nested {
-  border-left-color: rgba(200,146,42,0.25);
-  background: rgba(200,146,42,0.03);
+  border-left-color: rgba(200, 146, 42, 0.25);
+  background: rgba(200, 146, 42, 0.03);
   padding-top: 0.2rem;
   padding-bottom: 0.2rem;
 }
@@ -2363,7 +2363,7 @@ body {
 /* Standalone side quest */
 .ql-quest--side.ql-quest--active:not(.ql-quest--nested) {
   border-left-color: #4a7a99;
-  background: rgba(74,122,153,0.06);
+  background: rgba(74, 122, 153, 0.06);
 }
 
 /* Completed / failed */

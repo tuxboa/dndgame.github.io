@@ -25,11 +25,11 @@ const CAMPAIGNS = [
     id: "great_upheaval",
     title: "A Great Upheaval",
     subtitle: "An Age of Chaos Begins",
-    path: "/campaigns/campaign.json",
+    path: `${import.meta.env.BASE_URL}campaigns/campaign.json`,
     icon: "🏰",
   },
   // Add more entries here once you have additional campaign.json files.
-  // { id: "strahd", title: "Curse of Strahd", subtitle: "Gothic horror", path: "/campaigns/strahd.json", icon: "🧛" },
+  // { id: "strahd", title: "Curse of Strahd", subtitle: "Gothic horror", path: `${import.meta.env.BASE_URL}campaigns/strahd.json`, icon: "🧛" },
 ];
 
 // ── Class definitions (all 12 PHB classes) ───────────────────────────────────
