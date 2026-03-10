@@ -5,7 +5,10 @@
  * The DM controller calls these when the LLM response includes quest actions.
  *
  * Quest shape:
- *   { id, title, description, status: 'active'|'completed'|'failed', addedAt }
+ *   { id, title, description, type: 'main'|'side', parentId?, status: 'active'|'completed'|'failed', addedAt }
+ *
+ * type     — 'main' = fő quest (arany, mindig felül), 'side' = mellékküldetés (default)
+ * parentId — ha meg van adva, a side quest a megadott main quest alatt jelenik meg
  */
 
 import { gameStore } from "../store/index.js";
@@ -16,9 +19,15 @@ import { eventBus, EVENTS } from "../engine/eventBus.js";
 /**
  * Add a new quest. Silently skips if a quest with the same id already exists.
  *
- * @param {{ id: string, title: string, description?: string }} quest
+ * @param {{ id: string, title: string, description?: string, type?: 'main'|'side', parentId?: string }} quest
  */
-export function addQuest({ id, title, description = "" }) {
+export function addQuest({
+  id,
+  title,
+  description = "",
+  type = "side",
+  parentId = null,
+}) {
   const state = gameStore.getState();
   const quests = state.world.quests ?? [];
 
@@ -28,6 +37,8 @@ export function addQuest({ id, title, description = "" }) {
     id,
     title,
     description,
+    type,
+    parentId,
     status: "active",
     addedAt: Date.now(),
   };

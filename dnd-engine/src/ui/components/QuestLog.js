@@ -9,13 +9,6 @@
 import { gameStore } from "../../store/index.js";
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
 
-const STATUS_LABELS = {
-  active: "Active",
-  completed: "Completed",
-  failed: "Failed",
-};
-const STATUS_ORDER = ["active", "completed", "failed"];
-
 let _isOpen = false;
 
 // ── Public API ────────────────────────────────────────────────────────────────
@@ -97,6 +90,28 @@ function _getDispLabel(disposition) {
   return labels[disposition] ?? disposition;
 }
 
+/** Single quest card HTML */
+function _questCard(q, extraClass = "") {
+  const isDone = q.status === "completed" || q.status === "failed";
+  const isMain = q.type === "main";
+  const pip =
+    q.status === "completed"
+      ? "✓"
+      : q.status === "failed"
+        ? "✗"
+        : isMain
+          ? "👑"
+          : "◆";
+  return `
+    <li class="ql-quest ql-quest--${q.status}${isMain ? " ql-quest--main" : " ql-quest--side"}${extraClass}">
+      <span class="ql-quest-pip" aria-hidden="true">${pip}</span>
+      <div class="ql-quest-info">
+        <span class="ql-quest-title${isDone ? " ql-quest-title--done" : ""}">${q.title}</span>
+        ${q.description ? `<span class="ql-quest-desc">${q.description}</span>` : ""}
+      </div>
+    </li>`;
+}
+
 function _render(quests, npcRels = {}) {
   const body = document.getElementById("ql-body");
   if (!body) return;
@@ -110,34 +125,58 @@ function _render(quests, npcRels = {}) {
           : null) ?? "hu";
       return `<p class="ql-empty">${lang === "en" ? "No quests yet. Explore the world." : "Nincs még feladat. Fedezd fel a világot."}</p>`;
     }
-    const grouped = Object.fromEntries(STATUS_ORDER.map((s) => [s, []]));
-    quests.forEach((q) => {
-      if (grouped[q.status]) grouped[q.status].push(q);
-    });
 
-    return STATUS_ORDER.filter((s) => grouped[s].length > 0)
-      .map(
-        (status) => `
-        <div class="ql-group">
-          <h3 class="ql-group-title ql-group--${status}">${STATUS_LABELS[status]}</h3>
-          <ul class="ql-list">
-            ${grouped[status]
-              .map(
-                (q) => `
-              <li class="ql-quest ql-quest--${q.status}">
-                <span class="ql-quest-pip" aria-hidden="true">${_pip(status)}</span>
-                <div class="ql-quest-info">
-                  <span class="ql-quest-title">${q.title}</span>
-                  ${q.description ? `<span class="ql-quest-desc">${q.description}</span>` : ""}
-                </div>
-              </li>`,
-              )
-              .join("")}   
-          </ul>
-        </div>
-      `,
-      )
+    // Partition quests
+    const activeMain = quests
+      .filter((q) => q.type === "main" && q.status === "active")
+      .sort((a, b) => a.addedAt - b.addedAt);
+    const activeSide = quests.filter(
+      (q) => q.type !== "main" && q.status === "active",
+    );
+    const doneQuests = quests
+      .filter((q) => q.status !== "active")
+      .sort((a, b) => a.addedAt - b.addedAt);
+
+    // Build main+nested side blocks
+    const mainBlocks = activeMain
+      .map((main) => {
+        const nested = activeSide.filter((s) => s.parentId === main.id);
+        const nestedHtml = nested.length
+          ? `<ul class="ql-list ql-list--nested">${nested.map((s) => _questCard(s, " ql-quest--nested")).join("")}</ul>`
+          : "";
+        return `
+        <div class="ql-main-block">
+          <ul class="ql-list">${_questCard(main)}</ul>
+          ${nestedHtml}
+        </div>`;
+      })
       .join("");
+
+    // Standalone side quests (no matching active parent)
+    const activeMainIds = new Set(activeMain.map((m) => m.id));
+    const standaloneActive = activeSide.filter(
+      (s) => !s.parentId || !activeMainIds.has(s.parentId),
+    );
+    const standaloneSideHtml = standaloneActive.length
+      ? `<div class="ql-group ql-group--standalone">
+          <h3 class="ql-group-title">↪ Mellékküldetések</h3>
+          <ul class="ql-list">${standaloneActive.map((q) => _questCard(q)).join("")}</ul>
+         </div>`
+      : "";
+
+    // Done / failed at the bottom
+    const doneHtml = doneQuests.length
+      ? `<div class="ql-group ql-group--done">
+          <h3 class="ql-group-title ql-group-title--done">✓ Befejezett / Bukott</h3>
+          <ul class="ql-list">${doneQuests.map((q) => _questCard(q)).join("")}</ul>
+         </div>`
+      : "";
+
+    const mainHeader = activeMain.length
+      ? `<h3 class="ql-group-title ql-group-title--main">⚔️ Fő Küldetések</h3>`
+      : "";
+
+    return mainHeader + mainBlocks + standaloneSideHtml + doneHtml;
   })();
 
   // ── NPC relationship section ──────────────────────────────────────────────
@@ -146,7 +185,7 @@ function _render(quests, npcRels = {}) {
   if (npcEntries.length > 0) {
     npcHtml = `
       <div class="ql-group">
-        <h3 class="ql-group-title">${typeof localStorage !== "undefined" && localStorage.getItem("dnd_lang") === "en" ? "NPC Relationships" : "NPC kapcsolatok"}</h3>
+        <h3 class="ql-group-title">🧑‍🤝‍🧑 ${typeof localStorage !== "undefined" && localStorage.getItem("dnd_lang") === "en" ? "NPC Relationships" : "NPC kapcsolatok"}</h3>
         <ul class="ql-list">
           ${npcEntries
             .map(([id, npc]) => {
@@ -168,8 +207,4 @@ function _render(quests, npcRels = {}) {
   }
 
   body.innerHTML = questHtml + npcHtml;
-}
-
-function _pip(status) {
-  return status === "completed" ? "✓" : status === "failed" ? "✗" : "◆";
 }

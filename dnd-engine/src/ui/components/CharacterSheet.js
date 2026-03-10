@@ -246,7 +246,7 @@ function _render(player) {
 
       <!-- Ability Scores -->
       <section class="cs-section">
-        <h3 class="cs-section-title">Ability Scores</h3>
+        <h3 class="cs-section-title">🎲 Ability Scores</h3>
         <div class="cs-ability-grid">
           ${Object.entries(ab)
             .map(([key, val]) => {
@@ -269,7 +269,7 @@ function _render(player) {
 
       <!-- Saving Throws -->
       <section class="cs-section">
-        <h3 class="cs-section-title">Saving Throws</h3>
+        <h3 class="cs-section-title">🛡️ Saving Throws</h3>
         <div class="cs-save-grid">
           ${Object.entries(ab)
             .map(([key, val]) => {
@@ -289,7 +289,7 @@ function _render(player) {
 
       <!-- Skills -->
       <section class="cs-section">
-        <h3 class="cs-section-title">Skills</h3>
+        <h3 class="cs-section-title">🎯 Skills</h3>
         <ul class="cs-skill-list">
           ${SKILLS.map(([name, ability]) => {
             const key = skillKey(name);
@@ -318,7 +318,7 @@ function _render(player) {
 
       <!-- Proficiencies & Languages -->
       <section class="cs-section">
-        <h3 class="cs-section-title">Proficiencies &amp; Languages</h3>
+        <h3 class="cs-section-title">📋 Proficiencies &amp; Languages</h3>
         <div class="cs-prof-list">
           <div class="cs-prof-row">
             <span class="cs-prof-label">⚔️ Weapons</span>
@@ -340,7 +340,7 @@ function _render(player) {
         (player.conditions?.length ?? 0) > 0
           ? `
       <section class="cs-section">
-        <h3 class="cs-section-title">Conditions</h3>
+        <h3 class="cs-section-title">⚠️ Conditions</h3>
         <div class="cs-conditions">
           ${player.conditions.map((c) => `<span class="cs-condition">${c}</span>`).join("")}
         </div>
@@ -385,7 +385,7 @@ function _render(player) {
 
       <!-- Equipment slots -->
       <section class="cs-section">
-        <h3 class="cs-section-title">Equipment</h3>
+        <h3 class="cs-section-title">⚔️ Equipment</h3>
         ${_renderEquipmentSlots(player)}
       </section>
 

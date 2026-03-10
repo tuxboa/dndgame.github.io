@@ -1817,8 +1817,8 @@ body {
   background: var(--color-surface-2);
 }
 .cs-save-row--prof {
-  background: rgba(200,146,42,0.08);
-  border: 1px solid rgba(200,146,42,0.25);
+  background: rgba(200, 146, 42, 0.08);
+  border: 1px solid rgba(200, 146, 42, 0.25);
 }
 .cs-save-pip {
   font-size: 0.65rem;
@@ -2275,18 +2275,53 @@ body {
   font-size: 0.68rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  color: var(--color-text-dim);
   padding-bottom: 0.2rem;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 0.45rem;
 }
-.ql-group--active .ql-group-title {
+
+/* Main quest header */
+.ql-group-title--main {
+  font-size: 0.72rem;
   color: var(--color-accent);
+  border-bottom-color: rgba(200,146,42,0.4);
+  margin-bottom: 0.55rem;
+  letter-spacing: 0.12em;
 }
-.ql-group--completed .ql-group-title {
-  color: var(--color-success);
+
+/* Done / failed section header */
+.ql-group-title--done {
+  color: var(--color-text-dim);
+  opacity: 0.7;
 }
-.ql-group--failed .ql-group-title {
-  color: var(--color-danger);
+
+/* Main quest block wrapper */
+.ql-main-block {
+  margin-bottom: 0.55rem;
+}
+
+/* Nested side quests under a main quest */
+.ql-list--nested {
+  margin-top: 0.2rem;
+  margin-left: 1.1rem;
+  border-left: 2px solid rgba(200,146,42,0.2);
+  padding-left: 0.5rem;
+}
+
+/* Standalone side quests group */
+.ql-group--standalone {
+  margin-bottom: 0.8rem;
+}
+.ql-group--standalone .ql-group-title {
+  color: #7aabcc;
+  border-bottom-color: rgba(122,171,204,0.3);
+}
+
+/* Done group */
+.ql-group--done {
+  margin-top: 0.6rem;
+  opacity: 0.75;
 }
 
 .ql-list {
@@ -2295,28 +2330,72 @@ body {
   flex-direction: column;
   gap: 0.35rem;
 }
+
+/* Base quest card */
 .ql-quest {
   display: flex;
   gap: 0.5rem;
   padding: 0.3rem 0.4rem;
   background: var(--color-surface-2);
   border-radius: var(--radius);
+  border-left: 3px solid transparent;
+  transition: background var(--transition);
 }
+.ql-quest:hover {
+  background: #131a24;
+}
+
+/* Main quest — gold accent */
+.ql-quest--main.ql-quest--active {
+  border-left-color: var(--color-accent);
+  background: rgba(200,146,42,0.07);
+  box-shadow: 0 0 10px rgba(200,146,42,0.07);
+}
+
+/* Side quest nested */
+.ql-quest--nested {
+  border-left-color: rgba(200,146,42,0.25);
+  background: rgba(200,146,42,0.03);
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+}
+
+/* Standalone side quest */
+.ql-quest--side.ql-quest--active:not(.ql-quest--nested) {
+  border-left-color: #4a7a99;
+  background: rgba(74,122,153,0.06);
+}
+
+/* Completed / failed */
+.ql-quest--completed,
+.ql-quest--failed {
+  opacity: 0.6;
+}
+
 .ql-quest-pip {
   font-size: 0.8rem;
   padding-top: 0.15rem;
   flex-shrink: 0;
 }
-.ql-quest-pip.active {
+.ql-quest--main .ql-quest-pip {
   color: var(--color-accent);
 }
-.ql-quest-pip.completed {
+.ql-quest--side .ql-quest-pip {
+  color: var(--color-text-dim);
+}
+.ql-quest--completed .ql-quest-pip {
   color: var(--color-success);
 }
-.ql-quest-pip.failed {
+.ql-quest--failed .ql-quest-pip {
   color: var(--color-danger);
 }
+
 .ql-quest-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+.ql-quest-info {
   display: flex;
   flex-direction: column;
   gap: 0.05rem;
@@ -2325,6 +2404,16 @@ body {
   font-size: 0.88rem;
   color: var(--color-text);
   font-family: var(--font-body);
+}
+.ql-quest--main .ql-quest-title {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+/* Strikethrough for completed/failed */
+.ql-quest-title--done {
+  text-decoration: line-through;
+  color: var(--color-text-dim);
+  font-weight: 400;
 }
 .ql-quest-desc {
   font-size: 0.76rem;
