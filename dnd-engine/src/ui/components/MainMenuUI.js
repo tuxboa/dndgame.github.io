@@ -1469,6 +1469,16 @@ function _renderCharForm(wrap) {
       const conMod = Math.floor((conFinal - 10) / 2);
       hpValEl.textContent = HIT_DICE[currentClass] + conMod;
     }
+
+    // Update Initiative if DEX changed
+    const initValEl = wrap.querySelector(
+      ".mm-cs-combat-box--init .mm-cs-combat-val",
+    );
+    if (initValEl) {
+      const dexFinal = baseAbs.dex + (raceDef.bonuses.dex ?? 0);
+      const dexMod = Math.floor((dexFinal - 10) / 2);
+      initValEl.textContent = dexMod >= 0 ? `+${dexMod}` : `${dexMod}`;
+    }
     // NOTE: No listener re-attachment here — _patchAbilities patches DOM values
     // in-place without replacing nodes, so the listeners from _rewire() survive.
   };
