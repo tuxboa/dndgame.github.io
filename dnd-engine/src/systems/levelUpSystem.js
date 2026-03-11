@@ -32,6 +32,12 @@ import { eventBus, EVENTS } from "../engine/eventBus.js";
 import { FEATS } from "../data/feats.js";
 import { CLASS_LEVEL_SPELLS, SPELLS } from "../data/spells.js";
 
+/** Progressive XP thresholds — exported so other modules (e.g. actionDispatcher) can use the same curve. */
+export const XP_PER_LEVEL = [
+  0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700, 3250, 3850, 4500, 5200,
+  6000,
+];
+
 /** Average HP per level (hit die average) by class */
 const CLASS_HP_PER_LEVEL = {
   Barbarian: 7,
@@ -80,7 +86,11 @@ const CLASS_LEVEL_BONUSES = {
     3: [
       {
         desc: "Primal Path: +1 Rage use",
-        patchCa: (ca) => ({ ...ca, rageUses: (ca.rageUses ?? 2) + 1 }),
+        patchCa: (ca) => ({
+          ...ca,
+          rageUses: (ca.rageUses ?? 2) + 1,
+          maxRageUses: (ca.rageUses ?? 2) + 1,
+        }),
       },
     ],
     5: [{ desc: "Extra Attack — make 2 attacks per turn" }],
@@ -88,7 +98,11 @@ const CLASS_LEVEL_BONUSES = {
     9: [
       {
         desc: "Brutal Critical: +1 extra damage die on crits",
-        patchCa: (ca) => ({ ...ca, rageUses: (ca.rageUses ?? 2) + 1 }),
+        patchCa: (ca) => ({
+          ...ca,
+          rageUses: (ca.rageUses ?? 2) + 1,
+          maxRageUses: (ca.rageUses ?? 2) + 1,
+        }),
       },
     ],
   },
@@ -298,12 +312,8 @@ export function addXp(amount) {
   const newXp = (p.xp ?? 0) + amount;
   const level = p.level ?? 1;
   // Progressive XP curve — each level requires significantly more XP than the last
-  const XP_PER_LEVEL = [
-    0, 100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700, 3250, 3850, 4500, 5200,
-    6000,
-  ];
   const threshold =
-    XP_PER_LEVEL[Math.min(level, XP_PER_LEVEL.length - 1)] ?? level * 300;
+    level < XP_PER_LEVEL.length ? XP_PER_LEVEL[level] : level * 300;
 
   gameStore.setState({ player: { ...p, xp: newXp } }, "levelUpSystem:addXp");
 

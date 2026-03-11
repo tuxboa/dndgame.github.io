@@ -213,7 +213,9 @@ function _mountModal(payload) {
   overlay.querySelectorAll(".levelup-stat-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       // Disable all choice buttons immediately to prevent double-selection
-      overlay.querySelectorAll(".levelup-stat-btn, .levelup-feat-btn").forEach((b) => (b.disabled = true));
+      overlay
+        .querySelectorAll(".levelup-stat-btn, .levelup-feat-btn")
+        .forEach((b) => (b.disabled = true));
       btn.classList.add("levelup-stat-btn--chosen");
       setTimeout(() => {
         applyLevelUp(btn.dataset.stat);
@@ -241,7 +243,9 @@ function _mountModal(payload) {
   overlay.querySelectorAll(".levelup-feat-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       // Disable all choice buttons immediately to prevent double-selection
-      overlay.querySelectorAll(".levelup-stat-btn, .levelup-feat-btn").forEach((b) => (b.disabled = true));
+      overlay
+        .querySelectorAll(".levelup-stat-btn, .levelup-feat-btn")
+        .forEach((b) => (b.disabled = true));
       btn.classList.add("levelup-feat-btn--chosen");
       setTimeout(() => {
         applyLevelUp("feat:" + btn.dataset.feat);

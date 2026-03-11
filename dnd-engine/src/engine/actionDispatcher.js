@@ -27,7 +27,7 @@ import {
   applyDamage,
 } from "../systems/turnManager.js";
 import { removeItem, addItem } from "../systems/inventorySystem.js";
-import { addXp } from "../systems/levelUpSystem.js";
+import { addXp, XP_PER_LEVEL } from "../systems/levelUpSystem.js";
 import { processTurn } from "../systems/dmController.js";
 
 // ── Network Adapter ───────────────────────────────────────────────────────────
@@ -135,6 +135,10 @@ export function initDispatcher() {
         initiativeModifier: Math.floor(
           ((player.abilities?.dex ?? 10) - 10) / 2,
         ),
+        // Propagate feats so startCombat can apply feat bonuses (e.g. Alert +5 init)
+        feats: player.feats ?? [],
+        // Propagate movementSpeed so Mobile feat (+10 ft) is respected in combat
+        movementSpeed: player.movementSpeed ?? 30,
       };
 
       // Expand each enemy type × count into individual participants
@@ -532,7 +536,11 @@ export function collectVictoryRewards(defeatedEnemies) {
 
   // Re-read XP state after addXp may have updated it
   const afterState = gameStore.getState().player;
-  const wouldLevelUp = (afterState.xp ?? 0) >= oldLevel * 100;
+  // Use the same progressive threshold table as addXp so the victory modal is
+  // always consistent with the actual level-up trigger.
+  const xpThreshold =
+    oldLevel < XP_PER_LEVEL.length ? XP_PER_LEVEL[oldLevel] : oldLevel * 300;
+  const wouldLevelUp = (afterState.xp ?? 0) >= xpThreshold;
 
   return {
     xp: totalXp,

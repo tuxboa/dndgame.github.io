@@ -151,6 +151,7 @@ export function advanceTurn() {
 
   if (!state.combat.active) {
     console.warn("[TurnManager] advanceTurn() called outside combat");
+    _advanceDepth = 0; // Reset so stale stun-skip timeouts don't poison next combat
     return;
   }
 

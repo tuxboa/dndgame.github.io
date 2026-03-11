@@ -332,6 +332,9 @@ export async function castSpell(spellId, targetId) {
       eventBus.emit(EVENTS.CONCENTRATION_BROKEN, {
         spellId: prev.spellId,
         spellName: prev.spellName,
+        // Pass bonus data so the listener can reverse AC / attack bonuses correctly
+        appliedAcBonus: prev.appliedAcBonus ?? 0,
+        appliedAttackBonus: prev.appliedAttackBonus ?? 0,
       });
     }
     const cPlayer2 = gameStore.getState().player;
