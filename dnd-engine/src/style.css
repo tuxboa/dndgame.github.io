@@ -402,6 +402,57 @@ body {
   display: flex;
   gap: 0.75rem;
 }
+
+/* ── Drop Confirm popup ───────────────────────────────────────────────────── */
+.drop-confirm-overlay {
+  z-index: 300;
+}
+.drop-confirm-modal {
+  max-width: 340px;
+  text-align: center;
+}
+.drop-confirm-modal strong {
+  color: var(--color-text);
+}
+.drop-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.4rem;
+}
+.btn-drop-yes {
+  background: #5a1a1a;
+  border: 1px solid #a03030;
+  border-radius: var(--radius);
+  color: #e88;
+  cursor: pointer;
+  flex: 1;
+  font-family: var(--font-title);
+  font-size: 0.88rem;
+  letter-spacing: 0.04em;
+  padding: 0.55rem 0.8rem;
+  transition:
+    background var(--transition),
+    color var(--transition);
+}
+.btn-drop-yes:hover {
+  background: #a03030;
+  color: #fff;
+}
+.btn-drop-no {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  flex: 1;
+  font-size: 0.88rem;
+  padding: 0.55rem 0.8rem;
+  transition: background var(--transition);
+}
+.btn-drop-no:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+}
 .btn-primary {
   background: var(--color-accent-dim);
   border: none;

@@ -25,6 +25,45 @@ import { EQUIPMENT_SLOTS } from "../../data/equipment.js";
 
 let _isOpen = false;
 
+// ── Confirm Drop popup ────────────────────────────────────────────────────────
+/**
+ * Shows a small centered confirmation popup.
+ * Returns a Promise<boolean> — true if user confirmed, false if cancelled.
+ */
+function _confirmDrop(itemName) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay drop-confirm-overlay";
+    overlay.innerHTML = `
+      <div class="modal drop-confirm-modal">
+        <h2>⚠️ Item eldobása</h2>
+        <p>Biztosan eldobod: <strong>${itemName}</strong>?</p>
+        <div class="drop-confirm-actions">
+          <button class="btn-drop-yes">Igen, eldobom</button>
+          <button class="btn-drop-no">Mégsem</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const cleanup = (result) => {
+      overlay.remove();
+      resolve(result);
+    };
+
+    overlay
+      .querySelector(".btn-drop-yes")
+      .addEventListener("click", () => cleanup(true));
+    overlay
+      .querySelector(".btn-drop-no")
+      .addEventListener("click", () => cleanup(false));
+    // Click outside modal also cancels
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) cleanup(false);
+    });
+  });
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export function initInventoryUI() {
@@ -212,12 +251,13 @@ function renderInventoryList(inventory) {
     btn.addEventListener("click", () => useItem(btn.dataset.id));
   });
   list.querySelectorAll(".inv-btn--drop").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const item = gameStore
         .getState()
         .player.inventory.find((i) => i.itemId === btn.dataset.id);
       const name = item?.name ?? btn.dataset.id;
-      if (!confirm(`Biztosan eldobod: "${name}"?`)) return;
+      const confirmed = await _confirmDrop(name);
+      if (!confirmed) return;
       removeItem(btn.dataset.id, 1);
     });
   });
