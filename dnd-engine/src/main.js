@@ -82,7 +82,6 @@ import {
   DIFFICULTY_COLOUR,
 } from "./data/encounters.js";
 import { mountRadarChart } from "./ui/components/StatsRadarChart.js";
-import { initRPGNavBar } from "./ui/components/RPGNavBar.js";
 import { initRankModal } from "./ui/components/RankProgressionModal.js";
 import { initHowToPlayAccordion } from "./ui/components/HowToPlayAccordion.js";
 import { initChangelog } from "./ui/components/ChangelogModal.js";
@@ -226,8 +225,6 @@ async function bootstrap() {
   initTTS(restoreTtsKey());
 
   // ── New UI components ──────────────────────────────────────────────────────
-  // RPG Navigation bar (renders into #rpg-navbar added in footer)
-  initRPGNavBar();
   // Rank Progression Modal (attaches click handler to #rank-btn)
   initRankModal();
   // Changelog Modal (attaches to #changelog-btn)
@@ -289,7 +286,6 @@ function renderUI(app, campaign) {
 
       <footer class="game-footer">
         <div class="action-bar" id="action-bar"></div>
-        <div id="rpg-navbar"></div>
         <div class="input-row">
           <input
             id="player-input"
@@ -535,28 +531,38 @@ function wireUI() {
     ?.addEventListener("click", toggleQuestLog);
 
   // Radar chart modal
-  document.querySelector("#btn-radar")?.addEventListener("click", () =>
-    document.querySelector("#modal-radar")?.classList.remove("hidden")
-  );
-  document.querySelector("#btn-close-radar")?.addEventListener("click", () =>
-    document.querySelector("#modal-radar")?.classList.add("hidden")
-  );
+  document
+    .querySelector("#btn-radar")
+    ?.addEventListener("click", () =>
+      document.querySelector("#modal-radar")?.classList.remove("hidden"),
+    );
+  document
+    .querySelector("#btn-close-radar")
+    ?.addEventListener("click", () =>
+      document.querySelector("#modal-radar")?.classList.add("hidden"),
+    );
   document.querySelector("#modal-radar")?.addEventListener("click", (e) => {
     if (e.target === document.querySelector("#modal-radar"))
       document.querySelector("#modal-radar")?.classList.add("hidden");
   });
 
   // How To Play modal
-  document.querySelector("#how-to-play-btn")?.addEventListener("click", () =>
-    document.querySelector("#modal-how-to-play")?.classList.remove("hidden")
-  );
-  document.querySelector("#btn-close-htp")?.addEventListener("click", () =>
-    document.querySelector("#modal-how-to-play")?.classList.add("hidden")
-  );
-  document.querySelector("#modal-how-to-play")?.addEventListener("click", (e) => {
-    if (e.target === document.querySelector("#modal-how-to-play"))
-      document.querySelector("#modal-how-to-play")?.classList.add("hidden");
-  });
+  document
+    .querySelector("#how-to-play-btn")
+    ?.addEventListener("click", () =>
+      document.querySelector("#modal-how-to-play")?.classList.remove("hidden"),
+    );
+  document
+    .querySelector("#btn-close-htp")
+    ?.addEventListener("click", () =>
+      document.querySelector("#modal-how-to-play")?.classList.add("hidden"),
+    );
+  document
+    .querySelector("#modal-how-to-play")
+    ?.addEventListener("click", (e) => {
+      if (e.target === document.querySelector("#modal-how-to-play"))
+        document.querySelector("#modal-how-to-play")?.classList.add("hidden");
+    });
 
   document
     .querySelector("#btn-encounters")

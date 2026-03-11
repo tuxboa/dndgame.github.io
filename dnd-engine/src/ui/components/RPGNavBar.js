@@ -17,10 +17,10 @@ import { gameStore } from "../../store/index.js";
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
 
 const PANELS = [
-  { id: "inventory",  label: "LELTÁR",    icon: "🎒" },
-  { id: "spells",     label: "VARÁZSLATOK", icon: "✨" },
-  { id: "spellbook",  label: "VARÁZSKÖNYV", icon: "📖" },
-  { id: "boons",      label: "ÁLDÁSOK",    icon: "🏅" },
+  { id: "inventory", label: "LELTÁR", icon: "🎒" },
+  { id: "spells", label: "VARÁZSLATOK", icon: "✨" },
+  { id: "spellbook", label: "VARÁZSKÖNYV", icon: "📖" },
+  { id: "boons", label: "ÁLDÁSOK", icon: "🏅" },
 ];
 
 // ── CSS ───────────────────────────────────────────────────────────────────────
@@ -139,8 +139,12 @@ function _render(container, state) {
   container.querySelectorAll(".rpg-navbar-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const panelId = btn.dataset.panel;
-      gameStore.setState({ ui: { ...gameStore.getState().ui, activePanel: panelId } });
-      eventBus.emit(EVENTS.UI_PANEL_CHANGED ?? "ui:panelChanged", { panel: panelId });
+      gameStore.setState({
+        ui: { ...gameStore.getState().ui, activePanel: panelId },
+      });
+      eventBus.emit(EVENTS.UI_PANEL_CHANGED ?? "ui:panelChanged", {
+        panel: panelId,
+      });
     });
   });
 }

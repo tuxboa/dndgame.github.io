@@ -439,7 +439,11 @@ export function applyLevelUp(choice) {
     const allSpellIds = Object.keys(SPELLS);
     eventBus.emit(EVENTS.MAGICAL_SECRETS_READY, {
       count: freshP.classAbilities.magicalSecretsPending,
-      availableSpells: allSpellIds.map((id) => ({ id, name: SPELLS[id]?.name ?? id, description: SPELLS[id]?.description ?? "" })),
+      availableSpells: allSpellIds.map((id) => ({
+        id,
+        name: SPELLS[id]?.name ?? id,
+        description: SPELLS[id]?.description ?? "",
+      })),
     });
   }
 }

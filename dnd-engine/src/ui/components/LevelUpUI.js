@@ -12,7 +12,10 @@
  */
 
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
-import { applyLevelUp, applyMagicalSecret } from "../../systems/levelUpSystem.js";
+import {
+  applyLevelUp,
+  applyMagicalSecret,
+} from "../../systems/levelUpSystem.js";
 import { FEATS } from "../../data/feats.js";
 import { gameStore } from "../../store/index.js";
 
@@ -270,11 +273,13 @@ function _mountMagicalSecretsPicker({ count, availableSpells }) {
     const knownSpells = new Set(gameStore.getState().player.knownSpells ?? []);
     const rows = availableSpells
       .filter((s) => !knownSpells.has(s.id))
-      .map((s) => `
+      .map(
+        (s) => `
         <button class="ms-spell-btn" data-spell-id="${s.id}">
           <span class="ms-spell-name">${s.name}</span>
           ${s.description ? `<span class="ms-spell-desc">${s.description}</span>` : ""}
-        </button>`)
+        </button>`,
+      )
       .join("");
 
     overlay.innerHTML = `
@@ -287,7 +292,9 @@ function _mountMagicalSecretsPicker({ count, availableSpells }) {
       </div>`;
 
     document.body.appendChild(overlay);
-    requestAnimationFrame(() => overlay.classList.add("levelup-overlay--visible"));
+    requestAnimationFrame(() =>
+      overlay.classList.add("levelup-overlay--visible"),
+    );
 
     overlay.querySelectorAll(".ms-spell-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -296,7 +303,9 @@ function _mountMagicalSecretsPicker({ count, availableSpells }) {
         remaining -= 1;
         if (remaining <= 0) {
           overlay.classList.add("levelup-overlay--exit");
-          overlay.addEventListener("animationend", () => overlay.remove(), { once: true });
+          overlay.addEventListener("animationend", () => overlay.remove(), {
+            once: true,
+          });
         } else {
           overlay.remove();
           rebuild();

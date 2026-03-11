@@ -210,13 +210,17 @@ function _htmlBuy() {
   }
 
   const mult = _getPriceMultiplier();
-  const discountBadge = mult < 1
-    ? `<span class="merch-relation-badge merch-relation-badge--friendly">😊 Friendly −20%</span>`
-    : mult > 1
-      ? `<span class="merch-relation-badge merch-relation-badge--hostile">😠 Hostile +20%</span>`
-      : "";
+  const discountBadge =
+    mult < 1
+      ? `<span class="merch-relation-badge merch-relation-badge--friendly">😊 Friendly −20%</span>`
+      : mult > 1
+        ? `<span class="merch-relation-badge merch-relation-badge--hostile">😠 Hostile +20%</span>`
+        : "";
 
-  return (discountBadge ? `<div class="merch-relation-row">${discountBadge}</div>` : "") +
+  return (
+    (discountBadge
+      ? `<div class="merch-relation-row">${discountBadge}</div>`
+      : "") +
     _shop.items
       .map((shopItem) => {
         const template = isEquippable(shopItem.itemId);
@@ -232,8 +236,8 @@ function _htmlBuy() {
           !template &&
           (shopItem.itemId?.includes("potion") ||
             shopItem.itemId?.includes("elixir"))
-          ? `<span class="merch-badge merch-badge--consumable">🧪 Consumable</span>`
-          : "";
+            ? `<span class="merch-badge merch-badge--consumable">🧪 Consumable</span>`
+            : "";
 
         const finalPrice = _adjustedPrice(shopItem.price);
         const canAfford = gold >= finalPrice;
@@ -261,8 +265,9 @@ function _htmlBuy() {
               >Buy</button>
             </div>
           </div>`;
-        })
-      .join("");
+      })
+      .join("")
+  );
 
   // Equipped items can't be sold — unequip first
   const sellable = inventory.filter((i) => !i.equipped);

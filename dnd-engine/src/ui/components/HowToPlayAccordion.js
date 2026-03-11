@@ -222,7 +222,8 @@ function _render(container) {
   container.innerHTML = `
     <div class="htp-wrap">
       <p class="htp-title">Hogyan játssz?</p>
-      ${SECTIONS.map((s, i) => `
+      ${SECTIONS.map(
+        (s, i) => `
         <div class="htp-item" id="htp-item-${i}">
           <button class="htp-btn" data-idx="${i}" aria-expanded="false">
             <span class="htp-num">${i + 1}.</span>
@@ -230,7 +231,8 @@ function _render(container) {
             <span class="htp-chevron">▶</span>
           </button>
           <div class="htp-body">${s.body}</div>
-        </div>`).join("")}
+        </div>`,
+      ).join("")}
     </div>`;
 
   container.querySelectorAll(".htp-btn").forEach((btn) => {
@@ -239,8 +241,12 @@ function _render(container) {
       const item = container.querySelector(`#htp-item-${idx}`);
       const isOpen = item.classList.contains("open");
       // Close all, open clicked
-      container.querySelectorAll(".htp-item").forEach((el) => el.classList.remove("open"));
-      container.querySelectorAll(".htp-btn").forEach((el) => el.setAttribute("aria-expanded", "false"));
+      container
+        .querySelectorAll(".htp-item")
+        .forEach((el) => el.classList.remove("open"));
+      container
+        .querySelectorAll(".htp-btn")
+        .forEach((el) => el.setAttribute("aria-expanded", "false"));
       if (!isOpen) {
         item.classList.add("open");
         btn.setAttribute("aria-expanded", "true");

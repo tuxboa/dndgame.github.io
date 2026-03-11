@@ -72,10 +72,13 @@ function _buildSVG(abilities) {
       stroke-linejoin="round"/>`;
 
   // Data dots
-  const dots = dataPts.map((p) =>
-    `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="4"
+  const dots = dataPts
+    .map(
+      (p) =>
+        `<circle cx="${p.x.toFixed(2)}" cy="${p.y.toFixed(2)}" r="4"
       fill="#c8502a" stroke="#1a1a1a" stroke-width="1.5"/>`,
-  ).join("\n");
+    )
+    .join("\n");
 
   // Labels
   const labels = STATS.map((s, idx) => {

@@ -16,14 +16,50 @@ import { gameStore } from "../../store/index.js";
 // Each entry: { id, label, minRounds, color, icon }
 
 const RANKS = [
-  { id: "peasant",    label: "Közember",      minRounds: 0,   color: "#7a7465", icon: "🪚" },
-  { id: "recruit",    label: "Újonc",         minRounds: 5,   color: "#a0a090", icon: "⚔️" },
-  { id: "adventurer", label: "Kalandor",      minRounds: 15,  color: "#4a9e6a", icon: "🗺️" },
-  { id: "ranger",     label: "Határőr",       minRounds: 30,  color: "#5b9abf", icon: "🏹" },
-  { id: "hero",       label: "Hős",           minRounds: 60,  color: "#7b68ee", icon: "🛡️" },
-  { id: "veteran",    label: "Veterán",       minRounds: 100, color: "#c8922a", icon: "🪖" },
-  { id: "champion",   label: "Bajnok",        minRounds: 200, color: "#e56a2f", icon: "🏆" },
-  { id: "legend",     label: "Legenda",       minRounds: 350, color: "#9b2335", icon: "👑" },
+  {
+    id: "peasant",
+    label: "Közember",
+    minRounds: 0,
+    color: "#7a7465",
+    icon: "🪚",
+  },
+  { id: "recruit", label: "Újonc", minRounds: 5, color: "#a0a090", icon: "⚔️" },
+  {
+    id: "adventurer",
+    label: "Kalandor",
+    minRounds: 15,
+    color: "#4a9e6a",
+    icon: "🗺️",
+  },
+  {
+    id: "ranger",
+    label: "Határőr",
+    minRounds: 30,
+    color: "#5b9abf",
+    icon: "🏹",
+  },
+  { id: "hero", label: "Hős", minRounds: 60, color: "#7b68ee", icon: "🛡️" },
+  {
+    id: "veteran",
+    label: "Veterán",
+    minRounds: 100,
+    color: "#c8922a",
+    icon: "🪖",
+  },
+  {
+    id: "champion",
+    label: "Bajnok",
+    minRounds: 200,
+    color: "#e56a2f",
+    icon: "🏆",
+  },
+  {
+    id: "legend",
+    label: "Legenda",
+    minRounds: 350,
+    color: "#9b2335",
+    icon: "👑",
+  },
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -56,9 +92,13 @@ function _renderRankRow(rank, isUnlocked, isCurrent, rounds) {
       <div class="rank-row-info">
         <span class="rank-row-name" style="color:${isUnlocked ? rank.color : "var(--color-text-dim,#7a7465)"}">${rank.label}</span>
         <span class="rank-row-req">
-          ${isUnlocked
-            ? (isCurrent ? `<em>Jelenlegi rang</em>` : `✓ Elérve`)
-            : `${rank.minRounds} körből nyílik meg`}
+          ${
+            isUnlocked
+              ? isCurrent
+                ? `<em>Jelenlegi rang</em>`
+                : `✓ Elérve`
+              : `${rank.minRounds} körből nyílik meg`
+          }
         </span>
       </div>
       ${isCurrent ? `<span class="rank-badge-current">▶</span>` : ""}
@@ -95,7 +135,9 @@ function _buildHTML(state) {
           </div>
         </div>
 
-        ${next ? `
+        ${
+          next
+            ? `
         <div class="rank-progress-block">
           <div class="rank-progress-labels">
             <span style="color:${current.color}">${current.label}</span>
@@ -105,10 +147,12 @@ function _buildHTML(state) {
             <div class="rank-progress-bar" style="width:${pct}%;background:${current.color}"></div>
           </div>
           <p class="rank-progress-pct">${pct}%</p>
-        </div>` : `
+        </div>`
+            : `
         <div class="rank-progress-block">
           <p class="rank-max-label" style="color:${current.color}">⚜️ Maximális rang elérve</p>
-        </div>`}
+        </div>`
+        }
 
         <div class="rank-list">
           ${rankRows}
@@ -284,7 +328,9 @@ function _open() {
   _backdropEl = div.firstElementChild;
   document.body.appendChild(_backdropEl);
 
-  _backdropEl.querySelector("#rank-modal-close")?.addEventListener("click", _close);
+  _backdropEl
+    .querySelector("#rank-modal-close")
+    ?.addEventListener("click", _close);
   _backdropEl.addEventListener("click", (e) => {
     if (e.target === _backdropEl) _close();
   });
