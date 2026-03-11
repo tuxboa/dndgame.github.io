@@ -242,8 +242,9 @@ export function advanceTurn() {
       stunned: true,
     });
     _advanceDepth++;
+    // NOTE: do NOT reset _advanceDepth here — the guard at the top of
+    // advanceTurn() must stay active across all chained stun-skip calls.
     setTimeout(() => {
-      _advanceDepth = 0;
       advanceTurn();
     }, 1200);
     return;

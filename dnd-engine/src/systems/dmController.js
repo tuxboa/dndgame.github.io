@@ -115,7 +115,17 @@ export async function processTurn(playerAction) {
     };
   }
 
-  _applyDMResponse(response, context);
+  try {
+    _applyDMResponse(response, context);
+  } catch (applyErr) {
+    console.error("[DMController] _applyDMResponse crashed:", applyErr);
+    // Ensure the UI never gets permanently stuck in the "pending" loading state
+    const dmNow = gameStore.getState().dm;
+    gameStore.setState(
+      { dm: { ...dmNow, pendingResponse: false } },
+      "dmController:errorClear",
+    );
+  }
 
   // Increment turn counter and fire background summarization every 8 turns
   const newTurnCount = (gameStore.getState().dm.turnCount ?? 0) + 1;

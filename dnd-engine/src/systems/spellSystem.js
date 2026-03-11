@@ -375,6 +375,14 @@ function _wireManaRegen() {
   if (_regenWired) return;
   _regenWired = true;
 
+  // Reset buff-tracking vars at the start of every new combat so values from
+  // a previous encounter never corrupt AC or attack bonus in the next one.
+  eventBus.on(EVENTS.COMBAT_STARTED, () => {
+    _combatAcBuff = 0;
+    _lastConcAcBonus = 0;
+    _lastConcAtkBonus = 0;
+  });
+
   // Mana regen per round: full casters = 1 MP, half casters = 1 MP, non-casters = 0
   const _FULL_CASTERS = new Set([
     "Wizard",

@@ -149,6 +149,13 @@ export function initDispatcher() {
       }
 
       incoming.forEach(({ type, count = 1 }) => {
+        if (!type || typeof type !== "string") {
+          console.warn(
+            "[Dispatcher] Enemy entry missing valid type — skipping:",
+            { type, count },
+          );
+          return;
+        }
         const tpl = enemyTemplates[type];
         if (!tpl) {
           console.warn(

@@ -72,8 +72,8 @@ export async function runAITurn(enemy, thinkMs = 800) {
   // Bug fix: use full turnOrder for player lookup so that a player at 0 HP
   // (death saves active) is still found — allowing _resolveAttack to add
   // death save failures when enemies attack an unconscious player.
-  const player = live.find((p) => p.isPlayer)
-    ?? turnOrder.find((p) => p.isPlayer);
+  const player =
+    live.find((p) => p.isPlayer) ?? turnOrder.find((p) => p.isPlayer);
 
   if (!enemyNow || !player) {
     advanceTurn();
@@ -105,7 +105,10 @@ export async function runAITurn(enemy, thinkMs = 800) {
       await _executeFallbackTurn(enemyNow, player);
     }
   } catch (err) {
-    console.error("[CombatManager] Enemy turn crashed — forcing advanceTurn:", err);
+    console.error(
+      "[CombatManager] Enemy turn crashed — forcing advanceTurn:",
+      err,
+    );
     advanceTurn();
   }
 }
