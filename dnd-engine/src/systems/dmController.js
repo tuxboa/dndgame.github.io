@@ -215,7 +215,7 @@ export function buildContext(state, playerAction) {
       "  worldState   : object  — állapot-patch (lehet {})",
       "  actions      : string[] — 3-4 következő lehetséges játékos akció",
       "  combatTrigger: Ha ellenségek jelennek meg, KÖTELEZŐ: { enemies: [{ type: string, count: number }] } — Ha nincs harc: null",
-      "  quests       : null VAGY [{ action: 'add'|'complete'|'fail', id: string, title?: string }]",
+      "  quests       : null VAGY [{ action: 'add'|'complete'|'fail', id: string, title?: string, type?: 'main'|'side', description?: string }]",
       "",
       // !! KRIT Harc: combatTrigger
       "!!!KRITIKUS!!! Ha a narrációban ellenségek jelennek meg vagy harc indul, a combatTrigger SOSEM lehet null!",
@@ -505,6 +505,8 @@ function _applyDMResponse(response, context) {
           id: q.id,
           title: q.title ?? q.id,
           description: q.description ?? "",
+          type: q.type ?? "side",
+          parentId: q.parentId ?? null,
         });
       else if (q.action === "complete") completeQuest(q.id);
       else if (q.action === "fail") failQuest(q.id);

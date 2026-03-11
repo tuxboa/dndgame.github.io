@@ -211,6 +211,7 @@ export const STORY_NODES = {
         type: "addQuest",
         questId: "clear_the_sewers",
         title: "Clear the Sewers",
+        questType: "main",
         description:
           "Lord Vaelin has offered 50 gold to clear a rat infestation in Ironhold's eastern sewers. Someone — or something — has been feeding them.",
         then: "dungeon_entrance",
@@ -650,6 +651,7 @@ export const STORY_NODES = {
       type: "addQuest",
       questId: "thalos_audience",
       title: "An Audience with Thalos",
+      questType: "main",
       description:
         "Master Thalos of the Silver Circle wishes to examine the Vault Shard. " +
         "His motives remain unclear — scholar's curiosity, faction duty, or something else.",
@@ -841,6 +843,7 @@ export const STORY_NODES = {
         type: "addQuest",
         questId: "fragment_hunt",
         title: "The Five Fragments",
+        questType: "main",
         description:
           "Thalos has identified four other key fragments. Recover them before the cult does.",
       },

@@ -2381,6 +2381,11 @@ body {
   padding-left: 0.5rem;
 }
 
+/* Main quest group wrapper */
+.ql-group--main {
+  margin-bottom: 1rem;
+}
+
 /* Standalone side quests group */
 .ql-group--standalone {
   margin-bottom: 0.8rem;

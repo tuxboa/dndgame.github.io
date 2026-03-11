@@ -172,11 +172,14 @@ function _render(quests, npcRels = {}) {
          </div>`
       : "";
 
-    const mainHeader = activeMain.length
-      ? `<h3 class="ql-group-title ql-group-title--main">⚔️ Fő Küldetések</h3>`
+    const mainSection = activeMain.length
+      ? `<div class="ql-group ql-group--main">
+          <h3 class="ql-group-title ql-group-title--main">⚔️ Fő Küldetések</h3>
+          ${mainBlocks}
+         </div>`
       : "";
 
-    return mainHeader + mainBlocks + standaloneSideHtml + doneHtml;
+    return mainSection + standaloneSideHtml + doneHtml;
   })();
 
   // ── NPC relationship section ──────────────────────────────────────────────

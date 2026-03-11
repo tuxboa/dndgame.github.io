@@ -20,7 +20,7 @@
 import { gameStore } from "../store/index.js";
 import { eventBus, EVENTS } from "../engine/eventBus.js";
 import { addItem, modifyGold } from "./inventorySystem.js";
-import { completeQuest } from "./questSystem.js";
+import { addQuest, completeQuest } from "./questSystem.js";
 import { performSkillCheck } from "../engine/actionDispatcher.js";
 import { startStaticEncounter } from "../data/encounters.js";
 import { shortRest, longRest } from "./restSystem.js";
@@ -221,30 +221,15 @@ function _executeAction(action) {
 
     // ── addQuest ──────────────────────────────────────────────────────────────
     case "addQuest": {
-      const state = gameStore.getState();
-      const quests = [...(state.world.quests ?? [])];
-
-      if (!quests.some((q) => q.id === action.questId)) {
-        quests.push({
-          id: action.questId,
-          title: action.title,
-          description: action.description ?? "",
-          status: "active",
-          addedAt: Date.now(),
-        });
-
-        gameStore.setState(
-          { world: { ...state.world, quests } },
-          "storyManager:addQuest",
-        );
-
-        eventBus.emit(EVENTS.QUEST_ADDED, { questId: action.questId });
-        eventBus.emit(EVENTS.UI_NOTIFICATION, {
-          text: `📜 New Quest: ${action.title}`,
-          type: "info",
-          ttl: 4000,
-        });
-      }
+      // Delegate to questSystem so type, parentId and duplicate-checking are
+      // handled correctly — and the QUEST_ADDED event fires with full data.
+      addQuest({
+        id: action.questId,
+        title: action.title,
+        description: action.description ?? "",
+        type: action.questType ?? "side",
+        parentId: action.parentId ?? null,
+      });
 
       if (action.then) goTo(action.then);
       break;
