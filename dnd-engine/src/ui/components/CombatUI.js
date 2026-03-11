@@ -28,6 +28,33 @@ import { processTurn } from "../../systems/dmController.js";
 import { EQUIPMENT_TEMPLATES } from "../../data/equipment.js";
 import { SPELLS } from "../../data/spells.js";
 import { castSpell } from "../../systems/spellSystem.js";
+
+// ── Cantrip / free ranged attack for spellcaster classes ──────────────────────
+// When a spellcaster has no physical ranged weapon equipped they use a free
+// cantrip bolt that requires NO mana and NO ammo.
+// Spellcasting ability follows D&D 5e convention.
+const SPELLCASTER_CANTRIP = {
+  Wizard:   { name: "Tűzlövedék",     icon: "🔥", die: 10, abilityKey: "int", range: 12 },
+  Sorcerer: { name: "Tűzlövedék",     icon: "🔥", die: 10, abilityKey: "cha", range: 12 },
+  Warlock:  { name: "Ördögi Csapás",  icon: "💜", die: 10, abilityKey: "cha", range: 12 },
+  Bard:     { name: "Fénylövedék",    icon: "✨",   die: 8,  abilityKey: "cha", range: 10 },
+  Cleric:   { name: "Isteni Láng",    icon: "☀️",   die: 8,  abilityKey: "wis", range: 8  },
+  Druid:    { name: "Manaszikra",     icon: "🌿",   die: 8,  abilityKey: "wis", range: 8  },
+};
+
+/**
+ * Returns the cantrip meta for the player's class if they are a spellcaster
+ * and do NOT have a physical ranged weapon (bow/crossbow) equipped.
+ * Returns null otherwise (use normal weapon logic).
+ *
+ * @param {object} player
+ * @param {boolean} [hasPhysicalRanged=false]
+ * @returns {{ name, icon, die, abilityKey, range } | null}
+ */
+function _getCantripData(player, hasPhysicalRanged = false) {
+  if (hasPhysicalRanged) return null;
+  return SPELLCASTER_CANTRIP[player?.class ?? ""] ?? null;
+}
 import { removeItem } from "../../systems/inventorySystem.js";
 
 let _unsubs = []; // Store unsubscribe functions for cleanup
@@ -770,38 +797,49 @@ function updateButtonState(state) {
       : "No sidearm weapon equipped";
   }
 
-  // Attack button: tooltip showing attack stat + ammo badge for ranged weapons
+  // Attack button: label, tooltip, ammo badge
   const atkBtn = document.querySelector("#cbtn-attack");
   const ammoBadge = document.querySelector("#ammo-badge");
   if (atkBtn) {
     const wepSlot = state.player.equipment?.weapon;
     const wepTpl = wepSlot ? EQUIPMENT_TEMPLATES[wepSlot.itemId] : null;
-    const isFinesse = wepTpl?.bonuses?.finesse ?? false;
     const isRangedWep = wepTpl?.bonuses?.ranged ?? false;
-    const ammoType = wepTpl?.bonuses?.ammoType ?? "arrow";
-    const strMod = Math.floor(((state.player.abilities?.str ?? 10) - 10) / 2);
-    const dexMod = Math.floor(((state.player.abilities?.dex ?? 10) - 10) / 2);
-    let statLabel;
-    if (isRangedWep) {
-      statLabel = `DEX (ranged)`;
-    } else if (isFinesse) {
-      statLabel = dexMod >= strMod ? `DEX (finesse)` : `STR (finesse)`;
+    const cantrip = _getCantripData(state.player, isRangedWep);
+
+    if (cantrip) {
+      // Spellcaster with no bow/crossbow → show cantrip button
+      atkBtn.textContent = `${cantrip.icon} ${cantrip.name}`;
+      const ablKey = cantrip.abilityKey.toUpperCase();
+      atkBtn.title = `${ablKey} (cantrip · manát nem fogyaszt · ${cantrip.range} mező)`;
+      if (ammoBadge) ammoBadge.style.display = "none";
     } else {
-      statLabel = `STR`;
-    }
-    atkBtn.title = `Attack using ${statLabel}`;
-    if (ammoBadge) {
+      atkBtn.textContent = "⚔️ Attack";
+      const isFinesse = wepTpl?.bonuses?.finesse ?? false;
+      const ammoType = wepTpl?.bonuses?.ammoType ?? "arrow";
+      const strMod = Math.floor(((state.player.abilities?.str ?? 10) - 10) / 2);
+      const dexMod = Math.floor(((state.player.abilities?.dex ?? 10) - 10) / 2);
+      let statLabel;
       if (isRangedWep) {
-        const ammoItem = state.player.inventory?.find(
-          (i) => i.itemId === ammoType && (i.quantity ?? 0) > 0,
-        );
-        const ammoCount = ammoItem?.quantity ?? 0;
-        ammoBadge.textContent = `🪃 ${ammoCount}`;
-        ammoBadge.style.display = "";
-        ammoBadge.title = `${ammoCount} ${ammoType}${ammoType === "bolt" ? "s" : "s"} remaining`;
-        ammoBadge.classList.toggle("ammo-badge--low", ammoCount <= 5);
+        statLabel = `DEX (ranged)`;
+      } else if (isFinesse) {
+        statLabel = dexMod >= strMod ? `DEX (finesse)` : `STR (finesse)`;
       } else {
-        ammoBadge.style.display = "none";
+        statLabel = `STR`;
+      }
+      atkBtn.title = `Attack using ${statLabel}`;
+      if (ammoBadge) {
+        if (isRangedWep) {
+          const ammoItem = state.player.inventory?.find(
+            (i) => i.itemId === ammoType && (i.quantity ?? 0) > 0,
+          );
+          const ammoCount = ammoItem?.quantity ?? 0;
+          ammoBadge.textContent = `🪃 ${ammoCount}`;
+          ammoBadge.style.display = "";
+          ammoBadge.title = `${ammoCount} ${ammoType}${ammoType === "bolt" ? "s" : "s"} remaining`;
+          ammoBadge.classList.toggle("ammo-badge--low", ammoCount <= 5);
+        } else {
+          ammoBadge.style.display = "none";
+        }
       }
     }
   }
@@ -842,12 +880,16 @@ function wireButtons() {
         weaponTemplate?.bonuses?.finesse ?? legacyEquipped?.finesse ?? false;
 
       // Ranged weapons (bows, crossbows) use DEX to attack and damage
-      const isRanged =
+      const _physicalRanged =
         weaponTemplate?.bonuses?.ranged ?? legacyEquipped?.ranged ?? false;
 
-      // ── Ammo check for ranged weapons ───────────────────────────────────
+      // Spellcasters without a physical ranged weapon use a free cantrip
+      const cantripData = _getCantripData(player, _physicalRanged);
+      const isRanged = _physicalRanged || !!cantripData;
+
+      // ── Ammo check — physical ranged weapons only (cantrips need no ammo) ──
       const _ammoType = weaponTemplate?.bonuses?.ammoType ?? "arrow";
-      if (isRanged) {
+      if (_physicalRanged) {
         const _ammoItem = player.inventory.find(
           (i) => i.itemId === _ammoType && (i.quantity ?? 0) > 0,
         );
@@ -860,36 +902,46 @@ function wireButtons() {
         removeItem(_ammoType, 1); // consume one arrow/bolt per shot
       }
 
-      // atkMod: ranged → DEX | finesse → max(STR,DEX) | otherwise → STR
-      const atkStatMod = isRanged
-        ? dexMod
-        : isFinesse
-          ? Math.max(strMod, dexMod)
-          : strMod;
+      // atkMod: cantrip → spell ability | ranged → DEX | finesse → max(STR,DEX) | melee → STR
+      const spellMod = cantripData
+        ? Math.floor(((player.abilities?.[cantripData.abilityKey] ?? 10) - 10) / 2)
+        : 0;
+      const atkStatMod = cantripData
+        ? spellMod
+        : _physicalRanged
+          ? dexMod
+          : isFinesse
+            ? Math.max(strMod, dexMod)
+            : strMod;
       const atkMod =
         atkStatMod + player.proficiencyBonus + (player.attackBonus ?? 0);
 
       // Versatile: use the larger die when no off-hand item is equipped
       const isVersatile = weaponTemplate?.bonuses?.versatile ?? false;
       const hasOffhand = !!player.equipment?.offhand;
-      const damageDie =
-        isVersatile && !hasOffhand
+      const damageDie = cantripData
+        ? cantripData.die
+        : isVersatile && !hasOffhand
           ? (weaponTemplate.bonuses.versatileDie ??
             weaponTemplate.bonuses.damageDie ??
             (legacyEquipped ? 6 : 4))
           : (weaponTemplate?.bonuses?.damageDie ?? (legacyEquipped ? 6 : 4));
-      const dmgNote = legacyEquipped?.damageNotation ?? `1d${damageDie}`;
-      // Ranged damage also uses DEX; finesse → max(STR,DEX)
-      const dmgStatBonus = isRanged
-        ? dexMod
-        : isFinesse
-          ? Math.max(strMod, dexMod)
-          : strMod;
-      // Flat weapon damage bonus (e.g. Captain's Longsword +1)
-      const weaponBaseDmgBonus = weaponTemplate?.bonuses?.baseDmgBonus ?? 0;
+      // Cantrips in D&D 5e: attack roll uses spell mod + prof, but damage has NO ability bonus
+      const dmgNote = cantripData
+        ? `1d${cantripData.die}`
+        : (legacyEquipped?.damageNotation ?? `1d${damageDie}`);
+      const dmgStatBonus = cantripData
+        ? 0
+        : _physicalRanged
+          ? dexMod
+          : isFinesse
+            ? Math.max(strMod, dexMod)
+            : strMod;
+      const weaponBaseDmgBonus = cantripData ? 0 : (weaponTemplate?.bonuses?.baseDmgBonus ?? 0);
       const dmgBonus = dmgStatBonus + weaponBaseDmgBonus;
-      const weaponName =
-        weaponTemplate?.name ?? legacyEquipped?.name ?? "unarmed strike";
+      const weaponName = cantripData
+        ? `${cantripData.icon} ${cantripData.name}`
+        : (weaponTemplate?.name ?? legacyEquipped?.name ?? "unarmed strike");
 
       // ── Range check + adjacency disadvantage ────────────────────────────
       const combatState = gameStore.getState().combat;
@@ -898,11 +950,12 @@ function wireButtons() {
         const playerPos = combatState.turnOrder.find((p) => p.isPlayer);
         const targetPos = combatState.turnOrder.find((p) => p.id === targetId);
         if (playerPos && targetPos) {
-          const weaponRangeSquares =
-            weaponTemplate?.bonuses?.weaponRange ??
-            legacyEquipped?.weaponRange ??
-            playerPos.weaponRange ??
-            1;
+          const weaponRangeSquares = cantripData
+            ? cantripData.range
+            : (weaponTemplate?.bonuses?.weaponRange ??
+              legacyEquipped?.weaponRange ??
+              playerPos.weaponRange ??
+              1);
           const dist = calcDistance(playerPos, targetPos);
           if (dist > weaponRangeSquares) {
             appendCombatLog(
