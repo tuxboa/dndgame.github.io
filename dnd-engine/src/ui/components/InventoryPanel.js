@@ -38,6 +38,7 @@ function _confirmDrop(itemName) {
       <div class="modal drop-confirm-modal">
         <h2>⚠️ Item eldobása</h2>
         <p>Biztosan eldobod: <strong>${itemName}</strong>?</p>
+        <p class="drop-confirm-warning">Ez a művelet nem vonható vissza — az item véglegesen elvész!</p>
         <div class="drop-confirm-actions">
           <button class="btn-drop-yes">Igen, eldobom</button>
           <button class="btn-drop-no">Mégsem</button>

@@ -414,6 +414,11 @@ body {
 .drop-confirm-modal strong {
   color: var(--color-text);
 }
+.drop-confirm-warning {
+  color: #e06060;
+  font-size: 0.8rem;
+  margin-top: -0.2rem;
+}
 .drop-confirm-actions {
   display: flex;
   gap: 0.75rem;
