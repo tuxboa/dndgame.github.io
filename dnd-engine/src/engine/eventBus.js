@@ -24,8 +24,8 @@ export const eventBus = {
    */
   once(event, handler) {
     const unsub = this.on(event, (payload) => {
+      unsub(); // unsubscribe first so a throwing handler doesn't leave it stuck
       handler(payload);
-      unsub();
     });
     return unsub;
   },

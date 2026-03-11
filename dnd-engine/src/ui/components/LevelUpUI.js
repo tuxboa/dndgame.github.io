@@ -212,6 +212,8 @@ function _mountModal(payload) {
   // ── Stat buttons ─────────────────────────────────────────────────────────
   overlay.querySelectorAll(".levelup-stat-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
+      // Disable all choice buttons immediately to prevent double-selection
+      overlay.querySelectorAll(".levelup-stat-btn, .levelup-feat-btn").forEach((b) => (b.disabled = true));
       btn.classList.add("levelup-stat-btn--chosen");
       setTimeout(() => {
         applyLevelUp(btn.dataset.stat);
@@ -238,6 +240,8 @@ function _mountModal(payload) {
   // ── Feat buttons ──────────────────────────────────────────────────────────
   overlay.querySelectorAll(".levelup-feat-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
+      // Disable all choice buttons immediately to prevent double-selection
+      overlay.querySelectorAll(".levelup-stat-btn, .levelup-feat-btn").forEach((b) => (b.disabled = true));
       btn.classList.add("levelup-feat-btn--chosen");
       setTimeout(() => {
         applyLevelUp("feat:" + btn.dataset.feat);
@@ -264,6 +268,9 @@ function _dismiss(overlay) {
  */
 function _mountMagicalSecretsPicker({ count, availableSpells }) {
   let remaining = count;
+
+  // Remove any stale instance (same guard as _mountModal)
+  document.querySelector("#magical-secrets-overlay")?.remove();
 
   const overlay = document.createElement("div");
   overlay.id = "magical-secrets-overlay";

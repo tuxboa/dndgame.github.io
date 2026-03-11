@@ -415,10 +415,10 @@ function _renderEquipmentSlots(player) {
       const template = slotEntry ? EQUIPMENT_TEMPLATES[slotEntry.itemId] : null;
 
       if (template) {
-        totalAc += template.bonuses.acBonus ?? 0;
-        totalAtk += template.bonuses.attackBonus ?? 0;
-        totalMana += template.bonuses.manaBonus ?? 0;
-        totalHp += template.bonuses.hpBonus ?? 0;
+        totalAc += template.bonuses?.acBonus ?? 0;
+        totalAtk += template.bonuses?.attackBonus ?? 0;
+        totalMana += template.bonuses?.manaBonus ?? 0;
+        totalHp += template.bonuses?.hpBonus ?? 0;
       }
 
       const filled = !!template;

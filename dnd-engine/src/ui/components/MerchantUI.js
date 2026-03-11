@@ -268,6 +268,12 @@ function _htmlBuy() {
       })
       .join("")
   );
+}
+
+// ── Sell tab ──────────────────────────────────────────────────────────────────
+
+function _htmlSell() {
+  const { inventory } = gameStore.getState().player;
 
   // Equipped items can't be sold — unequip first
   const sellable = inventory.filter((i) => !i.equipped);
