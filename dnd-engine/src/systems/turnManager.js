@@ -96,6 +96,7 @@ export function startCombat(participants) {
         round: 1,
         turnOrder,
         currentTurnIndex: 0,
+        currentTurnActorId: turnOrder[0]?.id ?? null,
         log: [],
       },
       // Clear any stale death-save state from a previous combat (e.g. loaded
@@ -214,6 +215,7 @@ export function advanceTurn() {
         ...state.combat,
         turnOrder: withMovReset,
         currentTurnIndex: nextIndex,
+        currentTurnActorId: current.id,
         round: newRound,
       },
       session: {

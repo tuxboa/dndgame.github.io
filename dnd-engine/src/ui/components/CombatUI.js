@@ -268,7 +268,14 @@ export function initCombatUI() {
     const template = state.campaign.enemies[current.enemyType ?? ""] ?? {};
     const enemyWithStats = { ...template, ...current };
 
-    await runEnemyTurn(enemyWithStats);
+    // Bug fix: catch any unhandled rejection so a crashed enemy turn doesn't
+    // freeze combat with all buttons permanently disabled.
+    try {
+      await runEnemyTurn(enemyWithStats);
+    } catch (err) {
+      console.error("[CombatUI] Enemy turn threw — forcing advanceTurn:", err);
+      advanceTurn();
+    }
   });
 
   // After combat resolves, ask the DM to narrate the aftermath
@@ -623,8 +630,10 @@ function renderTurnStrip(combat) {
 
   el.innerHTML = combat.turnOrder
     .filter((p) => p.isPlayer || (p.hp ?? 1) > 0) // hide dead enemies
-    .map((p, i) => {
-      const isCurrent = i === combat.currentTurnIndex;
+    .map((p) => {
+      // Bug fix: use actor ID (not array index) — currentTurnIndex is an index
+      // into the *alive* array which diverges from turnOrder after enemies die.
+      const isCurrent = p.id === combat.currentTurnActorId;
       const hpPct = p.maxHp ? Math.round((p.hp / p.maxHp) * 100) : 100;
       return `
       <div class="turn-token ${isCurrent ? "turn-token--active" : ""} ${p.isPlayer ? "turn-token--player" : "turn-token--enemy"}">
@@ -1842,17 +1851,29 @@ function _openSpellPicker() {
           return;
         }
         const targetId = _targetedEnemyId;
-        const result = await castSpell(spellId, targetId);
-        if (!result.ok) {
-          appendCombatLog(`❌ Cannot cast: ${result.reason}`);
-        } else {
+        try {
+          const result = await castSpell(spellId, targetId);
+          if (!result.ok) {
+            appendCombatLog(`❌ Cannot cast: ${result.reason}`);
+          } else {
+            advanceTurn();
+          }
+        } catch (err) {
+          console.error("[CombatUI] castSpell threw:", err);
+          appendCombatLog("❌ Spell failed unexpectedly.");
           advanceTurn();
         }
       } else {
-        const result = await castSpell(spellId, null);
-        if (!result.ok) {
-          appendCombatLog(`❌ Cannot cast: ${result.reason}`);
-        } else {
+        try {
+          const result = await castSpell(spellId, null);
+          if (!result.ok) {
+            appendCombatLog(`❌ Cannot cast: ${result.reason}`);
+          } else {
+            advanceTurn();
+          }
+        } catch (err) {
+          console.error("[CombatUI] castSpell threw:", err);
+          appendCombatLog("❌ Spell failed unexpectedly.");
           advanceTurn();
         }
       }

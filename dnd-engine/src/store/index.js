@@ -156,6 +156,7 @@ export const gameStore = createStore({
     round: 0,
     turnOrder: [], // [{ id, name, initiative, isPlayer, x, y, movementSpeed, movementRemaining, weaponRange }]
     currentTurnIndex: 0,
+    currentTurnActorId: null, // ID of the combatant whose turn it currently is
     log: [], // [{ round, actor, action, result, timestamp }]
     // ── Tactical Grid Map ──────────────────────────────────────────
     map: {
