@@ -81,6 +81,11 @@ import {
   startStaticEncounter,
   DIFFICULTY_COLOUR,
 } from "./data/encounters.js";
+import { mountRadarChart } from "./ui/components/StatsRadarChart.js";
+import { initRPGNavBar } from "./ui/components/RPGNavBar.js";
+import { initRankModal } from "./ui/components/RankProgressionModal.js";
+import { initHowToPlayAccordion } from "./ui/components/HowToPlayAccordion.js";
+import { initChangelog } from "./ui/components/ChangelogModal.js";
 
 // ── Dev: expose state to DevTools ─────────────────────────────────────────────
 if (import.meta.env.DEV) {
@@ -220,6 +225,18 @@ async function bootstrap() {
   // Initialise Google Cloud TTS for the DM Voice (after audio context is unblocked)
   initTTS(restoreTtsKey());
 
+  // ── New UI components ──────────────────────────────────────────────────────
+  // RPG Navigation bar (renders into #rpg-navbar added in footer)
+  initRPGNavBar();
+  // Rank Progression Modal (attaches click handler to #rank-btn)
+  initRankModal();
+  // Changelog Modal (attaches to #changelog-btn)
+  initChangelog();
+  // How To Play Accordion (renders into #how-to-play-panel inside modal)
+  initHowToPlayAccordion(document.querySelector("#how-to-play-panel"));
+  // Stats Radar Chart (renders into #radar-chart-slot inside modal)
+  mountRadarChart(document.querySelector("#radar-chart-slot"));
+
   // Step 5: Start static story engine (no API key required)
   startStory();
 }
@@ -253,6 +270,10 @@ function renderUI(app, campaign) {
           <button id="btn-quests"     class="icon-btn" title="Quest Log (Q)">📜</button>
           <button id="btn-encounters" class="icon-btn" title="Encounters (E)">🗡️</button>
           <button id="btn-session"    class="icon-btn" title="Co-op Session">🌐</button>
+          <button id="btn-radar"      class="icon-btn" title="Képességek Radar">📊</button>
+          <button id="rank-btn"       class="icon-btn" title="Rang és Haladás">👑</button>
+          <button id="how-to-play-btn" class="icon-btn" title="Hogyan játssz?">❓</button>
+          <button id="changelog-btn"  class="icon-btn" title="Változásnapló">📋</button>
           <button id="btn-save"       class="icon-btn" title="Save / Load (F5)">💾</button>
           <button id="btn-settings"   class="icon-btn" title="Settings">⚙️<span id="settings-offline-badge" class="offline-badge" style="display:none" title="Offline — Nincs API kulcs">!</span></button>
         </div>
@@ -268,6 +289,7 @@ function renderUI(app, campaign) {
 
       <footer class="game-footer">
         <div class="action-bar" id="action-bar"></div>
+        <div id="rpg-navbar"></div>
         <div class="input-row">
           <input
             id="player-input"
@@ -360,6 +382,28 @@ function renderUI(app, campaign) {
 
     <!-- Notification toasts -->
     <div id="notif-container" aria-live="polite"></div>
+
+    <!-- Radar Chart Modal -->
+    <div class="modal-overlay hidden" id="modal-radar" role="dialog" aria-modal="true" aria-label="Képességek Radar">
+      <div class="modal radar-modal">
+        <div class="modal-header">
+          <h2>📊 Képességek</h2>
+          <button id="btn-close-radar" class="cs-close" title="Bezárás">✕</button>
+        </div>
+        <div id="radar-chart-slot"></div>
+      </div>
+    </div>
+
+    <!-- How To Play Modal -->
+    <div class="modal-overlay hidden" id="modal-how-to-play" role="dialog" aria-modal="true" aria-label="Hogyan játssz?">
+      <div class="modal htp-modal">
+        <div class="modal-header">
+          <h2>❓ Hogyan játssz?</h2>
+          <button id="btn-close-htp" class="cs-close" title="Bezárás">✕</button>
+        </div>
+        <div id="how-to-play-panel" style="max-height:70vh;overflow-y:auto;padding:4px 2px"></div>
+      </div>
+    </div>
   `;
 }
 
@@ -490,6 +534,30 @@ function wireUI() {
     .querySelector("#btn-quests")
     ?.addEventListener("click", toggleQuestLog);
 
+  // Radar chart modal
+  document.querySelector("#btn-radar")?.addEventListener("click", () =>
+    document.querySelector("#modal-radar")?.classList.remove("hidden")
+  );
+  document.querySelector("#btn-close-radar")?.addEventListener("click", () =>
+    document.querySelector("#modal-radar")?.classList.add("hidden")
+  );
+  document.querySelector("#modal-radar")?.addEventListener("click", (e) => {
+    if (e.target === document.querySelector("#modal-radar"))
+      document.querySelector("#modal-radar")?.classList.add("hidden");
+  });
+
+  // How To Play modal
+  document.querySelector("#how-to-play-btn")?.addEventListener("click", () =>
+    document.querySelector("#modal-how-to-play")?.classList.remove("hidden")
+  );
+  document.querySelector("#btn-close-htp")?.addEventListener("click", () =>
+    document.querySelector("#modal-how-to-play")?.classList.add("hidden")
+  );
+  document.querySelector("#modal-how-to-play")?.addEventListener("click", (e) => {
+    if (e.target === document.querySelector("#modal-how-to-play"))
+      document.querySelector("#modal-how-to-play")?.classList.add("hidden");
+  });
+
   document
     .querySelector("#btn-encounters")
     ?.addEventListener("click", showEncounterModal);
@@ -568,6 +636,8 @@ function closeAllPanels() {
   document.querySelector("#modal-key")?.classList.add("hidden");
   document.querySelector("#modal-save")?.classList.add("hidden");
   document.querySelector("#session-panel")?.classList.add("hidden");
+  document.querySelector("#modal-radar")?.classList.add("hidden");
+  document.querySelector("#modal-how-to-play")?.classList.add("hidden");
   // Game-over modal is intentionally NOT closed by Escape
 }
 

@@ -869,15 +869,25 @@ function wireButtons() {
       const atkMod =
         atkStatMod + player.proficiencyBonus + (player.attackBonus ?? 0);
 
+      // Versatile: use the larger die when no off-hand item is equipped
+      const isVersatile = weaponTemplate?.bonuses?.versatile ?? false;
+      const hasOffhand = !!player.equipment?.offhand;
       const damageDie =
-        weaponTemplate?.bonuses?.damageDie ?? (legacyEquipped ? 6 : 4);
+        isVersatile && !hasOffhand
+          ? (weaponTemplate.bonuses.versatileDie ??
+            weaponTemplate.bonuses.damageDie ??
+            (legacyEquipped ? 6 : 4))
+          : (weaponTemplate?.bonuses?.damageDie ?? (legacyEquipped ? 6 : 4));
       const dmgNote = legacyEquipped?.damageNotation ?? `1d${damageDie}`;
-      // Ranged damage also uses DEX
-      const dmgBonus = isRanged
+      // Ranged damage also uses DEX; finesse → max(STR,DEX)
+      const dmgStatBonus = isRanged
         ? dexMod
         : isFinesse
           ? Math.max(strMod, dexMod)
           : strMod;
+      // Flat weapon damage bonus (e.g. Captain's Longsword +1)
+      const weaponBaseDmgBonus = weaponTemplate?.bonuses?.baseDmgBonus ?? 0;
+      const dmgBonus = dmgStatBonus + weaponBaseDmgBonus;
       const weaponName =
         weaponTemplate?.name ?? legacyEquipped?.name ?? "unarmed strike";
 

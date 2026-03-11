@@ -136,6 +136,7 @@ export const EVENTS = {
   ITEM_UNEQUIPPED: "equipment:unequipped",
   // ── Progression ───────────────────────────────────────────────────────────
   LEVEL_UP_READY: "player:levelUpReady", // Emitted by addXp when threshold hit
+  MAGICAL_SECRETS_READY: "player:magicalSecretsReady", // { count, availableSpells }
 
   // ── Rest ──────────────────────────────────────────────────────────────────
   REST_COMPLETED: "player:restCompleted", // { restType, hpRestored, manaRestored, newHp, newMana }

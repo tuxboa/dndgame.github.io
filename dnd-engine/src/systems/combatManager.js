@@ -365,30 +365,45 @@ async function _resolveAttack(enemy) {
     return;
   }
 
-  // ── Attack roll: apply disadvantage from status effects ────────────────────
+  // ── Attack roll: apply advantage / disadvantage from status effects ─────────
   const enemyCombatant = state.combat.turnOrder.find((p) => p.id === enemy.id);
   const enemyEffects = enemyCombatant?.activeEffects ?? [];
+  // Enemy is disadvantaged when frightened, blinded, or prone (D&D 5e)
   const enemyDisadv = enemyEffects.some(
-    (e) => e.id === "frightened" || e.id === "blinded",
+    (e) => e.id === "frightened" || e.id === "blinded" || e.id === "prone",
   );
   const playerDodging = latestPlayer.dodging ?? false;
-  const hasDisadv = enemyDisadv || playerDodging;
+  // Enemy has advantage when the target (player) is blinded or prone (D&D 5e)
+  const playerCombatant = state.combat.turnOrder.find((p) => p.isPlayer);
+  const playerEffects = playerCombatant?.activeEffects ?? [];
+  const enemyHasAdv = playerEffects.some(
+    (e) => e.id === "blinded" || e.id === "prone",
+  );
+  // Advantage and disadvantage cancel out (D&D 5e rule)
+  const hasDisadv = (enemyDisadv || playerDodging) && !enemyHasAdv;
+  const hasAdv = enemyHasAdv && !enemyDisadv && !playerDodging;
 
   const attackBonus = enemy.attackBonus ?? 0;
   const atkBonusStr = attackBonus >= 0 ? `+${attackBonus}` : `${attackBonus}`;
   const atkNotation = hasDisadv
     ? `2d20kl1${atkBonusStr}`
-    : attackBonus >= 0
-      ? `1d20+${attackBonus}`
-      : `1d20-${Math.abs(attackBonus)}`;
+    : hasAdv
+      ? `2d20kh1${atkBonusStr}`
+      : attackBonus >= 0
+        ? `1d20+${attackBonus}`
+        : `1d20-${Math.abs(attackBonus)}`;
   const attackRoll = roll(atkNotation);
-  if (hasDisadv) {
+  if (hasDisadv || hasAdv) {
+    const cause = hasAdv
+      ? playerEffects.find((e) => e.id === "blinded" || e.id === "prone")?.id
+      : (enemyEffects.find(
+          (e) =>
+            e.id === "frightened" || e.id === "blinded" || e.id === "prone",
+        )?.id ?? "player dodging");
     logCombatAction({
       actor: enemy.name,
-      action: "attacks at Disadvantage",
-      result: enemyDisadv
-        ? `Status: ${enemyEffects.find((e) => e.id === "frightened" || e.id === "blinded")?.id}`
-        : "Player is dodging",
+      action: `attacks at ${hasAdv ? "Advantage" : "Disadvantage"}`,
+      result: `Cause: ${cause}`,
     });
   }
   eventBus.emit(EVENTS.DICE_ANIMATE, {
@@ -467,6 +482,9 @@ async function _resolveAttack(enemy) {
     handlePlayerKnockout();
     // Combat continues — advance to the next turn so enemies keep acting
     // while the player resolves death saving throws.
+    // Brief delay ensures the death-save overlay has had one render frame
+    // to mount before the next enemy turn fires.
+    await new Promise((r) => setTimeout(r, 80));
     advanceTurn();
     return;
   }

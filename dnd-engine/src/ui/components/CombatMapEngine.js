@@ -11,7 +11,11 @@
 
 import { gameStore } from "../../store/index.js";
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
-import { moveParticipant, calcDistance } from "../../systems/turnManager.js";
+import {
+  moveParticipant,
+  calcDistance,
+  setObstacleChecker,
+} from "../../systems/turnManager.js";
 import { performAttack } from "../../engine/actionDispatcher.js";
 import { EQUIPMENT_TEMPLATES } from "../../data/equipment.js";
 
@@ -1109,6 +1113,9 @@ function _buildObstacles(obstacleList) {
   for (const o of obstacleList ?? []) {
     _obstacles.set(`${o.x},${o.y}`, o.type ?? "wall");
   }
+  // Register the obstacle checker with turnManager so AI movement also
+  // respects obstacles (not just the player movement highlights).
+  setObstacleChecker((x, y) => _obstacles.has(`${x},${y}`));
 }
 
 function _drawObstacles(ctx) {

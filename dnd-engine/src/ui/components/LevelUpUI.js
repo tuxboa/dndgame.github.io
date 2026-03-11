@@ -12,13 +12,17 @@
  */
 
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
-import { applyLevelUp } from "../../systems/levelUpSystem.js";
+import { applyLevelUp, applyMagicalSecret } from "../../systems/levelUpSystem.js";
 import { FEATS } from "../../data/feats.js";
 import { gameStore } from "../../store/index.js";
 
 export function initLevelUpUI() {
   eventBus.on(EVENTS.LEVEL_UP_READY, (payload) => {
     _mountModal(payload);
+  });
+
+  eventBus.on(EVENTS.MAGICAL_SECRETS_READY, (payload) => {
+    _mountMagicalSecretsPicker(payload);
   });
 }
 
@@ -247,4 +251,59 @@ function _dismiss(overlay) {
   overlay.addEventListener("animationend", () => overlay.remove(), {
     once: true,
   });
+}
+
+// ── Magical Secrets spell picker ──────────────────────────────────────────────
+
+/**
+ * Show a modal where the Bard picks 2 spells from ANY class.
+ * Called when MAGICAL_SECRETS_READY fires after reaching Bard level 9.
+ */
+function _mountMagicalSecretsPicker({ count, availableSpells }) {
+  let remaining = count;
+
+  const overlay = document.createElement("div");
+  overlay.id = "magical-secrets-overlay";
+  overlay.className = "levelup-overlay magical-secrets-overlay";
+
+  const rebuild = () => {
+    const knownSpells = new Set(gameStore.getState().player.knownSpells ?? []);
+    const rows = availableSpells
+      .filter((s) => !knownSpells.has(s.id))
+      .map((s) => `
+        <button class="ms-spell-btn" data-spell-id="${s.id}">
+          <span class="ms-spell-name">${s.name}</span>
+          ${s.description ? `<span class="ms-spell-desc">${s.description}</span>` : ""}
+        </button>`)
+      .join("");
+
+    overlay.innerHTML = `
+      <div class="levelup-card ms-card" role="dialog" aria-modal="true">
+        <h2 class="levelup-title">✨ Magical Secrets</h2>
+        <p class="levelup-subtitle">Choose <strong>${remaining}</strong> spell${remaining !== 1 ? "s" : ""} from any class list.</p>
+        <div class="ms-spell-list">
+          ${rows || "<p class='levelup-subtitle'>No new spells available.</p>"}
+        </div>
+      </div>`;
+
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add("levelup-overlay--visible"));
+
+    overlay.querySelectorAll(".ms-spell-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const spellId = btn.dataset.spellId;
+        applyMagicalSecret(spellId);
+        remaining -= 1;
+        if (remaining <= 0) {
+          overlay.classList.add("levelup-overlay--exit");
+          overlay.addEventListener("animationend", () => overlay.remove(), { once: true });
+        } else {
+          overlay.remove();
+          rebuild();
+        }
+      });
+    });
+  };
+
+  rebuild();
 }

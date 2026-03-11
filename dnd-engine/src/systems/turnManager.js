@@ -24,6 +24,22 @@ const _GRID_COLS = 20;
 const _GRID_ROWS = 14;
 
 /**
+ * Optional obstacle checker — injected by CombatMapEngine after it builds
+ * the obstacle map so that moveParticipant can block impassable cells.
+ * Signature: (x: number, y: number) => boolean
+ */
+let _obstacleChecker = null;
+
+/**
+ * Register a function that returns true when a grid cell is an obstacle.
+ * Called once by CombatMapEngine after _buildObstacles().
+ * @param {(x: number, y: number) => boolean} fn
+ */
+export function setObstacleChecker(fn) {
+  _obstacleChecker = fn;
+}
+
+/**
  * Start a new combat encounter.
  * Rolls initiative for all participants and sets turn order.
  *
@@ -459,6 +475,11 @@ export function moveParticipant(participantId, toX, toY) {
       p.id !== participantId && p.x === toX && p.y === toY && (p.hp ?? 1) > 0,
   );
   if (occupied) return { ok: false, reason: "Cell is occupied" };
+
+  // Obstacle check (injected by CombatMapEngine)
+  if (_obstacleChecker && _obstacleChecker(toX, toY)) {
+    return { ok: false, reason: "Cell is blocked by an obstacle" };
+  }
 
   // Cost: Chebyshev distance × 5 ft per square
   const dist = calcDistance(mover, { x: toX, y: toY });

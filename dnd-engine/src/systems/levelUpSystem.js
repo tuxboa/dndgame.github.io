@@ -218,7 +218,10 @@ const CLASS_LEVEL_BONUSES = {
     ],
     9: [
       {
-        desc: "Magical Secrets: learn two spells from any class (not yet modelled)",
+        desc: "Magical Secrets: learn two spells from any class",
+        // Emit a special event so LevelUpUI can show the spell-picker modal.
+        // The two chosen spells are added in applyMagicalSecrets().
+        patchCa: (ca) => ({ ...ca, magicalSecretsPending: 2 }),
       },
     ],
   },
@@ -428,4 +431,52 @@ export function applyLevelUp(choice) {
       `HP ${state.player.maxHp}→${newMaxHp}, MP ${state.player.maxMana ?? 0}→${newMaxMp}, ` +
       `ProfBonus ${getProfBonus(newLevel)}${newSpellIds.length ? ", spells: " + newSpellIds.join(",") : ""}`,
   );
+
+  // Magical Secrets: let the player pick 2 spells from any class.
+  // Emit an event so LevelUpUI (or any listener) can show the picker UI.
+  const freshP = gameStore.getState().player;
+  if ((freshP.classAbilities?.magicalSecretsPending ?? 0) > 0) {
+    const allSpellIds = Object.keys(SPELLS);
+    eventBus.emit(EVENTS.MAGICAL_SECRETS_READY, {
+      count: freshP.classAbilities.magicalSecretsPending,
+      availableSpells: allSpellIds.map((id) => ({ id, name: SPELLS[id]?.name ?? id, description: SPELLS[id]?.description ?? "" })),
+    });
+  }
+}
+
+/**
+ * Add a spell chosen via Magical Secrets to the player's known spells.
+ * Call this once per spell the player selects in the picker UI.
+ * @param {string} spellId
+ */
+export function applyMagicalSecret(spellId) {
+  const p = gameStore.getState().player;
+  const ca = p.classAbilities ?? {};
+  const pending = ca.magicalSecretsPending ?? 0;
+  if (pending <= 0) return;
+
+  const existing = new Set(p.knownSpells ?? []);
+  existing.add(spellId);
+
+  gameStore.setState(
+    {
+      player: {
+        ...p,
+        knownSpells: [...existing],
+        classAbilities: {
+          ...ca,
+          magicalSecretsPending: Math.max(0, pending - 1),
+        },
+      },
+    },
+    "levelUpSystem:magicalSecret",
+  );
+
+  eventBus.emit(EVENTS.UI_NOTIFICATION, {
+    text: `✨ Magical Secrets: learned ${SPELLS[spellId]?.name ?? spellId}!`,
+    type: "success",
+    ttl: 3000,
+  });
+
+  console.log(`[LevelUpSystem] Magical Secrets — added ${spellId}`);
 }
