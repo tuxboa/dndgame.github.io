@@ -17,6 +17,17 @@
 
 import { hasSavedGame } from "../../systems/saveSystem.js";
 
+// ── Fullscreen helper ─────────────────────────────────────────────────────────
+function _requestFullscreen() {
+  const el = document.documentElement;
+  const fn =
+    el.requestFullscreen ??
+    el.webkitRequestFullscreen ??
+    el.mozRequestFullScreen ??
+    el.msRequestFullscreen;
+  fn?.call(el).catch(() => {});
+}
+
 // ── Campaign registry ─────────────────────────────────────────────────────────
 // Add more entries here as you create additional campaign files.
 
@@ -762,6 +773,7 @@ function _renderCampaignSelect(wrap) {
   `;
 
   wrap.querySelector("#mm-continue")?.addEventListener("click", () => {
+    _requestFullscreen();
     _resolve({ resumeSave: true });
   });
 
@@ -1540,6 +1552,7 @@ function _renderCharForm(wrap) {
     const maxHp = hd + conMod;
     const ac = BASE_AC[cls];
     const gold = STARTER_GOLD[cls];
+    _requestFullscreen();
     _resolve({
       campaignPath: _campaign.path,
       playerData: _buildPlayerData(cls, abs, maxHp, ac, gold, currentRace),
@@ -1627,6 +1640,7 @@ function _renderConfirm(wrap) {
 
   wrap.querySelector("#mm-start").addEventListener("click", () => {
     const playerData = _buildPlayerData(cls, abs, maxHp, ac, gold, race);
+    _requestFullscreen();
     _resolve({ campaignPath: _campaign.path, playerData });
   });
 }

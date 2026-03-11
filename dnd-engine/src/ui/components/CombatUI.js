@@ -34,12 +34,48 @@ import { castSpell } from "../../systems/spellSystem.js";
 // cantrip bolt that requires NO mana and NO ammo.
 // Spellcasting ability follows D&D 5e convention.
 const SPELLCASTER_CANTRIP = {
-  Wizard:   { name: "Tűzlövedék",     icon: "🔥", die: 10, abilityKey: "int", range: 12 },
-  Sorcerer: { name: "Tűzlövedék",     icon: "🔥", die: 10, abilityKey: "cha", range: 12 },
-  Warlock:  { name: "Ördögi Csapás",  icon: "💜", die: 10, abilityKey: "cha", range: 12 },
-  Bard:     { name: "Fénylövedék",    icon: "✨",   die: 8,  abilityKey: "cha", range: 10 },
-  Cleric:   { name: "Isteni Láng",    icon: "☀️",   die: 8,  abilityKey: "wis", range: 8  },
-  Druid:    { name: "Manaszikra",     icon: "🌿",   die: 8,  abilityKey: "wis", range: 8  },
+  Wizard: {
+    name: "Tűzlövedék",
+    icon: "🔥",
+    die: 10,
+    abilityKey: "int",
+    range: 12,
+  },
+  Sorcerer: {
+    name: "Tűzlövedék",
+    icon: "🔥",
+    die: 10,
+    abilityKey: "cha",
+    range: 12,
+  },
+  Warlock: {
+    name: "Ördögi Csapás",
+    icon: "💜",
+    die: 10,
+    abilityKey: "cha",
+    range: 12,
+  },
+  Bard: {
+    name: "Fénylövedék",
+    icon: "✨",
+    die: 8,
+    abilityKey: "cha",
+    range: 10,
+  },
+  Cleric: {
+    name: "Isteni Láng",
+    icon: "☀️",
+    die: 8,
+    abilityKey: "wis",
+    range: 8,
+  },
+  Druid: {
+    name: "Manaszikra",
+    icon: "🌿",
+    die: 8,
+    abilityKey: "wis",
+    range: 8,
+  },
 };
 
 /**
@@ -904,7 +940,9 @@ function wireButtons() {
 
       // atkMod: cantrip → spell ability | ranged → DEX | finesse → max(STR,DEX) | melee → STR
       const spellMod = cantripData
-        ? Math.floor(((player.abilities?.[cantripData.abilityKey] ?? 10) - 10) / 2)
+        ? Math.floor(
+            ((player.abilities?.[cantripData.abilityKey] ?? 10) - 10) / 2,
+          )
         : 0;
       const atkStatMod = cantripData
         ? spellMod
@@ -937,7 +975,9 @@ function wireButtons() {
           : isFinesse
             ? Math.max(strMod, dexMod)
             : strMod;
-      const weaponBaseDmgBonus = cantripData ? 0 : (weaponTemplate?.bonuses?.baseDmgBonus ?? 0);
+      const weaponBaseDmgBonus = cantripData
+        ? 0
+        : (weaponTemplate?.bonuses?.baseDmgBonus ?? 0);
       const dmgBonus = dmgStatBonus + weaponBaseDmgBonus;
       const weaponName = cantripData
         ? `${cantripData.icon} ${cantripData.name}`
