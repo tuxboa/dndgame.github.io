@@ -779,6 +779,7 @@ function _renderCampaignSelect(wrap) {
 
   wrap.querySelectorAll(".mm-campaign-card").forEach((btn) => {
     btn.addEventListener("click", () => {
+      _requestFullscreen();
       _campaign = { id: btn.dataset.id, path: btn.dataset.path };
       _transition(2);
     });
@@ -1552,7 +1553,6 @@ function _renderCharForm(wrap) {
     const maxHp = hd + conMod;
     const ac = BASE_AC[cls];
     const gold = STARTER_GOLD[cls];
-    _requestFullscreen();
     _resolve({
       campaignPath: _campaign.path,
       playerData: _buildPlayerData(cls, abs, maxHp, ac, gold, currentRace),
@@ -1640,7 +1640,6 @@ function _renderConfirm(wrap) {
 
   wrap.querySelector("#mm-start").addEventListener("click", () => {
     const playerData = _buildPlayerData(cls, abs, maxHp, ac, gold, race);
-    _requestFullscreen();
     _resolve({ campaignPath: _campaign.path, playerData });
   });
 }
