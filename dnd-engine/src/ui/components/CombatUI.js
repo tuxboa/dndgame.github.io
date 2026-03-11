@@ -233,6 +233,21 @@ export function initCombatUI() {
         const wsExpired = newWsRounds <= 0;
         const wsHp = Math.min(wsPlayer.maxHp, (wsPlayer.hp ?? 0) + 1);
         const wsAcPatch = wsExpired ? { ac: (wsPlayer.ac ?? 10) - 2 } : {};
+        // Sync AC removal into combat.turnOrder so attack-vs-AC rolls use the
+        // correct value when Wild Shape expires (fixes desync with spellSystem /
+        // turnManager which both read AC from the turnOrder entry, not player).
+        const wsCombat = gameStore.getState().combat;
+        const wsCombatPatch =
+          wsExpired && wsCombat?.active
+            ? {
+                combat: {
+                  ...wsCombat,
+                  turnOrder: wsCombat.turnOrder.map((p) =>
+                    p.isPlayer ? { ...p, ac: (p.ac ?? 10) - 2 } : p,
+                  ),
+                },
+              }
+            : {};
         gameStore.setState(
           {
             player: {
@@ -245,6 +260,7 @@ export function initCombatUI() {
                 wildShapeRoundsLeft: newWsRounds,
               },
             },
+            ...wsCombatPatch,
           },
           "combatUI:wildShapeTick",
         );
@@ -960,8 +976,29 @@ function wireButtons() {
           : isFinesse
             ? Math.max(strMod, dexMod)
             : strMod;
+
+      // Consume Bardic Inspiration die (one-time bonus — clear it before the attack
+      // fires so a second click can't double-apply it).
+      const bardInspBonus = ca.bardInspirationBonus ?? 0;
+      if (bardInspBonus > 0) {
+        const stBard = gameStore.getState();
+        gameStore.setState(
+          {
+            player: {
+              ...stBard.player,
+              classAbilities: {
+                ...stBard.player.classAbilities,
+                bardInspirationBonus: 0,
+              },
+            },
+          },
+          "combatUI:bardInspirationConsumed",
+        );
+        _refreshClassButton();
+      }
+
       const atkMod =
-        atkStatMod + player.proficiencyBonus + (player.attackBonus ?? 0);
+        atkStatMod + player.proficiencyBonus + (player.attackBonus ?? 0) + bardInspBonus;
 
       // Versatile: use the larger die when no off-hand item is equipped
       const isVersatile = weaponTemplate?.bonuses?.versatile ?? false;
@@ -1457,7 +1494,9 @@ function _handleClassAbility() {
     }
 
     case "Bard": {
-      // Bardic Inspiration: add +1d6 to next attack roll
+      // Bardic Inspiration: add +1d6 bonus to the NEXT attack roll only.
+      // We store the rolled value in classAbilities and consume it in the
+      // attack handler — do NOT permanently modify player.attackBonus.
       if (ca.bardInspirationUsed) {
         appendCombatLog(
           "🎵 Bardic Inspiration already used — rest to recover.",
@@ -1469,18 +1508,18 @@ function _handleClassAbility() {
         {
           player: {
             ...player,
-            attackBonus: (player.attackBonus ?? 0) + inspBonus,
             classAbilities: {
               ...ca,
               bardInspirationUsed: true,
               bardBonusDie: 0,
+              bardInspirationBonus: inspBonus,
             },
           },
         },
         "combatUI:bardInspiration",
       );
       appendCombatLog(
-        `🎵 Bardic Inspiration! +${inspBonus} to your attack bonus this combat.`,
+        `🎵 Bardic Inspiration! +${inspBonus} to your next attack roll.`,
       );
       _refreshClassButton();
       break;
@@ -1554,6 +1593,14 @@ function _handleClassAbility() {
                 wildShapeActive: false,
                 wildShapeRoundsLeft: 0,
               },
+            },
+            // Mirror the AC removal in combat.turnOrder so enemies attack against
+            // the correct AC immediately after Wild Shape ends early.
+            combat: {
+              ...state.combat,
+              turnOrder: state.combat.turnOrder.map((p) =>
+                p.isPlayer ? { ...p, ac: (p.ac ?? 10) - 2 } : p,
+              ),
             },
           },
           "combatUI:wildShapeEnd",

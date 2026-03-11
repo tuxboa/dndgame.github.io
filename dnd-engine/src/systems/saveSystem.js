@@ -36,6 +36,7 @@ const MAX_SLOTS = 5;
 
 let _autosaveTimer = null;
 let _autosaveEnabled = false;
+let _autosaveUnsub = null;
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -162,7 +163,7 @@ export function enableAutosave(slotId = DEFAULT_SLOT) {
   if (_autosaveEnabled) return;
   _autosaveEnabled = true;
 
-  gameStore.subscribe(() => {
+  _autosaveUnsub = gameStore.subscribe(() => {
     if (!_autosaveEnabled) return;
     clearTimeout(_autosaveTimer);
     _autosaveTimer = setTimeout(() => {
@@ -181,6 +182,8 @@ export function enableAutosave(slotId = DEFAULT_SLOT) {
 export function disableAutosave() {
   _autosaveEnabled = false;
   clearTimeout(_autosaveTimer);
+  _autosaveUnsub?.();
+  _autosaveUnsub = null;
 }
 
 /**
