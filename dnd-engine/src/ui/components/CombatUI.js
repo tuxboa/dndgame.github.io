@@ -912,270 +912,320 @@ function wireButtons() {
   document
     .querySelector("#cbtn-attack")
     ?.addEventListener("click", async () => {
-      if (!_targetedEnemyId) {
-        // Auto-target first living enemy and prompt to click again
-        const firstCard = document.querySelector(".enemy-card");
-        if (firstCard) {
-          _targetedEnemyId = firstCard.dataset.enemyId;
-          firstCard.classList.add("enemy-card--targeted");
-        }
-        return;
-      }
+      try {
+        let state = gameStore.getState();
 
-      const targetId = _targetedEnemyId;
-      const state = gameStore.getState();
-      const player = state.player;
-      const ca = player.classAbilities ?? {};
-
-      // Resolve weapon: equipment slot (new system) → legacy inventory equipped item
-      const weaponSlot = player.equipment?.weapon;
-      const weaponTemplate = weaponSlot
-        ? EQUIPMENT_TEMPLATES[weaponSlot.itemId]
-        : null;
-      const legacyEquipped = !weaponTemplate
-        ? player.inventory.find((i) => i.equipped && i.type === "weapon")
-        : null;
-
-      const strMod = Math.floor((player.abilities.str - 10) / 2);
-      const dexMod = Math.floor((player.abilities.dex - 10) / 2);
-      const isFinesse =
-        weaponTemplate?.bonuses?.finesse ?? legacyEquipped?.finesse ?? false;
-
-      // Ranged weapons (bows, crossbows) use DEX to attack and damage
-      const _physicalRanged =
-        weaponTemplate?.bonuses?.ranged ?? legacyEquipped?.ranged ?? false;
-
-      // Spellcasters without a physical ranged weapon use a free cantrip
-      const cantripData = _getCantripData(player, _physicalRanged);
-      const isRanged = _physicalRanged || !!cantripData;
-
-      // ── Ammo check — physical ranged weapons only (cantrips need no ammo) ──
-      const _ammoType = weaponTemplate?.bonuses?.ammoType ?? "arrow";
-      if (_physicalRanged) {
-        const _ammoItem = player.inventory.find(
-          (i) => i.itemId === _ammoType && (i.quantity ?? 0) > 0,
-        );
-        if (!_ammoItem) {
-          appendCombatLog(
-            `❌ No ${_ammoType === "bolt" ? "crossbow bolts" : "arrows"} left — buy some from a merchant!`,
+        // No selected target → lock onto the first living enemy and continue immediately.
+        if (!_targetedEnemyId) {
+          const firstLivingEnemy = state.combat.turnOrder.find(
+            (participant) => !participant.isPlayer && (participant.hp ?? 1) > 0,
           );
-          return;
+          if (!firstLivingEnemy) {
+            appendCombatLog("❌ Nincs élő célpont támadáshoz.");
+            return;
+          }
+
+          _targetedEnemyId = firstLivingEnemy.id;
+          document
+            .querySelectorAll(".enemy-card")
+            .forEach((card) => card.classList.remove("enemy-card--targeted"));
+          document
+            .querySelector(`.enemy-card[data-enemy-id="${_targetedEnemyId}"]`)
+            ?.classList.add("enemy-card--targeted");
         }
-        removeItem(_ammoType, 1); // consume one arrow/bolt per shot
-      }
 
-      // atkMod: cantrip → spell ability | ranged → DEX | finesse → max(STR,DEX) | melee → STR
-      const spellMod = cantripData
-        ? Math.floor(
-            ((player.abilities?.[cantripData.abilityKey] ?? 10) - 10) / 2,
-          )
-        : 0;
-      const atkStatMod = cantripData
-        ? spellMod
-        : _physicalRanged
-          ? dexMod
-          : isFinesse
-            ? Math.max(strMod, dexMod)
-            : strMod;
+        let targetId = _targetedEnemyId;
 
-      // Consume Bardic Inspiration die (one-time bonus — clear it before the attack
-      // fires so a second click can't double-apply it).
-      const bardInspBonus = ca.bardInspirationBonus ?? 0;
-      if (bardInspBonus > 0) {
-        const stBard = gameStore.getState();
-        gameStore.setState(
-          {
-            player: {
-              ...stBard.player,
-              classAbilities: {
-                ...stBard.player.classAbilities,
-                bardInspirationBonus: 0,
-              },
-            },
-          },
-          "combatUI:bardInspirationConsumed",
+        // Recover from stale target IDs (dead/removed enemy) instead of silently failing.
+        const targetStillAlive = state.combat.turnOrder.some(
+          (participant) =>
+            participant.id === targetId &&
+            !participant.isPlayer &&
+            (participant.hp ?? 1) > 0,
         );
-        _refreshClassButton();
-      }
 
-      const atkMod =
-        atkStatMod +
-        player.proficiencyBonus +
-        (player.attackBonus ?? 0) +
-        bardInspBonus;
+        if (!targetStillAlive) {
+          const fallbackTarget = state.combat.turnOrder.find(
+            (participant) => !participant.isPlayer && (participant.hp ?? 1) > 0,
+          );
 
-      // Versatile: use the larger die when no off-hand item is equipped
-      const isVersatile = weaponTemplate?.bonuses?.versatile ?? false;
-      const hasOffhand = !!player.equipment?.offhand;
-      const damageDie = cantripData
-        ? cantripData.die
-        : isVersatile && !hasOffhand
-          ? (weaponTemplate.bonuses.versatileDie ??
-            weaponTemplate.bonuses.damageDie ??
-            (legacyEquipped ? 6 : 4))
-          : (weaponTemplate?.bonuses?.damageDie ?? (legacyEquipped ? 6 : 4));
-      // Cantrips in D&D 5e: attack roll uses spell mod + prof, but damage has NO ability bonus
-      const dmgNote = cantripData
-        ? `1d${cantripData.die}`
-        : (legacyEquipped?.damageNotation ?? `1d${damageDie}`);
-      const dmgStatBonus = cantripData
-        ? 0
-        : _physicalRanged
-          ? dexMod
-          : isFinesse
-            ? Math.max(strMod, dexMod)
-            : strMod;
-      const weaponBaseDmgBonus = cantripData
-        ? 0
-        : (weaponTemplate?.bonuses?.baseDmgBonus ?? 0);
-      const dmgBonus = dmgStatBonus + weaponBaseDmgBonus;
-      const weaponName = cantripData
-        ? `${cantripData.icon} ${cantripData.name}`
-        : (weaponTemplate?.name ?? legacyEquipped?.name ?? "unarmed strike");
+          if (!fallbackTarget) {
+            _targetedEnemyId = null;
+            appendCombatLog("❌ Nincs élő célpont támadáshoz.");
+            return;
+          }
 
-      // ── Range check + adjacency disadvantage ────────────────────────────
-      const combatState = gameStore.getState().combat;
-      let hasDisadvantage = false;
-      if (combatState.active) {
-        const playerPos = combatState.turnOrder.find((p) => p.isPlayer);
-        const targetPos = combatState.turnOrder.find((p) => p.id === targetId);
-        if (playerPos && targetPos) {
-          const weaponRangeSquares = cantripData
-            ? cantripData.range
-            : (weaponTemplate?.bonuses?.weaponRange ??
-              legacyEquipped?.weaponRange ??
-              playerPos.weaponRange ??
-              1);
-          const dist = calcDistance(playerPos, targetPos);
-          if (dist > weaponRangeSquares) {
+          targetId = fallbackTarget.id;
+          _targetedEnemyId = targetId;
+          document
+            .querySelectorAll(".enemy-card")
+            .forEach((card) => card.classList.remove("enemy-card--targeted"));
+          document
+            .querySelector(`.enemy-card[data-enemy-id="${targetId}"]`)
+            ?.classList.add("enemy-card--targeted");
+        }
+
+        state = gameStore.getState();
+        const player = state.player;
+        const ca = player.classAbilities ?? {};
+
+        // Resolve weapon: equipment slot (new system) → legacy inventory equipped item
+        const weaponSlot = player.equipment?.weapon;
+        const weaponTemplate = weaponSlot
+          ? EQUIPMENT_TEMPLATES[weaponSlot.itemId]
+          : null;
+        const legacyEquipped = !weaponTemplate
+          ? player.inventory.find((i) => i.equipped && i.type === "weapon")
+          : null;
+
+        const strMod = Math.floor((player.abilities.str - 10) / 2);
+        const dexMod = Math.floor((player.abilities.dex - 10) / 2);
+        const isFinesse =
+          weaponTemplate?.bonuses?.finesse ?? legacyEquipped?.finesse ?? false;
+
+        // Ranged weapons (bows, crossbows) use DEX to attack and damage
+        const _physicalRanged =
+          weaponTemplate?.bonuses?.ranged ?? legacyEquipped?.ranged ?? false;
+
+        // Spellcasters without a physical ranged weapon use a free cantrip
+        const cantripData = _getCantripData(player, _physicalRanged);
+        const isRanged = _physicalRanged || !!cantripData;
+
+        // ── Ammo check — physical ranged weapons only (cantrips need no ammo) ──
+        const _ammoType = weaponTemplate?.bonuses?.ammoType ?? "arrow";
+        if (_physicalRanged) {
+          const _ammoItem = player.inventory.find(
+            (i) => i.itemId === _ammoType && (i.quantity ?? 0) > 0,
+          );
+          if (!_ammoItem) {
             appendCombatLog(
-              `❌ Out of range — target is ${dist} sq away (weapon range: ${weaponRangeSquares} sq). Move closer or use the map.`,
+              `❌ No ${_ammoType === "bolt" ? "crossbow bolts" : "arrows"} left — buy some from a merchant!`,
             );
             return;
           }
-          // Ranged weapons have Disadvantage when adjacent to ANY enemy
-          // unless the Sharpshooter feat negates it (D&D 5e)
-          if (isRanged) {
-            const sharpshooter = (player.feats ?? []).includes("sharpshooter");
-            if (!sharpshooter) {
-              const adjacentEnemy = combatState.turnOrder.find(
-                (p) =>
-                  !p.isPlayer &&
-                  (p.hp ?? 1) > 0 &&
-                  calcDistance(playerPos, p) <= 1,
+          removeItem(_ammoType, 1); // consume one arrow/bolt per shot
+        }
+
+        // atkMod: cantrip → spell ability | ranged → DEX | finesse → max(STR,DEX) | melee → STR
+        const spellMod = cantripData
+          ? Math.floor(
+              ((player.abilities?.[cantripData.abilityKey] ?? 10) - 10) / 2,
+            )
+          : 0;
+        const atkStatMod = cantripData
+          ? spellMod
+          : _physicalRanged
+            ? dexMod
+            : isFinesse
+              ? Math.max(strMod, dexMod)
+              : strMod;
+
+        // Consume Bardic Inspiration die (one-time bonus — clear it before the attack
+        // fires so a second click can't double-apply it).
+        const bardInspBonus = ca.bardInspirationBonus ?? 0;
+        if (bardInspBonus > 0) {
+          const stBard = gameStore.getState();
+          gameStore.setState(
+            {
+              player: {
+                ...stBard.player,
+                classAbilities: {
+                  ...stBard.player.classAbilities,
+                  bardInspirationBonus: 0,
+                },
+              },
+            },
+            "combatUI:bardInspirationConsumed",
+          );
+          _refreshClassButton();
+        }
+
+        const atkMod =
+          atkStatMod +
+          player.proficiencyBonus +
+          (player.attackBonus ?? 0) +
+          bardInspBonus;
+
+        // Versatile: use the larger die when no off-hand item is equipped
+        const isVersatile = weaponTemplate?.bonuses?.versatile ?? false;
+        const hasOffhand = !!player.equipment?.offhand;
+        const damageDie = cantripData
+          ? cantripData.die
+          : isVersatile && !hasOffhand
+            ? (weaponTemplate.bonuses.versatileDie ??
+              weaponTemplate.bonuses.damageDie ??
+              (legacyEquipped ? 6 : 4))
+            : (weaponTemplate?.bonuses?.damageDie ?? (legacyEquipped ? 6 : 4));
+        // Cantrips in D&D 5e: attack roll uses spell mod + prof, but damage has NO ability bonus
+        const dmgNote = cantripData
+          ? `1d${cantripData.die}`
+          : (legacyEquipped?.damageNotation ?? `1d${damageDie}`);
+        const dmgStatBonus = cantripData
+          ? 0
+          : _physicalRanged
+            ? dexMod
+            : isFinesse
+              ? Math.max(strMod, dexMod)
+              : strMod;
+        const weaponBaseDmgBonus = cantripData
+          ? 0
+          : (weaponTemplate?.bonuses?.baseDmgBonus ?? 0);
+        const dmgBonus = dmgStatBonus + weaponBaseDmgBonus;
+        const weaponName = cantripData
+          ? `${cantripData.icon} ${cantripData.name}`
+          : (weaponTemplate?.name ?? legacyEquipped?.name ?? "unarmed strike");
+
+        // ── Range check + adjacency disadvantage ────────────────────────────
+        const combatState = gameStore.getState().combat;
+        let hasDisadvantage = false;
+        if (combatState.active) {
+          const playerPos = combatState.turnOrder.find((p) => p.isPlayer);
+          const targetPos = combatState.turnOrder.find(
+            (p) => p.id === targetId,
+          );
+          if (playerPos && targetPos) {
+            const weaponRangeSquares = cantripData
+              ? cantripData.range
+              : (weaponTemplate?.bonuses?.weaponRange ??
+                legacyEquipped?.weaponRange ??
+                playerPos.weaponRange ??
+                1);
+            const dist = calcDistance(playerPos, targetPos);
+            if (dist > weaponRangeSquares) {
+              appendCombatLog(
+                `❌ Out of range — target is ${dist} sq away (weapon range: ${weaponRangeSquares} sq). Move closer or use the map.`,
               );
-              if (adjacentEnemy) {
-                hasDisadvantage = true;
-                appendCombatLog(
-                  `⚠️ Disadvantage — ${adjacentEnemy.name} is adjacent while you use a ranged weapon!`,
+              return;
+            }
+            // Ranged weapons have Disadvantage when adjacent to ANY enemy
+            // unless the Sharpshooter feat negates it (D&D 5e)
+            if (isRanged) {
+              const sharpshooter = (player.feats ?? []).includes(
+                "sharpshooter",
+              );
+              if (!sharpshooter) {
+                const adjacentEnemy = combatState.turnOrder.find(
+                  (p) =>
+                    !p.isPlayer &&
+                    (p.hp ?? 1) > 0 &&
+                    calcDistance(playerPos, p) <= 1,
                 );
+                if (adjacentEnemy) {
+                  hasDisadvantage = true;
+                  appendCombatLog(
+                    `⚠️ Disadvantage — ${adjacentEnemy.name} is adjacent while you use a ranged weapon!`,
+                  );
+                }
               }
             }
           }
         }
-      }
 
-      const dmgNotation =
-        dmgBonus === 0
-          ? dmgNote
-          : dmgBonus > 0
-            ? `${dmgNote}+${dmgBonus}`
-            : `${dmgNote}-${Math.abs(dmgBonus)}`;
+        const dmgNotation =
+          dmgBonus === 0
+            ? dmgNote
+            : dmgBonus > 0
+              ? `${dmgNote}+${dmgBonus}`
+              : `${dmgNote}-${Math.abs(dmgBonus)}`;
 
-      // ── Class ability damage bonuses ────────────────────────────────────
-      let finalDmgNotation = dmgNotation;
-      let finalWeaponName = weaponName;
+        // ── Class ability damage bonuses ────────────────────────────────────
+        let finalDmgNotation = dmgNotation;
+        let finalWeaponName = weaponName;
 
-      // Barbarian Rage: +2 damage flat
-      if (ca.rageActive) {
-        finalDmgNotation = `${finalDmgNotation}+2`;
-        finalWeaponName += " [Rage]";
-      }
+        // Barbarian Rage: +2 damage flat
+        if (ca.rageActive) {
+          finalDmgNotation = `${finalDmgNotation}+2`;
+          finalWeaponName += " [Rage]";
+        }
 
-      // Rogue Sneak Attack: +Nd6 bonus damage (N = ceil(level/2))
-      if (ca.sneakAttackPending) {
-        const snkDice = Math.ceil((player.level ?? 1) / 2);
-        finalDmgNotation = `${finalDmgNotation}+${snkDice}d6`;
-        finalWeaponName += " [Sneak Attack]";
-        // Clear the pending flag after use
-        gameStore.setState(
-          {
-            player: {
-              ...gameStore.getState().player,
-              classAbilities: { ...ca, sneakAttackPending: false },
-            },
-          },
-          "combatUI:sneakAttackUsed",
-        );
-        _refreshClassButton();
-      }
-
-      // Paladin Divine Smite: +2d8 radiant when armed
-      if (ca.smitePending) {
-        finalDmgNotation = `${finalDmgNotation}+2d8`;
-        finalWeaponName += " [Smite]";
-        gameStore.setState(
-          {
-            player: {
-              ...gameStore.getState().player,
-              classAbilities: { ...ca, smitePending: false },
-            },
-          },
-          "combatUI:smiteUsed",
-        );
-        _refreshClassButton();
-      }
-
-      // Ranger Hunter's Mark: +1d6 when hitting the marked target
-      if (ca.hunterMarkTarget && ca.hunterMarkTarget === targetId) {
-        finalDmgNotation = `${finalDmgNotation}+1d6`;
-        finalWeaponName += " [Hunter's Mark]";
-      }
-
-      // ── Extra Attack: Fighter/Paladin/Barbarian/Ranger level 5+ ──────────
-      const EXTRA_ATTACK_CLASSES = [
-        "Fighter",
-        "Paladin",
-        "Barbarian",
-        "Ranger",
-      ];
-      const hasExtraAttack =
-        EXTRA_ATTACK_CLASSES.includes(player.class) &&
-        (player.level ?? 1) >= 5 &&
-        !ca.extraAttackUsedThisTurn;
-
-      if (hasExtraAttack) {
-        // First attack: don't advance turn so we can offer the second
-        await performAttack(player.id ?? "player", targetId, {
-          attackBonus: atkMod,
-          damageNotation: finalDmgNotation,
-          damageName: finalWeaponName,
-          disadvantage: hasDisadvantage,
-          skipTurnAdvance: true,
-        });
-        // Mark extra attack as used
-        const stAfter = gameStore.getState();
-        gameStore.setState(
-          {
-            player: {
-              ...stAfter.player,
-              classAbilities: {
-                ...stAfter.player.classAbilities,
-                extraAttackUsedThisTurn: true,
+        // Rogue Sneak Attack: +Nd6 bonus damage (N = ceil(level/2))
+        if (ca.sneakAttackPending) {
+          const snkDice = Math.ceil((player.level ?? 1) / 2);
+          finalDmgNotation = `${finalDmgNotation}+${snkDice}d6`;
+          finalWeaponName += " [Sneak Attack]";
+          // Clear the pending flag after use
+          gameStore.setState(
+            {
+              player: {
+                ...gameStore.getState().player,
+                classAbilities: { ...ca, sneakAttackPending: false },
               },
             },
-          },
-          "combatUI:extraAttackUsed",
-        );
-        // Show second attack prompt
-        _showExtraAttackPrompt(targetId);
-      } else {
-        await performAttack(player.id ?? "player", targetId, {
-          attackBonus: atkMod,
-          damageNotation: finalDmgNotation,
-          damageName: finalWeaponName,
-          disadvantage: hasDisadvantage,
-        });
+            "combatUI:sneakAttackUsed",
+          );
+          _refreshClassButton();
+        }
+
+        // Paladin Divine Smite: +2d8 radiant when armed
+        if (ca.smitePending) {
+          finalDmgNotation = `${finalDmgNotation}+2d8`;
+          finalWeaponName += " [Smite]";
+          gameStore.setState(
+            {
+              player: {
+                ...gameStore.getState().player,
+                classAbilities: { ...ca, smitePending: false },
+              },
+            },
+            "combatUI:smiteUsed",
+          );
+          _refreshClassButton();
+        }
+
+        // Ranger Hunter's Mark: +1d6 when hitting the marked target
+        if (ca.hunterMarkTarget && ca.hunterMarkTarget === targetId) {
+          finalDmgNotation = `${finalDmgNotation}+1d6`;
+          finalWeaponName += " [Hunter's Mark]";
+        }
+
+        // ── Extra Attack: Fighter/Paladin/Barbarian/Ranger level 5+ ──────────
+        const EXTRA_ATTACK_CLASSES = [
+          "Fighter",
+          "Paladin",
+          "Barbarian",
+          "Ranger",
+        ];
+        const hasExtraAttack =
+          EXTRA_ATTACK_CLASSES.includes(player.class) &&
+          (player.level ?? 1) >= 5 &&
+          !ca.extraAttackUsedThisTurn;
+
+        if (hasExtraAttack) {
+          // First attack: don't advance turn so we can offer the second
+          await performAttack(player.id ?? "player", targetId, {
+            attackBonus: atkMod,
+            damageNotation: finalDmgNotation,
+            damageName: finalWeaponName,
+            disadvantage: hasDisadvantage,
+            skipTurnAdvance: true,
+          });
+          // Mark extra attack as used
+          const stAfter = gameStore.getState();
+          gameStore.setState(
+            {
+              player: {
+                ...stAfter.player,
+                classAbilities: {
+                  ...stAfter.player.classAbilities,
+                  extraAttackUsedThisTurn: true,
+                },
+              },
+            },
+            "combatUI:extraAttackUsed",
+          );
+          // Show second attack prompt
+          _showExtraAttackPrompt(targetId);
+        } else {
+          await performAttack(player.id ?? "player", targetId, {
+            attackBonus: atkMod,
+            damageNotation: finalDmgNotation,
+            damageName: finalWeaponName,
+            disadvantage: hasDisadvantage,
+          });
+        }
+      } catch (error) {
+        console.error("[CombatUI] Attack handler failed:", error);
+        appendCombatLog("⚠️ A támadás közben hiba történt. Próbáld újra.");
       }
     });
 
