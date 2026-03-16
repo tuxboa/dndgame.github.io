@@ -1,5 +1,6 @@
 import { eventBus, EVENTS } from "../engine/eventBus.js";
 import { getEquippedInSlot } from "./equipmentSystem.js";
+import { waitForRoll } from "../ui/components/DiceBoxUI.js";
 
 let _initialized = false;
 
@@ -17,6 +18,28 @@ async function _attackStartBridgeSystem(payload) {
   const animationMs = Math.max(0, Math.floor(payload.animationMs ?? 0));
   if (animationMs > 0) {
     await _wait(animationMs);
+  }
+
+  if (payload.waitForPlayerRoll === true && payload.damagePayload) {
+    const manualRoll = await waitForRoll({
+      sides: Math.max(2, Math.floor(payload.diceSides ?? 6)),
+      instructions: payload.dicePrompt ?? "Kattints a kockára a dobáshoz!",
+      rollAnimationMs: Math.max(0, Math.floor(payload.rollAnimationMs ?? 500)),
+      resultHoldMs: Math.max(0, Math.floor(payload.resultHoldMs ?? 800)),
+    });
+
+    payload.damagePayload.meta = {
+      ...(payload.damagePayload.meta ?? {}),
+      manualRoll,
+    };
+
+    if (payload.applyManualRollAsBonus === true) {
+      payload.damagePayload.amount = Math.max(
+        0,
+        Math.floor(payload.damagePayload.amount ?? 0) + manualRoll,
+      );
+      payload.damagePayload.meta.manualRollAppliedAsBonus = true;
+    }
   }
 
   if (!payload.damagePayload) return;
@@ -150,7 +173,16 @@ export function resolveAttackDamage(input) {
  * 3) Armor/Damage/Logging run in priority order via async publish
  *
  * @param {object} input
- * @param {{ animationMs?: number, skipAnimation?: boolean }} [options]
+ * @param {{
+ *   animationMs?: number,
+ *   skipAnimation?: boolean,
+ *   waitForPlayerRoll?: boolean,
+ *   diceSides?: number,
+ *   dicePrompt?: string,
+ *   rollAnimationMs?: number,
+ *   resultHoldMs?: number,
+ *   applyManualRollAsBonus?: boolean,
+ * }} [options]
  * @returns {Promise<object>}
  */
 export async function resolveAttackDamageAsync(input, options = {}) {
@@ -172,6 +204,12 @@ export async function resolveAttackDamageAsync(input, options = {}) {
   await eventBus.publish(EVENTS.COMBAT_ATTACK_START, {
     targetId: payload.targetId,
     animationMs,
+    waitForPlayerRoll: options.waitForPlayerRoll === true,
+    diceSides: options.diceSides,
+    dicePrompt: options.dicePrompt,
+    rollAnimationMs: options.rollAnimationMs,
+    resultHoldMs: options.resultHoldMs,
+    applyManualRollAsBonus: options.applyManualRollAsBonus === true,
     damagePayload: payload,
   });
 

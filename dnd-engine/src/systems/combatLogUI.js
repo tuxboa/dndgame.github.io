@@ -1,6 +1,8 @@
 import { eventBus, EVENTS } from "../engine/eventBus.js";
 import { gameStore } from "../store/index.js";
 
+const NARRATION_EVENT = "NARRATION_RECEIVED";
+
 let _initialized = false;
 let _combatLogElement = null;
 let _systemLogElement = null;
@@ -85,6 +87,28 @@ function _onDamageApplied(payload) {
   logToSystemLog("✅ DAMAGE_APPLIED lánc lefutott.");
 }
 
+function _onNarrationReceived(payload) {
+  if (!_combatLogElement || !payload) return;
+
+  const text = String(payload.text ?? "").trim();
+  if (!text) return;
+
+  const messageEl = document.createElement("div");
+  messageEl.className = "log-message dm-narration";
+  messageEl.textContent = text;
+
+  const color = payload.color ?? "gold";
+  messageEl.style.color = color;
+
+  if (color === "gold" || color === "#FFD700") {
+    messageEl.style.fontStyle = "italic";
+    messageEl.style.textShadow = "1px 1px 2px #000";
+  }
+
+  _combatLogElement.appendChild(messageEl);
+  _combatLogElement.scrollTop = _combatLogElement.scrollHeight;
+}
+
 export function logToSystemLog(message) {
   if (!_systemLogElement) {
     _systemLogElement = document.querySelector("#system-log");
@@ -114,6 +138,7 @@ export function initCombatLogUI() {
 
   eventBus.subscribe(EVENTS.COMBAT_ATTACK_START, _onCombatStart, 250);
   eventBus.subscribe(EVENTS.DAMAGE_APPLIED, _onDamageApplied, -100);
+  eventBus.subscribe(NARRATION_EVENT, _onNarrationReceived, -90);
 
   _initialized = true;
 }

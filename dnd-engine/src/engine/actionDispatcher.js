@@ -349,7 +349,14 @@ export async function performAttack(attackerId, targetId, weapon) {
       damageType: weapon.damageType ?? "physical",
       extraReduction: weapon.armorReduction ?? 0,
     },
-    {},
+    {
+      waitForPlayerRoll: true,
+      diceSides: 6,
+      dicePrompt: "Kattints a kockára a sebzés véglegesítéséhez!",
+      rollAnimationMs: 500,
+      resultHoldMs: 700,
+      applyManualRollAsBonus: false,
+    },
   );
   const damage = resolvedDamage.amount;
 

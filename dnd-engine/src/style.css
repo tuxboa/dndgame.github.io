@@ -600,186 +600,71 @@ body {
   padding: 1rem;
 }
 
-/* ── 3D Dice Box ─────────────────────────────────────────────────────────────── */
-/* The Three.js canvas uses alpha:true so it is always transparent between rolls.
-   Keep the container always at opacity:1 to avoid framebuffer-before-visible races. */
-#dice-box-container {
+.hidden {
+  display: none !important;
+}
+
+#dice-click-overlay {
   position: fixed;
   inset: 0;
-  pointer-events: none;
-  z-index: 9000; /* above all game UI */
-  background: transparent;
-}
-#dice-box-container canvas {
-  display: block;
-  /* Do NOT override width/height — Three.js sets these in pixels via renderer.setSize() */
-}
-
-#dice-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0);
-  pointer-events: none;
-  z-index: 8999; /* just below the canvas */
-  transition: background 0.3s ease;
-}
-#dice-overlay.visible {
-  background: rgba(0, 0, 0, 0.6);
-  pointer-events: all;
-}
-
-.attack-dice-vfx {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  z-index: 9001;
-  pointer-events: none;
-  font-size: 2.8rem;
-  line-height: 1;
-  opacity: 0.9;
-  transform-origin: center;
-  transition:
-    opacity 0.5s ease,
-    transform 1.5s ease;
-}
-
-.attack-dice-vfx.rolling {
-  transform: rotate(1080deg) scale(0);
-  opacity: 0;
-}
-
-/* ── Dice Toast ───────────────────────────────────────────────────────────────── */
-#dice-toast {
-  position: fixed;
-  bottom: 5.5rem;
-  left: 50%;
-  transform: translateX(-50%) translateY(12px);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  color: var(--color-text);
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  opacity: 0;
-  padding: 0.55rem 1rem;
-  pointer-events: none;
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-  white-space: nowrap;
-  z-index: 300;
-  font-family: var(--font-body);
-  font-size: 1rem;
-}
-#dice-toast.visible {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-.dice-toast-notation {
-  color: var(--color-text-dim);
-  font-size: 0.85rem;
-}
-.dice-toast-dice {
-  color: var(--color-text);
-}
-.dice-toast-total {
-  color: var(--color-accent);
-  font-size: 1.4rem;
-  font-weight: 700;
-  font-family: var(--font-title);
-  min-width: 2ch;
-  text-align: center;
-}
-.dice-toast-crit {
-  background: var(--color-accent);
-  border-radius: 3px;
-  color: #000;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 0.1rem 0.4rem;
-  text-transform: uppercase;
-}
-
-#dice-toast.dice-toast--crit {
-  border-color: var(--color-accent);
-}
-#dice-toast.dice-toast--fumble {
-  border-color: var(--color-danger);
-}
-#dice-toast.dice-toast--fumble .dice-toast-total {
-  color: var(--color-danger);
-}
-
-/* ── Manual Roll Prompt Card (overlays the dice canvas) ─────────────────── */
-#dice-roll-card {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9001; /* above the dice canvas (9000) */
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-#dice-roll-card.visible {
-  opacity: 1;
-  pointer-events: all;
-}
-/* .roll-prompt card styles shared with #dice-roll-card */
-.roll-prompt {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.72);
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
   gap: 1rem;
-  padding: 2rem 2.5rem;
-  text-align: center;
-  min-width: 260px;
-}
-.roll-prompt-label {
-  color: var(--color-text-dim);
-  font-size: 0.9rem;
-  font-family: var(--font-body);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin: 0;
-}
-.roll-prompt-notation {
-  color: var(--color-accent);
-  font-family: var(--font-title);
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: 0.04em;
-}
-.roll-prompt-btn {
-  background: var(--color-accent);
-  border: none;
-  border-radius: var(--radius);
-  color: #000;
+  z-index: 9205;
   cursor: pointer;
-  font-family: var(--font-title);
+}
+
+.dice-instructions {
+  color: var(--color-text);
   font-size: 1.1rem;
+  font-family: var(--font-ui);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.dice-box {
+  width: 104px;
+  height: 104px;
+  border: 3px solid var(--color-accent);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #fff, #ddd);
+  color: #141414;
+  font-size: 58px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-title);
   font-weight: 700;
-  letter-spacing: 0.05em;
-  padding: 0.7rem 2rem;
-  text-transform: uppercase;
-  transition:
-    filter 0.15s ease,
-    transform 0.1s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  transition: transform 0.3s ease-out;
 }
-.roll-prompt-btn:hover {
-  filter: brightness(1.15);
+
+.dice-box:hover {
+  transform: scale(1.08) rotate(10deg);
 }
-.roll-prompt-btn:active {
-  transform: scale(0.96);
+
+.dice-box.rolling {
+  animation: click-dice-roll 0.5s ease-out;
+}
+
+@keyframes click-dice-roll {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(180deg) scale(1.2);
+  }
+  50% {
+    transform: rotate(360deg) scale(1);
+  }
+  75% {
+    transform: rotate(540deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(720deg) scale(1);
+  }
 }
 
 /* ── Character Creation ──────────────────────────────────────────────────────── */
@@ -2260,7 +2145,8 @@ body {
   font-family: var(--font-ui);
   letter-spacing: 0.02em;
 }
-───────────────────────────────────────────────────────── */ .save-modal {
+/* ── Save Modal ─────────────────────────────────────────────────────────────── */
+.save-modal {
   max-width: 500px;
 }
 .save-slot-list {

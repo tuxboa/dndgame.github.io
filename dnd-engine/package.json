@@ -12,6 +12,7 @@
     "vite": "^7.3.1"
   },
   "dependencies": {
-    "@dice-roller/rpg-dice-roller": "^5.5.1"
+    "@dice-roller/rpg-dice-roller": "^5.5.1",
+    "@google/generative-ai": "^0.24.1"
   }
 }

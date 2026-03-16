@@ -925,6 +925,7 @@ function wireButtons() {
       const targetId = _targetedEnemyId;
       const state = gameStore.getState();
       const player = state.player;
+      const ca = player.classAbilities ?? {};
 
       // Resolve weapon: equipment slot (new system) → legacy inventory equipped item
       const weaponSlot = player.equipment?.weapon;
@@ -1082,7 +1083,6 @@ function wireButtons() {
             : `${dmgNote}-${Math.abs(dmgBonus)}`;
 
       // ── Class ability damage bonuses ────────────────────────────────────
-      const ca = player.classAbilities ?? {};
       let finalDmgNotation = dmgNotation;
       let finalWeaponName = weaponName;
 

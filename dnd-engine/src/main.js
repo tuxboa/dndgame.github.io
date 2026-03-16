@@ -12,6 +12,7 @@
 import "./style.css";
 import { eventBus, EVENTS } from "./engine/eventBus.js";
 import { gameStore } from "./store/index.js";
+import { geminiDMService } from "./services/GeminiDMService.js";
 import { initPlayerEcsBridge } from "./ecs/playerEcsBridge.js";
 import { loadCampaign } from "./data/campaignLoader.js";
 import { getGroqKey, getTtsKey, isAiEnabled } from "./config/apiConfig.js";
@@ -22,6 +23,7 @@ import {
   setApiKey,
 } from "./systems/dmController.js";
 import { initDiceUI } from "./ui/components/DiceRollerUI.js";
+import { initDiceBoxUI } from "./ui/components/DiceBoxUI.js";
 import { mountCharacterCreation } from "./ui/components/CharacterCreation.js";
 import { initCombatUI } from "./ui/components/CombatUI.js";
 import { initDispatcher } from "./engine/actionDispatcher.js";
@@ -172,6 +174,7 @@ async function bootstrap() {
   // Step 3b: Init subsystems
   initAudio();
   initCombatLogUI();
+  geminiDMService?.initialize();
   initVisualEffectSystem();
   initCombatDamagePipeline();
   initDispatcher(); // Must be first — wires COMBAT_REQUESTED → startCombat
@@ -182,6 +185,7 @@ async function bootstrap() {
   initSessionPanel();
   initStory();
   initStoryUI(executeChoice);
+  initDiceBoxUI();
   initDiceUI();
 
   // ── Step 8: Resume saved game or greet the new character ────────────────────
@@ -301,9 +305,10 @@ function renderUI(app, campaign) {
       </main>
 
       <!-- 3D dice canvas — positioned fixed, shown only during rolls -->
-      <div id="dice-box-container"></div>
-      <div id="dice-overlay"></div>
-      <div id="dice-animation" class="attack-dice-vfx" aria-hidden="true">🎲</div>
+      <div id="dice-click-overlay" class="hidden" aria-live="polite">
+        <div id="dice-click-box" class="dice-box" data-side="1">?</div>
+        <div id="dice-click-instructions" class="dice-instructions">Kattints a kockára a dobáshoz!</div>
+      </div>
 
       <footer class="game-footer">
         <div class="action-bar" id="action-bar"></div>
