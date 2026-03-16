@@ -289,6 +289,10 @@ export const EVENTS = {
   STORY_CHOICE_MADE: "story:choiceMade",
   STORY_SKILL_CHECK_START: "story:skillCheckStart",
   STORY_SKILL_CHECK_END: "story:skillCheckEnd",
+  SCENE_LOADED: "story:sceneLoaded",
+  COMBAT_TRIGGERED: "story:combatTriggered",
+  STATE_CHANGED: "story:stateChanged",
+  CAMPAIGN_LOADED: "story:campaignLoaded",
   // ── Player Actions ─────────────────────────────────────────────────────────
   PLAYER_CUSTOM_ACTION: "player:customAction", // { text } — free-text input
   // ── Spells & Abilities ────────────────────────────────────────────

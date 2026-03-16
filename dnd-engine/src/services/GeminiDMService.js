@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { eventBus, EVENTS } from "../engine/eventBus.js";
+import { campaignManager } from "../engine/CampaignManager.js";
 import { gameStore } from "../store/index.js";
 
 const DEFAULT_NARRATION_INTERVAL = 3;
@@ -116,7 +117,8 @@ class GeminiDMService {
 
   async generateNarration(combatData) {
     try {
-      const prompt = `Generálj egy narrációt a következő eseményről:\n- Támadó: ${combatData.attacker.name}\n- Célpont: ${combatData.defender.name}\n- Sebzés: ${combatData.damage}\n- Fegyver: ${combatData.weaponName}\n- Kritikus találat: ${combatData.isCritical ? "Igen" : "Nem"}\n- Halálos csapás: ${combatData.isFatal ? "Igen" : "Nem"}`;
+      const worldStateContext = this._buildWorldStateContext();
+      const prompt = `Generálj egy narrációt a következő eseményről:\n- Támadó: ${combatData.attacker.name}\n- Célpont: ${combatData.defender.name}\n- Sebzés: ${combatData.damage}\n- Fegyver: ${combatData.weaponName}\n- Kritikus találat: ${combatData.isCritical ? "Igen" : "Nem"}\n- Halálos csapás: ${combatData.isFatal ? "Igen" : "Nem"}\n\n${worldStateContext}`;
 
       const result = await this.model.generateContent(prompt);
       const responseText = result.response.text();
@@ -135,6 +137,45 @@ class GeminiDMService {
         error,
       );
     }
+  }
+
+  async generateNarrative(basePrompt) {
+    try {
+      const worldStateContext = this._buildWorldStateContext();
+      const prompt = `${worldStateContext}\n\nFeladat: ${basePrompt}`;
+
+      const result = await this.model.generateContent(prompt);
+      const responseText = result.response.text();
+      const narration = this._parseNarrationResponse(responseText);
+
+      return narration?.text || String(responseText ?? "").trim();
+    } catch (error) {
+      console.error(
+        "[GeminiDMService] Hiba a szöveges narráció generálásakor:",
+        error,
+      );
+      return "";
+    }
+  }
+
+  _buildWorldStateContext() {
+    const currentState = campaignManager.getWorldState();
+    const activeFlags = Object.entries(currentState?.flags ?? {})
+      .filter(([, value]) => value === true)
+      .map(([key]) => key);
+
+    const activeVariables = Object.entries(currentState?.variables ?? {}).map(
+      ([key, value]) => `${key}: ${value}`,
+    );
+
+    const flagText =
+      activeFlags.length > 0 ? activeFlags.join(", ") : "nincs aktív flag";
+    const variableText =
+      activeVariables.length > 0
+        ? activeVariables.join(", ")
+        : "nincs releváns változó";
+
+    return `Jelenlegi worldState flagek: [${flagText}]\nJelenlegi worldState változók: [${variableText}]`;
   }
 
   _parseNarrationResponse(responseText) {

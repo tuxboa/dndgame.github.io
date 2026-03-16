@@ -11,10 +11,12 @@
 
 import "./style.css";
 import { eventBus, EVENTS } from "./engine/eventBus.js";
+import { campaignManager } from "./engine/CampaignManager.js";
 import { gameStore } from "./store/index.js";
 import { geminiDMService } from "./services/GeminiDMService.js";
 import { initPlayerEcsBridge } from "./ecs/playerEcsBridge.js";
 import { loadCampaign } from "./data/campaignLoader.js";
+import demoCampaign from "./campaigns/demo_campaign.json";
 import { getGroqKey, getTtsKey, isAiEnabled } from "./config/apiConfig.js";
 import {
   initDM,
@@ -194,6 +196,40 @@ async function bootstrap() {
   initSessionPanel();
   initStory();
   initStoryUI(executeChoice);
+
+  eventBus.on(EVENTS.COMBAT_TRIGGERED, (payload = {}) => {
+    const encounterId = payload.encounterId ?? payload.sceneData?.encounterId;
+
+    if (!encounterId) {
+      eventBus.emit(EVENTS.UI_NOTIFICATION, {
+        text: "Nem indítható a harc (hiányzó encounterId).",
+        type: "error",
+        ttl: 4500,
+      });
+
+      eventBus.emit(EVENTS.COMBAT_ENDED, {
+        result: "error",
+        reason: "Missing encounterId in COMBAT_TRIGGERED payload.",
+      });
+      return;
+    }
+
+    const started = startStaticEncounter(encounterId);
+    if (started) return;
+
+    eventBus.emit(EVENTS.UI_NOTIFICATION, {
+      text: `Nem indítható a harc (${encounterId ?? "unknown"}).`,
+      type: "error",
+      ttl: 4500,
+    });
+
+    eventBus.emit(EVENTS.COMBAT_ENDED, {
+      result: "error",
+      reason: `Encounter indítása sikertelen: ${encounterId}`,
+      encounterId,
+    });
+  });
+
   initDiceBoxUI();
   initDiceUI();
 
@@ -257,8 +293,20 @@ async function bootstrap() {
   // Stats Radar Chart (renders into #radar-chart-slot inside modal)
   mountRadarChart(document.querySelector("#radar-chart-slot"));
 
-  // Step 5: Start static story engine (no API key required)
-  startStory();
+  // Step 5: Start story engine
+  if (_isDemoCampaignEnabled()) {
+    campaignManager.loadCampaign(demoCampaign);
+    campaignManager.goToScene("start");
+  } else {
+    startStory();
+  }
+}
+
+function _isDemoCampaignEnabled() {
+  const raw = String(import.meta.env.VITE_USE_DEMO_CAMPAIGN ?? "")
+    .trim()
+    .toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes" || raw === "on";
 }
 
 // ── Character Creation ────────────────────────────────────────────────────────

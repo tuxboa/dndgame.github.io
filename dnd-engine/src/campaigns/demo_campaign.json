@@ -1,0 +1,109 @@
+{
+  "campaignName": "A Zord Kapu Őre",
+  "initialState": {
+    "flags": {
+      "met_guard": false,
+      "npc_angered": false,
+      "gate_opened": false
+    },
+    "variables": {
+      "player_gold": 10
+    }
+  },
+  "scenes": {
+    "start": {
+      "type": "narrative",
+      "text": "Egy masszív, kőből faragott kapu áll előtted. Mellette egy mogorva őr áll, karba tett kézzel. Mit teszel?",
+      "choices": [
+        {
+          "text": "'Szia! Be szeretnék menni.'",
+          "nextScene": "guard_dialogue"
+        },
+        {
+          "text": "'Tűnj az utamból, paraszt!'",
+          "nextScene": "guard_angry",
+          "setFlag": {
+            "npc_angered": true
+          }
+        },
+        {
+          "text": "[LOPAKODÁS] Megpróbálok elosonni mellette.",
+          "nextScene": "skill_check_sneak"
+        }
+      ]
+    },
+    "guard_dialogue": {
+      "type": "narrative",
+      "text": "Az őr végigmér. 'Nem mehetsz be. Parancs.'",
+      "choices": [
+        {
+          "text": "Vissza a kapu elé.",
+          "nextScene": "start"
+        }
+      ]
+    },
+    "guard_angry": {
+      "type": "narrative",
+      "text": "Az őr szeme összeszűkül. 'Ezt még megbánod!' A kardjáért nyúl.",
+      "choices": [
+        {
+          "text": "Felkészülök a harcra.",
+          "nextScene": "combat_with_guard"
+        }
+      ]
+    },
+    "skill_check_sneak": {
+      "type": "skill_check",
+      "text": "Megpróbálsz elosonni az őr mellett a fal árnyékában.",
+      "skill": "dexterity",
+      "difficulty": 12,
+      "onSuccess": "sneak_success",
+      "onFailure": "sneak_failure"
+    },
+    "sneak_success": {
+      "type": "narrative",
+      "text": "Sikerült! Az őr észre sem vett. Bent vagy a kapun.",
+      "setFlag": {
+        "gate_opened": true
+      },
+      "choices": []
+    },
+    "sneak_failure": {
+      "type": "narrative",
+      "text": "Megbotlasz egy kőben. Az őr feléd fordul. 'Hé! Te ott!'",
+      "choices": [
+        {
+          "text": "Harc!",
+          "nextScene": "combat_with_guard"
+        }
+      ]
+    },
+    "combat_with_guard": {
+      "type": "combat",
+      "encounterId": "young_guard_captain",
+      "onWin": "gate_opened_by_force",
+      "onLoss": "player_defeated"
+    },
+    "gate_opened_by_force": {
+      "type": "narrative",
+      "text": "Az őr legyőzve a porban fekszik. A kapu nyitva áll.",
+      "setFlag": {
+        "gate_opened": true
+      },
+      "choices": []
+    },
+    "player_defeated": {
+      "type": "narrative",
+      "text": "Legyőztek. Az őr elveszi az aranyadat és kidob a kapu elé.",
+      "setVariable": {
+        "player_gold": 0
+      },
+      "choices": [
+        {
+          "text": "Újra megpróbálom...",
+          "nextScene": "start"
+        }
+      ]
+    }
+  }
+}

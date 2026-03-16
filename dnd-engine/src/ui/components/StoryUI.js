@@ -18,6 +18,7 @@
  */
 
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
+import { campaignManager } from "../../engine/CampaignManager.js";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -51,10 +52,29 @@ export function initStoryUI(onChoiceClick) {
     _choicesLocked = false;
     _renderNodeEntry(node);
     _renderChoices(node, onChoiceClick);
+    _showNarrativeMode();
+  });
+
+  // ── CampaignManager scene rendered ─────────────────────────────────────
+  eventBus.on(EVENTS.SCENE_LOADED, ({ scene }) => {
+    if (!scene) return;
+
+    _choicesLocked = false;
+
+    if (scene.type === "narrative" || scene.type === "skill_check") {
+      _showNarrativeMode();
+      _renderCampaignScene(scene);
+    }
+  });
+
+  eventBus.on(EVENTS.COMBAT_TRIGGERED, () => {
+    _showCombatMode();
+    _lockChoices();
   });
 
   // ── Combat started: hide choices ─────────────────────────────────────────
   eventBus.on(EVENTS.COMBAT_STARTED, () => {
+    _showCombatMode();
     _lockChoices();
     document
       .querySelector("#story-choices")
@@ -63,6 +83,7 @@ export function initStoryUI(onChoiceClick) {
 
   // ── Combat ended: restore choices ────────────────────────────────────────
   eventBus.on(EVENTS.COMBAT_ENDED, () => {
+    _showNarrativeMode();
     // Choices will be replaced when storyManager navigates to victoryNode
     // (which fires STORY_NODE_CHANGED). Just ensure the container is visible
     // so the new choices are shown when they arrive.
@@ -108,6 +129,93 @@ export function initStoryUI(onChoiceClick) {
       b.disabled = false;
     });
   });
+}
+
+function _renderCampaignScene(scene) {
+  const log = document.querySelector("#narrative-log");
+  if (log) {
+    const entry = document.createElement("div");
+    entry.className =
+      "story-node-entry story-node-entry--active story-node-entry--enter";
+
+    const desc = document.createElement("p");
+    desc.className = "story-node-desc";
+    desc.textContent = String(scene.text ?? "");
+
+    entry.appendChild(desc);
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  const bar = document.querySelector("#story-choices");
+  if (!bar) return;
+
+  bar.innerHTML = "";
+  bar.classList.remove("story-choices--hidden");
+
+  const choices = Array.isArray(scene.choices) ? scene.choices : [];
+  if (choices.length === 0) {
+    bar.innerHTML = `<p class="story-no-choices">— A jelenet véget ért —</p>`;
+    return;
+  }
+
+  choices.forEach((choice, index) => {
+    const button = document.createElement("button");
+    button.className = "story-choice-btn";
+    button.dataset.choiceIdx = String(index);
+    button.textContent = String(choice.text ?? "Tovább");
+
+    button.addEventListener("click", () => {
+      if (_choicesLocked) return;
+
+      _choicesLocked = true;
+      bar.querySelectorAll(".story-choice-btn").forEach((b) => {
+        b.disabled = true;
+      });
+
+      campaignManager.makeChoice(choice);
+    });
+
+    bar.appendChild(button);
+  });
+}
+
+function _showNarrativeMode() {
+  const narrative =
+    document.querySelector("#narrative-ui") ??
+    document.querySelector("#narrative-log");
+  const combat =
+    document.querySelector("#combat-ui") ??
+    document.querySelector(".runtime-log-grid");
+
+  if (narrative) {
+    narrative.classList.remove("story-mode-hidden");
+    narrative.classList.add("story-mode-active");
+  }
+
+  if (combat) {
+    combat.classList.remove("story-mode-active", "fall-in-animation");
+    combat.classList.add("story-mode-hidden");
+  }
+}
+
+function _showCombatMode() {
+  const narrative =
+    document.querySelector("#narrative-ui") ??
+    document.querySelector("#narrative-log");
+  const combat =
+    document.querySelector("#combat-ui") ??
+    document.querySelector(".runtime-log-grid");
+
+  if (narrative) {
+    narrative.classList.remove("story-mode-active");
+    narrative.classList.add("story-mode-hidden");
+  }
+
+  if (combat) {
+    combat.classList.remove("story-mode-hidden");
+    combat.classList.add("story-mode-active", "fall-in-animation");
+  }
 }
 
 // ── Private: DOM Manipulation ─────────────────────────────────────────────────
