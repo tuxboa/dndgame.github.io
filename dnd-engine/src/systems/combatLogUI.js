@@ -1,8 +1,6 @@
 import { eventBus, EVENTS } from "../engine/eventBus.js";
 import { gameStore } from "../store/index.js";
 
-const NARRATION_EVENT = "NARRATION_RECEIVED";
-
 let _initialized = false;
 let _combatLogElement = null;
 let _systemLogElement = null;
@@ -138,7 +136,7 @@ export function initCombatLogUI() {
 
   eventBus.subscribe(EVENTS.COMBAT_ATTACK_START, _onCombatStart, 250);
   eventBus.subscribe(EVENTS.DAMAGE_APPLIED, _onDamageApplied, -100);
-  eventBus.subscribe(NARRATION_EVENT, _onNarrationReceived, -90);
+  eventBus.subscribe(EVENTS.NARRATION_RECEIVED, _onNarrationReceived, -90);
 
   _initialized = true;
 }

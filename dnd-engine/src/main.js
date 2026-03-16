@@ -94,7 +94,6 @@ import { initChangelog } from "./ui/components/ChangelogModal.js";
 
 // ── Dev: expose state to DevTools ─────────────────────────────────────────────
 if (import.meta.env.DEV) {
-  eventBus.debug();
   window.__store__ = gameStore;
   window.__events__ = EVENTS;
 }
@@ -102,6 +101,9 @@ if (import.meta.env.DEV) {
 // ── Bootstrap ────────────────────────────────────────────────────────────────
 async function bootstrap() {
   const app = document.querySelector("#app");
+  if (!app) {
+    throw new Error('Hiányzik a gyökér DOM elem: "#app".');
+  }
 
   // ── Step 1: Mount pre-game containers ────────────────────────────────────────
   app.innerHTML = `
@@ -125,7 +127,7 @@ async function bootstrap() {
       : menuResult.campaignPath;
     campaign = await loadCampaign(campaignPath);
   } catch (err) {
-    app.innerHTML = `<div class="error"><h2>Failed to load campaign</h2><pre>${err.message}</pre></div>`;
+    renderFatalScreen("Failed to load campaign", err);
     return;
   }
 
@@ -174,6 +176,13 @@ async function bootstrap() {
   // Step 3b: Init subsystems
   initAudio();
   initCombatLogUI();
+  if (!geminiDMService) {
+    eventBus.emit(EVENTS.UI_NOTIFICATION, {
+      text: "Gemini narráció kikapcsolva (hiányzó API kulcs).",
+      type: "warning",
+      ttl: 4500,
+    });
+  }
   geminiDMService?.initialize();
   initVisualEffectSystem();
   initCombatDamagePipeline();
@@ -788,7 +797,15 @@ function subscribeToStore() {
 
 function appendNarration(text, role) {
   const log = document.querySelector("#narrative-log");
-  if (!log) return;
+  if (!log) {
+    if (!appendNarration._missingContainerWarned) {
+      appendNarration._missingContainerWarned = true;
+      console.error(
+        "[UI] A #narrative-log elem hiányzik, ezért a narráció nem jeleníthető meg.",
+      );
+    }
+    return;
+  }
 
   const el = document.createElement("p");
   el.className = `narrative-entry narrative-${role}`;
@@ -909,9 +926,39 @@ function showNotification(text, type = "info", ttl = 3000) {
   }, ttl);
 }
 
+function renderFatalScreen(title, error) {
+  const app = document.querySelector("#app");
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : JSON.stringify(error);
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "error";
+
+  const heading = document.createElement("h2");
+  heading.textContent = title;
+
+  const details = document.createElement("pre");
+  details.textContent = message;
+
+  wrapper.appendChild(heading);
+  wrapper.appendChild(details);
+
+  if (app) {
+    app.innerHTML = "";
+    app.appendChild(wrapper);
+    return;
+  }
+
+  document.body.innerHTML = "";
+  document.body.appendChild(wrapper);
+}
+
 // ── Go ────────────────────────────────────────────────────────────────────────
 bootstrap().catch((err) => {
   console.error("[Bootstrap] Fatal:", err);
-  document.querySelector("#app").innerHTML =
-    `<div class="error"><h2>Engine failed to start</h2><pre>${err.message}</pre></div>`;
+  renderFatalScreen("Engine failed to start", err);
 });

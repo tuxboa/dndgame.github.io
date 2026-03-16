@@ -254,6 +254,7 @@ export const EVENTS = {
   DM_CONTEXT_READY: "dm:contextReady",
   DM_RESPONSE_RECEIVED: "dm:responseReceived",
   DM_NARRATIVE_CHUNK: "dm:narrativeChunk", // streaming
+  NARRATION_RECEIVED: "NARRATION_RECEIVED",
 
   // ── Text-to-Speech ───────────────────────────────────────────────
   TTS_SPEAK: "tts:speak", // { text } — playback started

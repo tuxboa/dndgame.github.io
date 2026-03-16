@@ -237,7 +237,23 @@ async function _queryGroq(enemy, player, allLive, apiKey) {
   const text = data.choices?.[0]?.message?.content;
   if (!text) throw new Error("Empty Groq response");
 
-  const parsed = JSON.parse(text);
+  let cleaned = String(text).trim();
+  cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+
+  const jsonStart = cleaned.indexOf("{");
+  const jsonEnd = cleaned.lastIndexOf("}");
+  if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+    cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch (parseErr) {
+    throw new Error(`Malformed Groq JSON response: ${parseErr.message}`, {
+      cause: parseErr,
+    });
+  }
 
   // Sanity-check the response shape
   if (

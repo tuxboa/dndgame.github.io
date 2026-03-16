@@ -3,9 +3,22 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { eventBus, EVENTS } from "../engine/eventBus.js";
 import { gameStore } from "../store/index.js";
 
-const NARRATION_EVENT = "NARRATION_RECEIVED";
+const DEFAULT_NARRATION_INTERVAL = 3;
 
 const SYSTEM_INSTRUCTION = `Te egy sötét fantasy Dungeon Master vagy. Rövid, velős, 10-15 szavas magyar nyelvű leírásokat generálj a harci eseményekről. A válaszod MINDIG egy valid JSON objektum legyen, ami tartalmaz egy 'text' mezőt a narrációnak és egy 'audioOutput' mezőt, ami a base64 kódolt hangfájlt tartalmazza. A hang stílusa legyen mély, rekedtes és gótikus.`;
+
+function _resolveNarrationInterval() {
+  const rawValue = Number.parseInt(
+    String(import.meta.env.VITE_GEMINI_NARRATION_EVERY ?? ""),
+    10,
+  );
+
+  if (!Number.isFinite(rawValue) || rawValue < 1) {
+    return DEFAULT_NARRATION_INTERVAL;
+  }
+
+  return rawValue;
+}
 
 class GeminiDMService {
   constructor(apiKey) {
@@ -21,6 +34,7 @@ class GeminiDMService {
 
     this.audioContext = null;
     this.attackCounter = 0;
+    this.narrationInterval = _resolveNarrationInterval();
     this._initialized = false;
     this._boundDamageHandler = this.handleDamageEvent.bind(this);
   }
@@ -30,10 +44,6 @@ class GeminiDMService {
 
     eventBus.subscribe(EVENTS.DAMAGE_APPLIED, this._boundDamageHandler, -50);
     this._initialized = true;
-
-    console.log(
-      "[GeminiDMService] Inicializálva és feliratkozva a DAMAGE_APPLIED eseményre.",
-    );
   }
 
   handleDamageEvent(payload) {
@@ -43,7 +53,7 @@ class GeminiDMService {
     this.attackCounter += 1;
 
     if (
-      this.attackCounter % 3 !== 0 &&
+      this.attackCounter % this.narrationInterval !== 0 &&
       !combatData.isCritical &&
       !combatData.isFatal
     ) {
@@ -51,7 +61,12 @@ class GeminiDMService {
     }
 
     this.attackCounter = 0;
-    void this.generateNarration(combatData);
+    void this.generateNarration(combatData).catch((error) => {
+      console.error(
+        "[GeminiDMService] Hiba a narrációs háttérfeladat futtatása közben:",
+        error,
+      );
+    });
   }
 
   _buildCombatData(payload) {
@@ -124,6 +139,8 @@ class GeminiDMService {
 
   _parseNarrationResponse(responseText) {
     const trimmed = (responseText ?? "").trim();
+    if (!trimmed) return null;
+
     const unfenced = trimmed
       .replace(/^```(?:json)?\s*/i, "")
       .replace(/\s*```$/i, "");
@@ -136,13 +153,33 @@ class GeminiDMService {
         ? unfenced.slice(jsonStart, jsonEnd + 1)
         : unfenced;
 
-    return JSON.parse(jsonPayload);
+    let parsed;
+    try {
+      parsed = JSON.parse(jsonPayload);
+    } catch (error) {
+      console.warn(
+        "[GeminiDMService] A modell válasza nem valid JSON, fallback szöveg kerül használatra.",
+        error,
+      );
+
+      return { text: unfenced };
+    }
+
+    if (!parsed || typeof parsed !== "object") {
+      return null;
+    }
+
+    return {
+      text: typeof parsed.text === "string" ? parsed.text.trim() : "",
+      audioOutput:
+        typeof parsed.audioOutput === "string" ? parsed.audioOutput : null,
+    };
   }
 
   displayText(text) {
     if (!text) return;
 
-    void eventBus.publish(NARRATION_EVENT, {
+    void eventBus.publish(EVENTS.NARRATION_RECEIVED, {
       text,
       color: "gold",
     });
