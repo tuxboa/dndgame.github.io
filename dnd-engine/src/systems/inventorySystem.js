@@ -13,6 +13,12 @@ import { gameStore } from "../store/index.js";
 import { eventBus, EVENTS } from "../engine/eventBus.js";
 import { equipItem, unequipItem, isEquippable } from "./equipmentSystem.js";
 import { roll } from "./diceSystem.js";
+import {
+  ecsGetPlayerInventory,
+  ecsSetPlayerInventory,
+  ecsModifyPlayerGold,
+  ecsHealPlayer,
+} from "../ecs/playerEcsBridge.js";
 
 // ── Item Operations ───────────────────────────────────────────────────────────
 
@@ -23,8 +29,7 @@ import { roll } from "./diceSystem.js";
  * @param {{ itemId: string, name: string, quantity?: number, description?: string, value?: number }} item
  */
 export function addItem(item) {
-  const state = gameStore.getState();
-  const inventory = [...state.player.inventory];
+  const inventory = [...ecsGetPlayerInventory()];
   const idx = inventory.findIndex((i) => i.itemId === item.itemId);
 
   if (idx !== -1) {
@@ -36,12 +41,7 @@ export function addItem(item) {
     inventory.push({ equipped: false, quantity: 1, ...item });
   }
 
-  gameStore.setState(
-    {
-      player: { ...state.player, inventory },
-    },
-    "inventorySystem:addItem",
-  );
+  ecsSetPlayerInventory(inventory, { source: "inventorySystem:addItem" });
 
   eventBus.emit(EVENTS.INVENTORY_CHANGED, { action: "add", item });
 }
@@ -55,8 +55,7 @@ export function addItem(item) {
  * @returns {boolean} true if successful
  */
 export function removeItem(itemId, quantity = 1) {
-  let state = gameStore.getState();
-  let inventory = [...state.player.inventory];
+  let inventory = [...ecsGetPlayerInventory()];
   let idx = inventory.findIndex((i) => i.itemId === itemId);
 
   if (idx === -1 || inventory[idx].quantity < quantity) return false;
@@ -65,8 +64,7 @@ export function removeItem(itemId, quantity = 1) {
   // Re-read state afterward because unequipItem calls setState (recalculates stats, clears slot).
   if (inventory[idx].equipped && isEquippable(itemId)) {
     unequipItem(itemId);
-    state = gameStore.getState();
-    inventory = [...state.player.inventory];
+    inventory = [...ecsGetPlayerInventory()];
     idx = inventory.findIndex((i) => i.itemId === itemId);
     if (idx === -1) return false; // Shouldn't happen, but guard anyway
   }
@@ -80,12 +78,7 @@ export function removeItem(itemId, quantity = 1) {
     };
   }
 
-  gameStore.setState(
-    {
-      player: { ...state.player, inventory },
-    },
-    "inventorySystem:removeItem",
-  );
+  ecsSetPlayerInventory(inventory, { source: "inventorySystem:removeItem" });
 
   eventBus.emit(EVENTS.INVENTORY_CHANGED, {
     action: "remove",
@@ -118,10 +111,7 @@ export function toggleEquip(itemId) {
     const inventory = state.player.inventory.map((i) =>
       i.itemId === itemId ? { ...i, equipped: !i.equipped } : i,
     );
-    gameStore.setState(
-      { player: { ...state.player, inventory } },
-      "inventorySystem:toggleEquip",
-    );
+    ecsSetPlayerInventory(inventory, { source: "inventorySystem:toggleEquip" });
   }
 
   eventBus.emit(EVENTS.INVENTORY_CHANGED, { action: "equip", itemId });
@@ -152,27 +142,28 @@ function useItem(itemId) {
   }
 
   const healRoll = roll(healNotation);
-  const healed = healRoll.total;
   const p = gameStore.getState().player;
-  const newHp = Math.min(p.maxHp ?? p.hp, (p.hp ?? 0) + healed);
+  const healed = healRoll.total;
+  const healResult = ecsHealPlayer(healed, {
+    source: "inventorySystem:useItem",
+  });
+  const newHp = healResult.newCurrentHp;
 
   // Sync HP into combat turn order if combat is active
   const combat = gameStore.getState().combat;
-  const combatPatch = combat.active
-    ? {
+  if (combat.active) {
+    gameStore.setState(
+      {
         combat: {
           ...combat,
           turnOrder: combat.turnOrder.map((c) =>
             c.isPlayer ? { ...c, hp: newHp } : c,
           ),
         },
-      }
-    : {};
-
-  gameStore.setState(
-    { player: { ...p, hp: newHp }, ...combatPatch },
-    "inventorySystem:useItem",
-  );
+      },
+      "inventorySystem:syncCombatHpFromEcs",
+    );
+  }
 
   removeItem(itemId, 1);
 
@@ -203,19 +194,7 @@ export function hasItem(itemId, minQuantity = 1) {
  * @returns {boolean} false if insufficient funds for a spend
  */
 export function modifyGold(amount) {
-  const state = gameStore.getState();
-  const newGold = state.player.gold + amount;
-
-  if (newGold < 0) return false; // Can't go into debt
-
-  gameStore.setState(
-    {
-      player: { ...state.player, gold: newGold },
-    },
-    "inventorySystem:modifyGold",
-  );
-
-  return true;
+  return ecsModifyPlayerGold(amount, { source: "inventorySystem:modifyGold" });
 }
 
 // ── Barter / Trade ────────────────────────────────────────────────────────────

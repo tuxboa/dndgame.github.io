@@ -18,6 +18,13 @@ import { gameStore } from "../store/index.js";
 import { eventBus, EVENTS } from "../engine/eventBus.js";
 import { roll } from "./diceSystem.js";
 import { playSFX, setMusic } from "./audioSystem.js";
+import {
+  ecsApplyDamageToPlayer,
+  ecsSetPlayerCurrentHp,
+  ecsSetPlayerKnockoutState,
+  ecsSetPlayerPosition,
+  ecsSetPlayerTempHp,
+} from "../ecs/playerEcsBridge.js";
 
 // ── Grid constants (must match CombatMapEngine) ───────────────────────────────
 const _GRID_COLS = 20;
@@ -120,6 +127,13 @@ export function startCombat(participants) {
     "turnManager:startCombat",
   );
 
+  const playerStart = turnOrder.find((p) => p.isPlayer);
+  if (playerStart) {
+    ecsSetPlayerPosition(playerStart.x, playerStart.y, {
+      source: "turnManager:startCombatPosition",
+    });
+  }
+
   eventBus.emit(EVENTS.COMBAT_STARTED, { turnOrder });
   setMusic("combat");
   eventBus.emit(EVENTS.COMBAT_TURN_START, { current: turnOrder[0], round: 1 });
@@ -183,7 +197,11 @@ export function advanceTurn() {
   );
 
   // Re-check liveness — poison tick might have finished off someone
-  const stillAlive = updatedOrder.filter((p) => (p.hp ?? 1) > 0);
+  const stillAlive = updatedOrder.filter((p) =>
+    p.isPlayer
+      ? (p.hp ?? 1) > 0 || (p.conditions ?? []).includes("unconscious")
+      : (p.hp ?? 1) > 0,
+  );
   if (stillAlive.length <= 1) {
     gameStore.setState(
       { combat: { ...state.combat, turnOrder: updatedOrder } },
@@ -204,14 +222,11 @@ export function advanceTurn() {
 
   // Sync player HP in state.player if a tick changed it
   const updatedPlayer = withMovReset.find((p) => p.isPlayer);
-  const playerHpPatch =
-    updatedPlayer && updatedPlayer.hp !== state.player.hp
-      ? { player: { ...state.player, hp: updatedPlayer.hp } }
-      : {};
+  const shouldSyncPlayerHp =
+    !!updatedPlayer && updatedPlayer.hp !== state.player.hp;
 
   gameStore.setState(
     {
-      ...playerHpPatch,
       combat: {
         ...state.combat,
         turnOrder: withMovReset,
@@ -229,11 +244,36 @@ export function advanceTurn() {
     "turnManager:advanceTurn",
   );
 
+  if (shouldSyncPlayerHp) {
+    ecsSetPlayerCurrentHp(updatedPlayer.hp, {
+      source: "turnManager:advanceTurnHpSync",
+    });
+  }
+
   // Flush log entries produced by effect ticks
   logEntries.forEach((entry) => logCombatAction(entry));
 
   // Emit per-effect VFX events (FCT on cards, etc.)
   effectEvents.forEach((ev) => eventBus.emit(EVENTS.STATUS_EFFECT_TICKED, ev));
+
+  // ── DEATH SAVE PAUSE FROM STATUS EFFECTS ──
+  // If the player succumbed to poison/fire at the start of their turn:
+  const wasKnockedOut =
+    updatedPlayer && updatedPlayer.hp === 0 && (state.player.hp ?? 0) > 0;
+  if (wasKnockedOut) {
+    _handlePlayerKnockout();
+    // Do NOT emit COMBAT_TURN_START; pause combat for death saves.
+    return;
+  }
+
+  // ── DEATH SAVE PAUSE (already active) ──
+  // If the player is already making death saves, skip turn processing.
+  if (gameStore.getState().player?.deathSaveActive) {
+    console.log(
+      "[TurnManager] advanceTurn paused because player is making death saves",
+    );
+    return;
+  }
 
   if (shouldSkip) {
     // Emit with stunned flag so CombatUI renders the indicator but skips enemy AI
@@ -277,40 +317,37 @@ export function applyDamage(targetId, damage, options = {}) {
     }
   }
 
-  // Temporary HP: absorb incoming damage before touching real HP
-  if (isPlayer && (state.player.tempHp ?? 0) > 0) {
-    const absorbed = Math.min(state.player.tempHp, damage);
-    damage -= absorbed;
-    const newTempHp = state.player.tempHp - absorbed;
-    gameStore.setState(
-      { player: { ...state.player, tempHp: newTempHp } },
-      "turnManager:absorbTempHp",
-    );
-    eventBus.emit(EVENTS.TEMP_HP_ABSORBED, {
-      targetId,
-      absorbed,
-      remaining: newTempHp,
+  let playerDamageResult = null;
+
+  if (isPlayer) {
+    playerDamageResult = ecsApplyDamageToPlayer(damage, {
+      useTempHp: true,
+      source: "turnManager:applyDamage",
     });
+
+    if (playerDamageResult.absorbedTempHp > 0) {
+      eventBus.emit(EVENTS.TEMP_HP_ABSORBED, {
+        targetId,
+        absorbed: playerDamageResult.absorbedTempHp,
+        remaining: playerDamageResult.remainingTempHp,
+      });
+    }
+
+    damage = playerDamageResult.appliedDamage;
     if (damage <= 0) return; // all damage absorbed
   }
 
   const turnOrder = state.combat.turnOrder.map((p) => {
     if (p.id !== targetId) return p;
-    return { ...p, hp: Math.max(0, (p.hp ?? p.maxHp ?? 0) - damage) };
+    const nextHp = isPlayer
+      ? (playerDamageResult?.newCurrentHp ?? p.hp ?? p.maxHp ?? 0)
+      : Math.max(0, (p.hp ?? p.maxHp ?? 0) - damage);
+    return { ...p, hp: nextHp };
   });
-
-  // Sync player HP — use fresh snapshot to preserve any tempHp changes above
-  const updatedPlayer = turnOrder.find((p) => p.isPlayer);
-  const freshPlayerSnap = gameStore.getState().player;
-  const playerPatch =
-    updatedPlayer && updatedPlayer.id === targetId
-      ? { player: { ...freshPlayerSnap, hp: updatedPlayer.hp } }
-      : {};
 
   gameStore.setState(
     {
       combat: { ...state.combat, turnOrder },
-      ...playerPatch,
     },
     "turnManager:applyDamage",
   );
@@ -426,10 +463,7 @@ export function grantTempHp(targetId, amount) {
     state.combat.turnOrder.find((p) => p.id === targetId)?.isPlayer ?? false;
   if (!isPlayerTarget) return;
   const newTempHp = Math.max(state.player.tempHp ?? 0, amount);
-  gameStore.setState(
-    { player: { ...state.player, tempHp: newTempHp } },
-    "turnManager:grantTempHp",
-  );
+  ecsSetPlayerTempHp(newTempHp, { source: "turnManager:grantTempHp" });
   logCombatAction({
     actor: state.player.name,
     action: "gains Temp HP",
@@ -527,6 +561,12 @@ export function moveParticipant(participantId, toX, toY) {
     { combat: { ...state.combat, turnOrder: newOrder } },
     "turnManager:moveParticipant",
   );
+
+  if (mover.isPlayer) {
+    ecsSetPlayerPosition(toX, toY, {
+      source: "turnManager:moveParticipant",
+    });
+  }
 
   eventBus.emit(EVENTS.COMBAT_MAP_MOVE, {
     participantId,
@@ -804,17 +844,30 @@ function _handlePlayerKnockout() {
   const state = gameStore.getState();
   const conditions = [...new Set([...state.player.conditions, "unconscious"])];
 
+  // Also sync "unconscious" into the player's turn-order entry so that
+  // advanceTurn()'s alive filter keeps them in the rotation for death saves.
+  // Without this, p.conditions on the turn-order entry never contains
+  // "unconscious" and the player is silently dropped from the alive list,
+  // causing both: (a) button never re-arming, and (b) enemies looping forever.
+  const turnOrder = (state.combat?.turnOrder ?? []).map((p) =>
+    p.isPlayer ? { ...p, conditions } : p,
+  );
+
+  ecsSetPlayerKnockoutState(
+    {
+      hp: 0,
+      conditions,
+      deathSaves: { successes: 0, failures: 0 },
+      deathSaveActive: true,
+    },
+    { source: "turnManager:playerKnockout" },
+  );
+
   gameStore.setState(
     {
-      player: {
-        ...state.player,
-        hp: 0,
-        conditions,
-        deathSaves: { successes: 0, failures: 0 },
-        deathSaveActive: true,
-      },
+      combat: { ...state.combat, turnOrder },
     },
-    "turnManager:playerKnockout",
+    "turnManager:playerKnockoutCombat",
   );
 
   eventBus.emit(EVENTS.PLAYER_KNOCKED_OUT, {

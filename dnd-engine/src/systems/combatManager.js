@@ -495,12 +495,10 @@ async function _resolveAttack(enemy) {
 
   if (newHp === 0) {
     handlePlayerKnockout();
-    // Combat continues — advance to the next turn so enemies keep acting
-    // while the player resolves death saving throws.
-    // Brief delay ensures the death-save overlay has had one render frame
-    // to mount before the next enemy turn fires.
-    await new Promise((r) => setTimeout(r, 80));
-    advanceTurn();
+    // ── DEATH SAVE PAUSE ──
+    // Player has dropped to 0 HP. We intentionally DO NOT call advanceTurn() here.
+    // This fully pauses the combat loop (stopping all enemies) until the player
+    // either stabilises or dies, ensuring the death-save sequence is an uninterrupted mini-game.
     return;
   }
 

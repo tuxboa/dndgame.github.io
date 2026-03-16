@@ -12,6 +12,7 @@
 import "./style.css";
 import { eventBus, EVENTS } from "./engine/eventBus.js";
 import { gameStore } from "./store/index.js";
+import { initPlayerEcsBridge } from "./ecs/playerEcsBridge.js";
 import { loadCampaign } from "./data/campaignLoader.js";
 import { getGroqKey, getTtsKey, isAiEnabled } from "./config/apiConfig.js";
 import {
@@ -138,6 +139,9 @@ async function bootstrap() {
       "mainMenu:seedPlayer",
     );
   }
+
+  // ── Step 4b: Init ECS bridge (player entity + component sync) ──────────────
+  initPlayerEcsBridge();
 
   // ── Step 5: Reveal game container with a cinematic fade ──────────────────────
   gameEl.classList.remove("game-container--hidden");

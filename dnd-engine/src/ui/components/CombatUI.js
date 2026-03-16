@@ -998,7 +998,10 @@ function wireButtons() {
       }
 
       const atkMod =
-        atkStatMod + player.proficiencyBonus + (player.attackBonus ?? 0) + bardInspBonus;
+        atkStatMod +
+        player.proficiencyBonus +
+        (player.attackBonus ?? 0) +
+        bardInspBonus;
 
       // Versatile: use the larger die when no off-hand item is equipped
       const isVersatile = weaponTemplate?.bonuses?.versatile ?? false;
@@ -2231,9 +2234,13 @@ function _wireDeathSave(overlay) {
     } else if (saves.failures >= 3) {
       _resolveDeath("dead", overlay, `${p.name} has died.`);
     } else {
-      // Advance to enemy turns; the button re-arms when COMBAT_TURN_START
-      // fires again on the player's next turn (see handler at top of file).
-      advanceTurn();
+      // ── DEATH SAVE PAUSE ──
+      // Re-enable button after a small delay to prevent rapid multi-clicks.
+      // We DO NOT call advanceTurn() here to ensure combat remains completely paused.
+      // Once the player succeeds 3 times, _resumeCombatAfterStabilise() will unpause it.
+      setTimeout(() => {
+        if (overlay.parentNode) btn.disabled = false;
+      }, 500);
     }
   });
 }
@@ -2248,7 +2255,13 @@ function _resumeCombatAfterStabilise() {
   const s = gameStore.getState();
   if (!s.combat.active) return; // safety: already ended somehow
   const syncedOrder = s.combat.turnOrder.map((c) =>
-    c.isPlayer ? { ...c, hp: 1 } : c,
+    c.isPlayer
+      ? {
+          ...c,
+          hp: 1,
+          conditions: (c.conditions ?? []).filter((cd) => cd !== "unconscious"),
+        }
+      : c,
   );
   gameStore.setState(
     { combat: { ...s.combat, turnOrder: syncedOrder } },
