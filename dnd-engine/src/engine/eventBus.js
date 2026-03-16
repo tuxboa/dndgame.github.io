@@ -4,29 +4,133 @@
  * In multiplayer: server messages arrive here via NetworkBridge.
  */
 
+/**
+ * @typedef {Object} EventListenerEntry
+ * @property {Function} callback
+ * @property {number} priority
+ * @property {number} order
+ */
+
 const _handlers = new Map();
+let _listenerOrder = 0;
+
+/**
+ * Normalize priority argument passed to on/once.
+ * Supported forms:
+ *   - number (e.g. 10)
+ *   - { priority: number }
+ *   - undefined (defaults to 0)
+ *
+ * @param {number | {priority?: number} | undefined} priorityOrOptions
+ * @returns {number}
+ */
+function _normalizePriority(priorityOrOptions) {
+  if (typeof priorityOrOptions === "number") return priorityOrOptions;
+  if (priorityOrOptions && typeof priorityOrOptions.priority === "number") {
+    return priorityOrOptions.priority;
+  }
+  return 0;
+}
+
+/**
+ * Insert a listener and keep execution order deterministic:
+ * 1) higher priority first
+ * 2) for same priority, earlier subscription first
+ *
+ * @param {string} event
+ * @param {Function} callback
+ * @param {number} priority
+ */
+function _addListener(event, callback, priority) {
+  if (!_handlers.has(event)) _handlers.set(event, []);
+
+  const listeners = _handlers.get(event);
+  listeners.push({
+    callback,
+    priority,
+    order: _listenerOrder++,
+  });
+
+  listeners.sort((a, b) => {
+    if (b.priority !== a.priority) return b.priority - a.priority;
+    return a.order - b.order;
+  });
+}
+
+/**
+ * Remove listener entries for an exact callback reference.
+ *
+ * @param {string} event
+ * @param {Function} callback
+ * @returns {number} number of removed listener entries
+ */
+function _removeListener(event, callback) {
+  const listeners = _handlers.get(event);
+  if (!listeners?.length) return 0;
+
+  const before = listeners.length;
+  const next = listeners.filter((entry) => entry.callback !== callback);
+
+  if (next.length === 0) {
+    _handlers.delete(event);
+  } else {
+    _handlers.set(event, next);
+  }
+
+  return before - next.length;
+}
 
 export const eventBus = {
   /**
    * Subscribe to an event.
    * @param {string} event
    * @param {Function} handler
+   * @param {number|{priority?: number}} [priorityOrOptions=0]
    * @returns {Function} unsubscribe — call to clean up
    */
-  on(event, handler) {
-    if (!_handlers.has(event)) _handlers.set(event, new Set());
-    _handlers.get(event).add(handler);
-    return () => _handlers.get(event).delete(handler);
+  on(event, handler, priorityOrOptions = 0) {
+    const priority = _normalizePriority(priorityOrOptions);
+    _addListener(event, handler, priority);
+    return () => this.off(event, handler);
+  },
+
+  /**
+   * Alias for on() to match classic EventBus naming.
+   */
+  subscribe(event, handler, priorityOrOptions = 0) {
+    return this.on(event, handler, priorityOrOptions);
+  },
+
+  /**
+   * Unsubscribe one callback from an event.
+   * @param {string} event
+   * @param {Function} handler
+   * @returns {boolean}
+   */
+  off(event, handler) {
+    return _removeListener(event, handler) > 0;
+  },
+
+  /**
+   * Alias for off() to match classic EventBus naming.
+   */
+  unsubscribe(event, handler) {
+    return this.off(event, handler);
   },
 
   /**
    * Subscribe once — auto-removes after first call.
    */
-  once(event, handler) {
-    const unsub = this.on(event, (payload) => {
-      unsub(); // unsubscribe first so a throwing handler doesn't leave it stuck
-      handler(payload);
-    });
+  once(event, handler, priorityOrOptions = 0) {
+    const priority = _normalizePriority(priorityOrOptions);
+    const unsub = this.on(
+      event,
+      (payload) => {
+        unsub(); // unsubscribe first so a throwing handler doesn't leave it stuck
+        return handler(payload);
+      },
+      priority,
+    );
     return unsub;
   },
 
@@ -35,9 +139,21 @@ export const eventBus = {
    * Each handler is isolated — one crash won't prevent the rest from running.
    */
   emit(event, payload) {
-    _handlers.get(event)?.forEach((fn) => {
+    const listeners = _handlers.get(event);
+    if (!listeners?.length) return;
+
+    // Snapshot protects against mutation while iterating (unsubscribe inside handler).
+    [...listeners].forEach((entry) => {
       try {
-        fn(payload);
+        const maybePromise = entry.callback(payload);
+        if (maybePromise && typeof maybePromise.then === "function") {
+          maybePromise.catch((err) => {
+            console.error(
+              `[EventBus] Async handler for "${event}" threw:`,
+              err,
+            );
+          });
+        }
       } catch (err) {
         console.error(`[EventBus] Handler for "${event}" threw:`, err);
       }
@@ -45,13 +161,58 @@ export const eventBus = {
   },
 
   /**
+   * Publish event asynchronously in strict priority order.
+   * Awaits each listener before invoking the next one.
+   */
+  async publish(event, payload) {
+    const listeners = _handlers.get(event);
+    if (!listeners?.length) return;
+
+    // Snapshot protects against mutation while iterating (unsubscribe inside handler).
+    for (const entry of [...listeners]) {
+      try {
+        await entry.callback(payload);
+      } catch (err) {
+        console.error(`[EventBus] Handler for "${event}" threw:`, err);
+      }
+    }
+  },
+
+  /**
+   * Number of listeners currently attached to one event.
+   * @param {string} event
+   */
+  listenerCount(event) {
+    return _handlers.get(event)?.length ?? 0;
+  },
+
+  /**
+   * Remove listeners.
+   * If event is omitted, clears everything.
+   * If event is provided, clears only that event.
+   * @param {string} [event]
+   */
+  clear(event) {
+    if (event) {
+      _handlers.delete(event);
+      return;
+    }
+    _handlers.clear();
+  },
+
+  /**
    * Enable debug logging of all events (dev only).
    */
   debug() {
     const originalEmit = this.emit.bind(this);
+    const originalPublish = this.publish.bind(this);
     this.emit = (event, payload) => {
       console.log(`[EventBus] ${event}`, payload);
       originalEmit(event, payload);
+    };
+    this.publish = async (event, payload) => {
+      console.log(`[EventBus] ${event}`, payload);
+      await originalPublish(event, payload);
     };
   },
 };
@@ -86,6 +247,8 @@ export const EVENTS = {
   TEMP_HP_ABSORBED: "combat:tempHpAbsorbed", // { targetId, absorbed, remaining }
   COMBAT_MAP_MOVE: "combat:mapMove", // { participantId, fromX, fromY, toX, toY }
   COMBAT_MAP_ATTACK_RANGE_INVALID: "combat:mapAttackRangeInvalid", // { targetId, distance, range }
+  COMBAT_ATTACK_START: "combat:attackStart", // async attack pre-processing (e.g. animation) before attackDamage
+  DAMAGE_APPLIED: "combat:damageApplied", // mutable payload pipeline (armor -> damage -> logging)
 
   // ── DM / LLM ─────────────────────────────────────────────────────
   DM_CONTEXT_READY: "dm:contextReady",

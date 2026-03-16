@@ -119,9 +119,13 @@ body {
 /* ── Narrative Log ───────────────────────────────────────────────────────────── */
 .game-main {
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .narrative-log {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 1.2rem 1.5rem;
   display: flex;
@@ -135,6 +139,80 @@ body {
 .narrative-log::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 2px;
+}
+
+.runtime-log-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.log-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.log-panel h3 {
+  font-family: var(--font-title);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.scrollable-log {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.55rem;
+  background: var(--color-surface-2);
+  text-align: left;
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.scrollable-log::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollable-log::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+}
+
+.log-message {
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--color-border);
+  color: var(--color-text-dim);
+}
+
+.log-message:last-child {
+  border-bottom: none;
+}
+
+.critical-hit {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.normal-hit {
+  color: var(--color-text);
+}
+
+.zero-damage {
+  color: var(--color-text-dim);
+  font-style: italic;
+}
+
+@media (max-width: 760px) {
+  .runtime-log-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .narrative-entry {
@@ -548,6 +626,26 @@ body {
 #dice-overlay.visible {
   background: rgba(0, 0, 0, 0.6);
   pointer-events: all;
+}
+
+.attack-dice-vfx {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9001;
+  pointer-events: none;
+  font-size: 2.8rem;
+  line-height: 1;
+  opacity: 0.9;
+  transform-origin: center;
+  transition:
+    opacity 0.5s ease,
+    transform 1.5s ease;
+}
+
+.attack-dice-vfx.rolling {
+  transform: rotate(1080deg) scale(0);
+  opacity: 0;
 }
 
 /* ── Dice Toast ───────────────────────────────────────────────────────────────── */
@@ -4246,6 +4344,11 @@ body {
   position: absolute;
   inset: 0;
   z-index: 10;
+  transition: transform 0.1s ease-in-out;
+}
+
+#game-container.shake {
+  animation: screen-shake 0.4s;
 }
 
 #game-container.game-container--hidden {
@@ -4264,6 +4367,42 @@ body {
   to {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes screen-shake {
+  0% {
+    transform: translate(1px, 1px) rotate(0deg);
+  }
+  10% {
+    transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    transform: translate(-3px, 0px) rotate(1deg);
+  }
+  30% {
+    transform: translate(3px, 2px) rotate(0deg);
+  }
+  40% {
+    transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    transform: translate(-1px, 2px) rotate(-1deg);
+  }
+  60% {
+    transform: translate(-3px, 1px) rotate(0deg);
+  }
+  70% {
+    transform: translate(3px, 1px) rotate(-1deg);
+  }
+  80% {
+    transform: translate(-1px, -1px) rotate(1deg);
+  }
+  90% {
+    transform: translate(1px, 2px) rotate(0deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
   }
 }
 

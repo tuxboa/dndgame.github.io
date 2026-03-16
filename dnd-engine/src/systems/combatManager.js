@@ -36,6 +36,7 @@ import {
   applyStatusEffect,
   handlePlayerKnockout,
 } from "./turnManager.js";
+import { resolveAttackDamageAsync } from "./combatDamagePipeline.js";
 import { roll } from "./diceSystem.js";
 import { speakCombatLine } from "./audioSystem.js";
 
@@ -458,9 +459,26 @@ async function _resolveAttack(enemy) {
   // D&D 5e: on a crit only the dice are doubled, bonus modifier is added once.
   const totalDmg = dmgRoll.total + bonus;
 
+  const resolvedDamage = await resolveAttackDamageAsync(
+    {
+      targetId: latestPlayer.id ?? "player",
+      targetIsPlayer: true,
+      amount: totalDmg,
+      isCritical: crit,
+      damageType: enemy.damageType ?? "physical",
+      extraReduction: 0,
+    },
+    {},
+  );
+  const finalDamage = resolvedDamage.amount;
+
   // applyDamage updates BOTH state.player.hp AND combat.turnOrder[player].hp
   // — keeps the HP bar, the alive-check, and the log value all in sync.
-  applyDamage(latestPlayer.id ?? "player", totalDmg, { isCrit: crit });
+  applyDamage(latestPlayer.id ?? "player", finalDamage, {
+    isCrit: crit,
+    damageType: enemy.damageType ?? "physical",
+    useDamagePipeline: false,
+  });
 
   // ── On-Hit status effects (e.g. Giant Spider poison) ─────────────────────
   if (enemy.onHit && Math.random() < (enemy.onHit.chance ?? 0)) {
@@ -481,7 +499,7 @@ async function _resolveAttack(enemy) {
   const newHp = gameStore.getState().player.hp;
 
   eventBus.emit(EVENTS.PLAYER_DAMAGED, {
-    damage: totalDmg,
+    damage: finalDamage,
     newHp,
     source: enemy.name,
     crit,
@@ -490,7 +508,7 @@ async function _resolveAttack(enemy) {
   logCombatAction({
     actor: enemy.name,
     action: `attacks you${crit ? " (CRIT!)" : ""}`,
-    result: `Hit for ${totalDmg} damage — you have ${newHp}/${latestPlayer.maxHp} HP remaining`,
+    result: `Hit for ${finalDamage} damage — you have ${newHp}/${latestPlayer.maxHp} HP remaining`,
   });
 
   if (newHp === 0) {

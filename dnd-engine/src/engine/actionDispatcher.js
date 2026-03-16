@@ -26,6 +26,7 @@ import {
   logCombatAction,
   applyDamage,
 } from "../systems/turnManager.js";
+import { resolveAttackDamageAsync } from "../systems/combatDamagePipeline.js";
 import { removeItem, addItem } from "../systems/inventorySystem.js";
 import { addXp, XP_PER_LEVEL } from "../systems/levelUpSystem.js";
 import { processTurn } from "../systems/dmController.js";
@@ -338,9 +339,24 @@ export async function performAttack(attackerId, targetId, weapon) {
       ? `⚡ CRIT Damage — ${weapon.damageName ?? "weapon"}`
       : `Damage — ${weapon.damageName ?? "weapon"}`,
   );
-  const damage = damageRoll.total;
+  const rawDamage = damageRoll.total;
+  const resolvedDamage = await resolveAttackDamageAsync(
+    {
+      targetId,
+      targetIsPlayer: target.isPlayer ?? false,
+      amount: rawDamage,
+      isCritical: crit,
+      damageType: weapon.damageType ?? "physical",
+      extraReduction: weapon.armorReduction ?? 0,
+    },
+    {},
+  );
+  const damage = resolvedDamage.amount;
 
-  applyDamage(targetId, damage);
+  applyDamage(targetId, damage, {
+    damageType: weapon.damageType ?? "physical",
+    useDamagePipeline: false,
+  });
 
   logCombatAction({
     actor: attackerId,

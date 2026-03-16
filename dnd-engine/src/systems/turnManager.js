@@ -18,6 +18,7 @@ import { gameStore } from "../store/index.js";
 import { eventBus, EVENTS } from "../engine/eventBus.js";
 import { roll } from "./diceSystem.js";
 import { playSFX, setMusic } from "./audioSystem.js";
+import { resolveAttackDamage } from "./combatDamagePipeline.js";
 import {
   ecsApplyDamageToPlayer,
   ecsSetPlayerCurrentHp,
@@ -304,10 +305,26 @@ export function advanceTurn() {
 export function applyDamage(targetId, damage, options = {}) {
   const state = gameStore.getState();
 
-  // Barbarian Rage: resistance to bludgeoning, piercing, and slashing damage
-  // (options.damageType defaults to "physical" for standard weapon attacks)
   const _rageTarget = state.combat.turnOrder.find((p) => p.id === targetId);
   const isPlayer = _rageTarget?.isPlayer ?? false;
+
+  // 1) Priority event-bus damage pipeline (ArmorSystem -> DamageSystem -> LoggingSystem)
+  // Can be bypassed when damage was already pre-processed by async attack flow.
+  const shouldUseDamagePipeline = options.useDamagePipeline !== false;
+  if (shouldUseDamagePipeline) {
+    const pipelineResult = resolveAttackDamage({
+      targetId,
+      targetIsPlayer: isPlayer,
+      amount: damage,
+      isCritical: options.isCrit === true,
+      damageType: options.damageType ?? "physical",
+      extraReduction: options.armorReduction ?? 0,
+    });
+
+    damage = pipelineResult.amount;
+  }
+
+  // 2) Class-based mitigation after armor pipeline (Barbarian Rage)
   if (isPlayer && (state.player.classAbilities?.rageActive ?? false)) {
     const dtype = options.damageType ?? "physical";
     const physical = ["physical", "bludgeoning", "piercing", "slashing"];

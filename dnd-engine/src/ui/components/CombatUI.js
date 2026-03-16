@@ -572,7 +572,7 @@ function mountCombatHUD() {
       </div>
 
       <!-- Combat log -->
-      <div class="combat-log" id="combat-log"></div>
+      <div class="combat-log" id="combat-hud-log"></div>
 
     </div>
   `;
@@ -773,7 +773,7 @@ function renderPlayerBar(player, effects = []) {
 }
 
 function renderCombatLog(log) {
-  const el = document.querySelector("#combat-log");
+  const el = document.querySelector("#combat-hud-log");
   if (!el) return;
 
   const entries = [...log].reverse().slice(0, 30);
@@ -1789,7 +1789,7 @@ function _refreshClassButton() {
 }
 
 function appendCombatLog(text) {
-  const el = document.querySelector("#combat-log");
+  const el = document.querySelector("#combat-hud-log");
   if (!el) return;
   const div = document.createElement("div");
   div.className = "log-entry log-entry--system";

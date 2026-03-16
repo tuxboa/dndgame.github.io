@@ -37,6 +37,9 @@ import {
 import { initLevelUpUI } from "./ui/components/LevelUpUI.js";
 import { initMerchantUI } from "./ui/components/MerchantUI.js";
 import { initAudio } from "./systems/audioSystem.js";
+import { initCombatDamagePipeline } from "./systems/combatDamagePipeline.js";
+import { initVisualEffectSystem } from "./systems/visualEffectSystem.js";
+import { initCombatLogUI } from "./systems/combatLogUI.js";
 import {
   initTTS,
   setTtsKey,
@@ -168,6 +171,9 @@ async function bootstrap() {
 
   // Step 3b: Init subsystems
   initAudio();
+  initCombatLogUI();
+  initVisualEffectSystem();
+  initCombatDamagePipeline();
   initDispatcher(); // Must be first — wires COMBAT_REQUESTED → startCombat
   initCombatUI();
   initInventoryUI();
@@ -282,11 +288,22 @@ function renderUI(app, campaign) {
 
       <main class="game-main">
         <div class="narrative-log" id="narrative-log"></div>
+        <div class="runtime-log-grid">
+          <div class="log-panel">
+            <h3>Harc Napló</h3>
+            <div id="combat-log" class="scrollable-log"></div>
+          </div>
+          <div class="log-panel">
+            <h3>Rendszer Napló (Debug)</h3>
+            <div id="system-log" class="scrollable-log"></div>
+          </div>
+        </div>
       </main>
 
       <!-- 3D dice canvas — positioned fixed, shown only during rolls -->
       <div id="dice-box-container"></div>
       <div id="dice-overlay"></div>
+      <div id="dice-animation" class="attack-dice-vfx" aria-hidden="true">🎲</div>
 
       <footer class="game-footer">
         <div class="action-bar" id="action-bar"></div>
