@@ -15,6 +15,7 @@
 
 import { gameStore } from "../../store/index.js";
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
+import { campaignManager } from "../../engine/CampaignManager.js";
 
 // ── Labels ────────────────────────────────────────────────────────────────────
 
@@ -60,6 +61,22 @@ export function initActionInput() {
 
     input.value = "";
     input.blur();
+
+    const sceneContext = campaignManager.getCurrentSceneContext?.();
+    const isInterrogation = sceneContext?.type === "interrogation";
+
+    if (isInterrogation) {
+      eventBus.emit(EVENTS.NARRATIVE_UPDATE, {
+        text,
+        role: "player",
+      });
+
+      eventBus.emit(EVENTS.PLAYER_INPUT_SUBMITTED, {
+        text,
+        sceneContext,
+      });
+      return;
+    }
 
     // Emit — dmController and any other listener handles the LLM call
     eventBus.emit(EVENTS.PLAYER_CUSTOM_ACTION, { text });

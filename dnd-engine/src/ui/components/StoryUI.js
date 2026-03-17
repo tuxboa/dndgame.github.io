@@ -61,7 +61,11 @@ export function initStoryUI(onChoiceClick) {
 
     _choicesLocked = false;
 
-    if (scene.type === "narrative" || scene.type === "skill_check") {
+    if (
+      scene.type === "narrative" ||
+      scene.type === "skill_check" ||
+      scene.type === "interrogation"
+    ) {
       _showNarrativeMode();
       _renderCampaignScene(scene);
     }
@@ -143,6 +147,15 @@ function _renderCampaignScene(scene) {
     desc.textContent = String(scene.text ?? "");
 
     entry.appendChild(desc);
+
+    if (scene.type === "interrogation") {
+      const hint = document.createElement("p");
+      hint.className = "story-node-desc";
+      hint.textContent =
+        "💬 Írj szabad szöveget a kihallgatáshoz az alsó mezőbe.";
+      entry.appendChild(hint);
+    }
+
     log.appendChild(entry);
     log.scrollTop = log.scrollHeight;
   }

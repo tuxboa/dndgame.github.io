@@ -12,6 +12,9 @@
 import "./style.css";
 import { eventBus, EVENTS } from "./engine/eventBus.js";
 import { campaignManager } from "./engine/CampaignManager.js";
+import { initAtmosphereSystem } from "./engine/AtmosphereSystem.js";
+import { initInterrogationSystem } from "./engine/InterrogationSystem.js";
+import { initChronicleManager } from "./engine/ChronicleManager.js";
 import { gameStore } from "./store/index.js";
 import { geminiDMService } from "./services/GeminiDMService.js";
 import { initPlayerEcsBridge } from "./ecs/playerEcsBridge.js";
@@ -53,6 +56,7 @@ import {
   stopNarration,
 } from "./systems/ttsSystem.js";
 import { initActionInput } from "./ui/components/ActionInputUI.js";
+import { initChronicleUI } from "./ui/components/ChronicleUI.js";
 import { initCombatMap } from "./ui/components/CombatMapEngine.js";
 import { mountMainMenu } from "./ui/components/MainMenuUI.js";
 import {
@@ -196,6 +200,10 @@ async function bootstrap() {
   initSessionPanel();
   initStory();
   initStoryUI(executeChoice);
+  initInterrogationSystem();
+  initChronicleManager();
+  initChronicleUI();
+  initAtmosphereSystem();
 
   eventBus.on(EVENTS.COMBAT_TRIGGERED, (payload = {}) => {
     const encounterId = payload.encounterId ?? payload.sceneData?.encounterId;
@@ -349,6 +357,10 @@ function renderUI(app, campaign) {
 
       <main class="game-main">
         <div class="narrative-log" id="narrative-log"></div>
+        <section class="chronicle-panel log-panel">
+          <h3>Krónika</h3>
+          <div id="chronicle-log" class="scrollable-log"></div>
+        </section>
         <div class="runtime-log-grid">
           <div class="log-panel">
             <h3>Harc Napló</h3>
@@ -833,6 +845,11 @@ function subscribeToStore() {
   // UI Notifications
   eventBus.on(EVENTS.UI_NOTIFICATION, ({ text, type = "info", ttl = 3000 }) => {
     showNotification(text, type, ttl);
+  });
+
+  eventBus.on(EVENTS.NARRATIVE_UPDATE, ({ text, role = "dm" } = {}) => {
+    if (!text) return;
+    appendNarration(text, role);
   });
 
   // Game Over — player died

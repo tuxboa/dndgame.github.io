@@ -65,6 +65,20 @@ class CampaignManager {
     return this.campaign.scenes?.[this.currentSceneId] ?? null;
   }
 
+  getCurrentSceneContext() {
+    const scene = this.getCurrentScene();
+    if (!scene) return null;
+
+    return {
+      sceneId: this.currentSceneId,
+      type: scene.type,
+      vibe: scene.vibe ?? "default",
+      character: scene.character ?? null,
+      context: scene.context ?? scene.text ?? "",
+      onLeave: scene.onLeave ?? null,
+    };
+  }
+
   goToScene(sceneId) {
     if (!this.campaign || !this.campaign.scenes?.[sceneId]) {
       console.error(`[CampaignManager] Scene with id "${sceneId}" not found.`);
@@ -139,27 +153,40 @@ class CampaignManager {
   updateState(stateUpdate) {
     if (!stateUpdate || typeof stateUpdate !== "object") return;
 
+    const incomingFlags = stateUpdate.flags ?? {};
+    const incomingVariables = stateUpdate.variables ?? {};
+
+    const changedFlags = Object.entries(incomingFlags).filter(
+      ([key, value]) => this.worldState.flags[key] !== value,
+    );
+
+    const changedVariables = Object.entries(incomingVariables).filter(
+      ([key, value]) => this.worldState.variables[key] !== value,
+    );
+
+    if (changedFlags.length === 0 && changedVariables.length === 0) return;
+
     const nextFlags = {
       ...this.worldState.flags,
-      ...(stateUpdate.flags ?? {}),
+      ...incomingFlags,
     };
     const nextVariables = {
       ...this.worldState.variables,
-      ...(stateUpdate.variables ?? {}),
+      ...incomingVariables,
     };
-
-    const flagsChanged =
-      JSON.stringify(nextFlags) !== JSON.stringify(this.worldState.flags);
-    const variablesChanged =
-      JSON.stringify(nextVariables) !==
-      JSON.stringify(this.worldState.variables);
-
-    if (!flagsChanged && !variablesChanged) return;
 
     this.worldState = {
       flags: nextFlags,
       variables: nextVariables,
     };
+
+    changedFlags.forEach(([flag, value]) => {
+      eventBus.emit(EVENTS.FLAG_CHANGED, {
+        flag,
+        value,
+        worldState: _clone(this.worldState),
+      });
+    });
 
     this._syncStoreState();
 

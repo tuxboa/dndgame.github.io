@@ -32,10 +32,14 @@ class GeminiDMService {
       model: "gemini-1.5-flash",
       systemInstruction: SYSTEM_INSTRUCTION,
     });
+    this.utilityModel = this.genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
 
     this.audioContext = null;
     this.attackCounter = 0;
     this.narrationInterval = _resolveNarrationInterval();
+    this.currentVibe = "default";
     this._initialized = false;
     this._boundDamageHandler = this.handleDamageEvent.bind(this);
   }
@@ -158,6 +162,117 @@ class GeminiDMService {
     }
   }
 
+  setCurrentVibe(vibeName) {
+    const nextVibe = String(vibeName ?? "default").trim();
+    this.currentVibe = nextVibe || "default";
+  }
+
+  async reasonPlayerIntent(playerInput, sceneContext = {}) {
+    const fallback = {
+      action: "STAY",
+      payload: null,
+      narrative: "Az őr összehúzott szemmel vizsgál, de egyelőre nem mozdul.",
+    };
+
+    try {
+      const worldStateContext = this._buildWorldStateContext();
+      const sceneDescription = String(
+        sceneContext.context ?? sceneContext.text ?? "",
+      ).trim();
+      const character = String(sceneContext.character ?? "őr").trim() || "őr";
+      const onLeave = String(sceneContext.onLeave ?? "").trim();
+
+      const prompt = [
+        "A feladatod: röviden értelmezd a játékos kihallgatási szándékát.",
+        "Kimenet kizárólag valid JSON legyen.",
+        "Engedélyezett action értékek: SET_FLAG, COMBAT_TRIGGERED, STAY, LEAVE.",
+        'SET_FLAG esetén payload legyen objektum (pl. {"guard_bribed": true}).',
+        'COMBAT_TRIGGERED esetén payload legyen {"sceneId": string} vagy {"encounterId": string}.',
+        "LEAVE esetén payload lehet null. Ha van kilépési jelenet, használd ezt: " +
+          (onLeave || "nincs megadva"),
+        "A narrative mező legyen 1 mondatos magyar, sötét hangulatú reagálás.",
+        `Kihallgatott karakter: ${character}`,
+        `Jelenet kontextus: ${sceneDescription || "nincs"}`,
+        `Aktív vibe: ${this.currentVibe}`,
+        worldStateContext,
+        `Játékos input: ${playerInput}`,
+        "Várt forma:",
+        '{"action":"STAY","payload":null,"narrative":"..."}',
+      ].join("\n");
+
+      const result = await this.utilityModel.generateContent(prompt);
+      const raw = result.response.text();
+      const parsed = this._parseJsonObject(raw);
+
+      if (!parsed) return fallback;
+
+      const allowedActions = new Set([
+        "SET_FLAG",
+        "COMBAT_TRIGGERED",
+        "STAY",
+        "LEAVE",
+      ]);
+
+      const action = String(parsed.action ?? "STAY")
+        .trim()
+        .toUpperCase();
+      const safeAction = allowedActions.has(action) ? action : "STAY";
+      const payload =
+        parsed.payload && typeof parsed.payload === "object"
+          ? parsed.payload
+          : null;
+
+      const narrative =
+        typeof parsed.narrative === "string" && parsed.narrative.trim().length
+          ? parsed.narrative.trim()
+          : fallback.narrative;
+
+      return {
+        action: safeAction,
+        payload,
+        narrative,
+      };
+    } catch (error) {
+      console.error("[GeminiDMService] reasonPlayerIntent hiba:", error);
+      return fallback;
+    }
+  }
+
+  async summarizeFlagChange({ flag, value, worldState } = {}) {
+    const fallback = `A krónikák új jelet őriznek: ${flag} = ${value ? "igaz" : "hamis"}.`;
+
+    if (!flag) return fallback;
+
+    try {
+      const activeFlags = Object.entries(worldState?.flags ?? {})
+        .filter(([, isActive]) => isActive === true)
+        .map(([key]) => key)
+        .slice(0, 8)
+        .join(", ");
+
+      const prompt = [
+        "Írj egyetlen, legfeljebb 22 szavas magyar mondatot, sötét fantasy krónika stílusban.",
+        "Nem kell JSON, csak maga a mondat.",
+        `Vibe: ${this.currentVibe}`,
+        `Megváltozott flag: ${flag}`,
+        `Új érték: ${value ? "igaz" : "hamis"}`,
+        `Aktív flag-ek: ${activeFlags || "nincs"}`,
+      ].join("\n");
+
+      const result = await this.utilityModel.generateContent(prompt);
+      const summary = String(result.response.text() ?? "")
+        .replace(/^```(?:json)?\s*/i, "")
+        .replace(/\s*```$/i, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      return summary || fallback;
+    } catch (error) {
+      console.error("[GeminiDMService] summarizeFlagChange hiba:", error);
+      return fallback;
+    }
+  }
+
   _buildWorldStateContext() {
     const currentState = campaignManager.getWorldState();
     const activeFlags = Object.entries(currentState?.flags ?? {})
@@ -175,7 +290,31 @@ class GeminiDMService {
         ? activeVariables.join(", ")
         : "nincs releváns változó";
 
-    return `Jelenlegi worldState flagek: [${flagText}]\nJelenlegi worldState változók: [${variableText}]`;
+    return `Aktuális vibe: ${this.currentVibe}\nJelenlegi worldState flagek: [${flagText}]\nJelenlegi worldState változók: [${variableText}]`;
+  }
+
+  _parseJsonObject(responseText) {
+    const trimmed = String(responseText ?? "").trim();
+    if (!trimmed) return null;
+
+    const unfenced = trimmed
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "");
+
+    const jsonStart = unfenced.indexOf("{");
+    const jsonEnd = unfenced.lastIndexOf("}");
+
+    const jsonPayload =
+      jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart
+        ? unfenced.slice(jsonStart, jsonEnd + 1)
+        : unfenced;
+
+    try {
+      const parsed = JSON.parse(jsonPayload);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
   }
 
   _parseNarrationResponse(responseText) {

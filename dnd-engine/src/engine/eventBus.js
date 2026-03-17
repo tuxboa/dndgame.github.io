@@ -293,6 +293,11 @@ export const EVENTS = {
   COMBAT_TRIGGERED: "story:combatTriggered",
   STATE_CHANGED: "story:stateChanged",
   CAMPAIGN_LOADED: "story:campaignLoaded",
+  FLAG_CHANGED: "story:flagChanged",
+  CHRONICLE_UPDATED: "story:chronicleUpdated",
+  PLAYER_INPUT_SUBMITTED: "story:playerInputSubmitted",
+  NARRATIVE_UPDATE: "story:narrativeUpdate",
+  ATMOSPHERE_CHANGED: "story:atmosphereChanged",
   // ── Player Actions ─────────────────────────────────────────────────────────
   PLAYER_CUSTOM_ACTION: "player:customAction", // { text } — free-text input
   // ── Spells & Abilities ────────────────────────────────────────────

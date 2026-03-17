@@ -13,11 +13,16 @@
   "scenes": {
     "start": {
       "type": "narrative",
+      "vibe": "tense_castle_gate",
       "text": "Egy masszív, kőből faragott kapu áll előtted. Mellette egy mogorva őr áll, karba tett kézzel. Mit teszel?",
       "choices": [
         {
           "text": "'Szia! Be szeretnék menni.'",
           "nextScene": "guard_dialogue"
+        },
+        {
+          "text": "'Ki adott neked parancsot? Beszéljünk.'",
+          "nextScene": "interrogation_guard"
         },
         {
           "text": "'Tűnj az utamból, paraszt!'",
@@ -34,6 +39,7 @@
     },
     "guard_dialogue": {
       "type": "narrative",
+      "vibe": "tense_castle_gate",
       "text": "Az őr végigmér. 'Nem mehetsz be. Parancs.'",
       "choices": [
         {
@@ -42,8 +48,22 @@
         }
       ]
     },
+    "interrogation_guard": {
+      "type": "interrogation",
+      "vibe": "noir_interrogation",
+      "character": "Mogorva Őr",
+      "context": "Az őr gyanakodva méreget, miközben az eső csendesen szitál a sisakján. Várja, hogy mondj valamit.",
+      "onLeave": "start",
+      "choices": [
+        {
+          "text": "Befejezem a beszélgetést.",
+          "nextScene": "start"
+        }
+      ]
+    },
     "guard_angry": {
       "type": "narrative",
+      "vibe": "noir_interrogation",
       "text": "Az őr szeme összeszűkül. 'Ezt még megbánod!' A kardjáért nyúl.",
       "choices": [
         {
@@ -54,6 +74,7 @@
     },
     "skill_check_sneak": {
       "type": "skill_check",
+      "vibe": "tense_castle_gate",
       "text": "Megpróbálsz elosonni az őr mellett a fal árnyékában.",
       "skill": "dexterity",
       "difficulty": 12,
@@ -62,6 +83,7 @@
     },
     "sneak_success": {
       "type": "narrative",
+      "vibe": "stealth_success",
       "text": "Sikerült! Az őr észre sem vett. Bent vagy a kapun.",
       "setFlag": {
         "gate_opened": true
@@ -70,6 +92,7 @@
     },
     "sneak_failure": {
       "type": "narrative",
+      "vibe": "tense_castle_gate",
       "text": "Megbotlasz egy kőben. Az őr feléd fordul. 'Hé! Te ott!'",
       "choices": [
         {
@@ -80,12 +103,14 @@
     },
     "combat_with_guard": {
       "type": "combat",
+      "vibe": "noir_interrogation",
       "encounterId": "young_guard_captain",
       "onWin": "gate_opened_by_force",
       "onLoss": "player_defeated"
     },
     "gate_opened_by_force": {
       "type": "narrative",
+      "vibe": "stealth_success",
       "text": "Az őr legyőzve a porban fekszik. A kapu nyitva áll.",
       "setFlag": {
         "gate_opened": true
@@ -94,6 +119,7 @@
     },
     "player_defeated": {
       "type": "narrative",
+      "vibe": "tense_castle_gate",
       "text": "Legyőztek. Az őr elveszi az aranyadat és kidob a kapu elé.",
       "setVariable": {
         "player_gold": 0
