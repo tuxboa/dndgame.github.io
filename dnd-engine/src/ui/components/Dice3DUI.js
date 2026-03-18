@@ -146,10 +146,12 @@ function _showOverlay(instructions = "Kattints a kockára a dobáshoz!") {
   );
   if (_instructionsElement) {
     _instructionsElement.textContent = instructions;
+    console.log("[Dice3DUI] Instructions text set");
   }
   if (_overlayElement) {
-    _overlayElement.style.display = "flex"; // Inline style to override
-    console.log("[Dice3DUI] Overlay display set to flex");
+    console.log("[Dice3DUI] Current overlay display before change:", _overlayElement.style.display);
+    _overlayElement.style.display = "flex";
+    console.log("[Dice3DUI] Overlay display set to flex - actual computed display:", window.getComputedStyle(_overlayElement).display);
   }
 
   if (!_scene && _containerElement) {
@@ -159,8 +161,11 @@ function _showOverlay(instructions = "Kattints a kockára a dobáshoz!") {
 }
 
 function _hideOverlay() {
+  console.log("[Dice3DUI] _hideOverlay called");
   if (_overlayElement) {
-    _overlayElement.style.display = "none"; // Inline style to override
+    console.log("[Dice3DUI] Current overlay display before hide:", _overlayElement.style.display);
+    _overlayElement.style.display = "none";
+    console.log("[Dice3DUI] Overlay display set to none");
   }
 }
 
@@ -308,9 +313,14 @@ export function initDiceBoxUI() {
   if (_overlayElement) {
     // Use pointerdown for more reliable interaction with Three.js canvas
     _overlayElement.addEventListener("pointerdown", (event) => {
-      console.log("[Dice3DUI] Pointer down on overlay area, target:", event.target.id || event.target.tagName, "isPrimary:", event.isPrimary);
+      console.log(
+        "[Dice3DUI] Pointer down on overlay area, target:",
+        event.target.id || event.target.tagName,
+        "isPrimary:",
+        event.isPrimary,
+      );
       if (!event.isPrimary) return; // Only handle primary pointer (mouse/touch)
-      
+
       // If it's the canvas, instructions, or inside container → handle roll
       if (
         event.target === _renderer?.domElement ||
@@ -324,7 +334,7 @@ export function initDiceBoxUI() {
         _handleRollClick();
       }
     });
-    
+
     // Keep click listener as fallback
     _overlayElement.addEventListener("click", (event) => {
       console.log("[Dice3DUI] Click event on overlay (fallback handler)");
