@@ -183,28 +183,34 @@ async function _rollDice(displayValue) {
   const spinStart = Date.now();
   const targetRotation = _getRollRotation(displayValue);
 
-  const spin = () => {
-    const elapsed = Date.now() - spinStart;
-    const progress = Math.min(1, elapsed / spinDuration);
+  return new Promise((resolve) => {
+    const spin = () => {
+      const elapsed = Date.now() - spinStart;
+      const progress = Math.min(1, elapsed / spinDuration);
 
-    // Chaotic spinning
-    _dice.rotation.x += 0.3;
-    _dice.rotation.y += 0.4;
-    _dice.rotation.z += 0.2;
+      // Chaotic spinning
+      _dice.rotation.x += 0.3;
+      _dice.rotation.y += 0.4;
+      _dice.rotation.z += 0.2;
 
-    if (progress < 1) {
-      requestAnimationFrame(spin);
-    } else {
-      // Ease to final rotation
-      _dice.rotation.x = targetRotation.x;
-      _dice.rotation.y = targetRotation.y;
-      _dice.rotation.z = targetRotation.z;
-      _isRolling = false;
-    }
-  };
+      if (progress < 1) {
+        requestAnimationFrame(spin);
+      } else {
+        // Ease to final rotation
+        _dice.rotation.x = targetRotation.x;
+        _dice.rotation.y = targetRotation.y;
+        _dice.rotation.z = targetRotation.z;
 
-  spin();
-  await _wait(600 + 300); // spin + hold time
+        // Wait for result hold time
+        setTimeout(() => {
+          _isRolling = false;
+          resolve();
+        }, 300);
+      }
+    };
+
+    spin();
+  });
 }
 
 function _finishSession(result) {
