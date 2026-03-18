@@ -307,21 +307,19 @@ export function initDiceBoxUI() {
 
   if (_overlayElement) {
     _overlayElement.addEventListener("click", (event) => {
-      console.log("[Dice3DUI] Overlay clicked");
+      console.log("[Dice3DUI] Overlay area clicked, target:", event.target.id || event.target.tagName);
+      
+      // If it's the canvas, instructions, or inside container → handle roll
       if (
+        event.target === _renderer?.domElement ||
         event.target === _overlayElement ||
-        event.target === _instructionsElement
+        event.target === _instructionsElement ||
+        (event.target && _containerElement?.contains(event.target))
       ) {
+        console.log("[Dice3DUI] Delegating click to _handleRollClick");
+        event.stopPropagation();
         _handleRollClick();
       }
-    });
-  }
-
-  if (_containerElement) {
-    _containerElement.addEventListener("click", (event) => {
-      console.log("[Dice3DUI] Container clicked");
-      event.stopPropagation();
-      _handleRollClick();
     });
   }
 
