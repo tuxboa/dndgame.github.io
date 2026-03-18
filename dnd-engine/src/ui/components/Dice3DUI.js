@@ -98,6 +98,13 @@ function _initScene() {
   _renderer.shadowMap.enabled = true;
   _containerElement.appendChild(_renderer.domElement);
 
+  // Add click listener to canvas
+  _renderer.domElement.style.cursor = "pointer";
+  _renderer.domElement.addEventListener("click", (event) => {
+    event.stopPropagation();
+    _handleRollClick();
+  });
+
   // Lighting
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
   _scene.add(ambientLight);
