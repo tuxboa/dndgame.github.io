@@ -40,7 +40,38 @@
     </div>
 
     <!-- Debug Menu Container -->
-    <div id="debug-menu-container" style="display: none"></div>
+    <div id="debug-menu-container" style="display: none">
+      <div class="debug-header">Cyborg DM - Isteni Mód</div>
+
+      <div class="debug-section">
+        <h4>🌍 WorldState (Live)</h4>
+        <pre id="debug-state-view">Várakozás az adatokra...</pre>
+      </div>
+
+      <div class="debug-section">
+        <h4>⏳ Time Control</h4>
+        <button id="btn-debug-day">☀️ Nappal</button>
+        <button id="btn-debug-night">🌙 Éjszaka</button>
+      </div>
+
+      <div class="debug-section">
+        <h4>⚡ Event Trigger</h4>
+        <button id="btn-debug-roll">🎲 Force Skill Check</button>
+        <button id="btn-debug-combat">⚔️ Force Combat</button>
+        <button id="btn-debug-loot">🎁 Get Gold & XP</button>
+      </div>
+
+      <div class="debug-section">
+        <h4>🤝 Factions</h4>
+        <label
+          >Guard:
+          <input type="number" id="debug-faction-guard" value="0" /></label
+        ><br />
+        <label
+          >Under: <input type="number" id="debug-faction-underworld" value="0"
+        /></label>
+      </div>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>
