@@ -108,6 +108,7 @@
         align-items: center;
         background: rgba(0, 0, 0, 0.5);
         pointer-events: auto;
+        flex-direction: column;
       "
     >
       <!-- 3D Dice Container -->
@@ -118,19 +119,39 @@
           height: 300px;
           position: relative;
           pointer-events: auto;
+          margin-bottom: 2rem;
         "
       ></div>
 
-      <!-- Fallback dice display -->
-      <div id="dice-click-box" class="dice-box" data-side="1">?</div>
+      <!-- Dice Result Display -->
+      <div
+        id="dice-result-display"
+        style="
+          color: #00ff00;
+          font-size: 4rem;
+          font-weight: bold;
+          font-family: monospace;
+          margin-bottom: 3rem;
+          text-align: center;
+          min-height: 5rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        "
+      ></div>
+
+      <!-- Instructions (positioned at bottom) -->
       <div
         id="dice-click-instructions"
         style="
           color: white;
           position: absolute;
-          bottom: 20%;
+          bottom: 8%;
+          left: 50%;
+          transform: translateX(-50%);
           font-family: sans-serif;
           pointer-events: auto;
+          font-size: 1.2rem;
         "
       >
         Kattints a dobáshoz!

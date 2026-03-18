@@ -1,9 +1,11 @@
 import * as THREE from "three";
+import { eventBus, EVENTS } from "../../engine/eventBus.js";
 
 let _ready = false;
 let _overlayElement = null;
 let _instructionsElement = null;
 let _containerElement = null;
+let _resultDisplayElement = null;
 
 let _pendingSession = null;
 let _isRolling = false;
@@ -33,6 +35,7 @@ function _cacheDom() {
   _overlayElement = document.querySelector("#dice-click-overlay");
   _instructionsElement = document.querySelector("#dice-click-instructions");
   _containerElement = document.querySelector("#dice-3d-container");
+  _resultDisplayElement = document.querySelector("#dice-result-display");
 
   if (!_containerElement && _overlayElement) {
     // Fallback: Create container if not found
@@ -149,9 +152,15 @@ function _showOverlay(instructions = "Kattints a kockára a dobáshoz!") {
     console.log("[Dice3DUI] Instructions text set");
   }
   if (_overlayElement) {
-    console.log("[Dice3DUI] Current overlay display before change:", _overlayElement.style.display);
+    console.log(
+      "[Dice3DUI] Current overlay display before change:",
+      _overlayElement.style.display,
+    );
     _overlayElement.style.display = "flex";
-    console.log("[Dice3DUI] Overlay display set to flex - actual computed display:", window.getComputedStyle(_overlayElement).display);
+    console.log(
+      "[Dice3DUI] Overlay display set to flex - actual computed display:",
+      window.getComputedStyle(_overlayElement).display,
+    );
   }
 
   if (!_scene && _containerElement) {
@@ -163,9 +172,16 @@ function _showOverlay(instructions = "Kattints a kockára a dobáshoz!") {
 function _hideOverlay() {
   console.log("[Dice3DUI] _hideOverlay called");
   if (_overlayElement) {
-    console.log("[Dice3DUI] Current overlay display before hide:", _overlayElement.style.display);
+    console.log(
+      "[Dice3DUI] Current overlay display before hide:",
+      _overlayElement.style.display,
+    );
     _overlayElement.style.display = "none";
     console.log("[Dice3DUI] Overlay display set to none");
+  }
+  // Clear result display
+  if (_resultDisplayElement) {
+    _resultDisplayElement.textContent = "";
   }
 }
 
@@ -237,6 +253,32 @@ function _finishSession(result) {
   const session = _pendingSession;
   _pendingSession = null;
   _isRolling = false;
+
+  // Display result on screen
+  if (_resultDisplayElement && session.displayValue != null) {
+    _resultDisplayElement.textContent = String(session.displayValue);
+    console.log("[Dice3DUI] Displayed result on screen:", session.displayValue);
+  }
+
+  // Emit chronicle event
+  const instructions = session?.instructions ?? "Kockadobás";
+  const displayValue = session?.displayValue ?? "?";
+  eventBus.emit(EVENTS.CHRONICLE_UPDATED, {
+    entries: [
+      {
+        id: "dice-roll-" + Date.now(),
+        timestamp: Date.now(),
+        flag: "dice_roll",
+        value: session.result,
+        summary: `🎲 ${instructions} → ${displayValue}`,
+      },
+    ],
+  });
+  console.log(
+    "[Dice3DUI] Chronicle event emitted for result:",
+    displayValue,
+  );
+
   _hideOverlay();
   session?.resolve?.(result);
 }
@@ -284,6 +326,10 @@ async function _handleRollClick() {
       : _getDisplayValue(result, sides);
 
   console.log("[Dice3DUI] Display value:", displayValue);
+
+  // Store for finish session
+  session.displayValue = displayValue;
+  session.result = result;
 
   await _rollDice(displayValue);
   _finishSession(result);
