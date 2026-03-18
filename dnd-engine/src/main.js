@@ -12,15 +12,14 @@
 import "./style.css";
 import { eventBus, EVENTS } from "./engine/eventBus.js";
 import { campaignManager } from "./engine/CampaignManager.js";
+import { initHybridDecisionBridge } from "./engine/HybridDecisionBridge.js";
 import { initAtmosphereSystem } from "./engine/AtmosphereSystem.js";
-import { initInterrogationSystem } from "./engine/InterrogationSystem.js";
 import { initChronicleManager } from "./engine/ChronicleManager.js";
 import { gameStore } from "./store/index.js";
 import { geminiDMService } from "./services/GeminiDMService.js";
 import { initPlayerEcsBridge } from "./ecs/playerEcsBridge.js";
 import { loadCampaign } from "./data/campaignLoader.js";
 import demoCampaign from "./campaigns/demo_campaign.json";
-import { initDM, processTurn } from "./systems/dmController.js";
 import { initDiceUI } from "./ui/components/DiceRollerUI.js";
 import { initDiceBoxUI } from "./ui/components/DiceBoxUI.js";
 import { mountCharacterCreation } from "./ui/components/CharacterCreation.js";
@@ -38,6 +37,7 @@ import {
 import { initLevelUpUI } from "./ui/components/LevelUpUI.js";
 import { initMerchantUI } from "./ui/components/MerchantUI.js";
 import { initAudio } from "./systems/audioSystem.js";
+import { initLivingAudioManager } from "./systems/livingAudioManager.js";
 import { initCombatDamagePipeline } from "./systems/combatDamagePipeline.js";
 import { initVisualEffectSystem } from "./systems/visualEffectSystem.js";
 import { initCombatLogUI } from "./systems/combatLogUI.js";
@@ -83,7 +83,36 @@ import { mountRadarChart } from "./ui/components/StatsRadarChart.js";
 import { initRankModal } from "./ui/components/RankProgressionModal.js";
 import { initHowToPlayAccordion } from "./ui/components/HowToPlayAccordion.js";
 import { initChangelog } from "./ui/components/ChangelogModal.js";
+// Golyóálló Debug Toggle
+window.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.key.toLowerCase() === "b") {
+    e.preventDefault();
+    const panel = document.getElementById("debug-menu-container");
 
+    if (panel) {
+      const isHidden =
+        panel.style.display === "none" || panel.style.display === "";
+      panel.style.display = isHidden ? "block" : "none";
+      console.log("🛠️ Debug Panel állapot:", panel.style.display);
+
+      // Frissítsük az adatokat is, ha látható
+      if (isHidden && window.campaignManager) {
+        const stateView = document.getElementById("debug-state-view");
+        if (stateView) {
+          stateView.innerText = JSON.stringify(
+            window.campaignManager.getWorldState(),
+            null,
+            2,
+          );
+        }
+      }
+    } else {
+      console.error(
+        "❌ Hiba: A 'debug-menu-container' nem található a HTML-ben!",
+      );
+    }
+  }
+});
 // ── Dev: expose state to DevTools ─────────────────────────────────────────────
 if (import.meta.env.DEV) {
   window.__store__ = gameStore;
@@ -96,7 +125,9 @@ async function bootstrap() {
   if (!app) {
     throw new Error('Hiányzik a gyökér DOM elem: "#app".');
   }
-
+  window.eventBus = eventBus;
+  window.campaignManager = campaignManager;
+  console.log("🛠️ DevTools: eventBus és campaignManager bekötve.");
   // ── Step 1: Mount pre-game containers ────────────────────────────────────────
   app.innerHTML = `
     <div id="main-menu-container"></div>
@@ -146,16 +177,14 @@ async function bootstrap() {
   gameEl.classList.remove("game-container--hidden");
   gameEl.classList.add("game-container--enter");
 
-  // ── Step 6: DM controller ─────────────────────────────────────────────────────
-  initDM();
-
-  // ── Step 7: Render game UI shell into #game-container ────────────────────────
+  // ── Step 6: Render game UI shell into #game-container ────────────────────────
   renderUI(gameEl, campaign);
   wireUI();
   subscribeToStore();
 
   // Step 3b: Init subsystems
   initAudio();
+  initLivingAudioManager();
   initCombatLogUI();
   if (!geminiDMService) {
     eventBus.emit(EVENTS.UI_NOTIFICATION, {
@@ -174,8 +203,8 @@ async function bootstrap() {
   initQuestLog();
   initSessionPanel();
   initStory();
+  initHybridDecisionBridge();
   initStoryUI(executeChoice);
-  initInterrogationSystem();
   initChronicleManager();
   initChronicleUI();
   initAtmosphereSystem();
@@ -345,11 +374,6 @@ function renderUI(app, campaign) {
         </div>
       </main>
 
-      <!-- 3D dice canvas — positioned fixed, shown only during rolls -->
-      <div id="dice-click-overlay" class="hidden" aria-live="polite">
-        <div id="dice-click-box" class="dice-box" data-side="1">?</div>
-        <div id="dice-click-instructions" class="dice-instructions">Kattints a kockára a dobáshoz!</div>
-      </div>
 
       <footer class="game-footer">
         <div class="action-bar" id="action-bar"></div>
@@ -711,29 +735,54 @@ function renderEncounterList() {
 }
 
 function subscribeToStore() {
+  const updateDmThinkingIndicator = () => {
+    const dmState = gameStore.getState().dm;
+    const existing = document.querySelector(".narrative-dm-thinking");
+
+    if (!dmState.pendingResponse) {
+      if (existing) existing.remove();
+      return;
+    }
+
+    const message = dmState.awaitingRoll
+      ? "Várakozás a dobásra..."
+      : "Gondolkodik a DM...";
+
+    if (existing) {
+      existing.textContent = message;
+      return;
+    }
+
+    appendNarration(message, "dm-thinking");
+  };
+
   // Action buttons
   gameStore.select((s) => s.world.availableActions, renderActionBar);
 
   // Pending / loading state
   gameStore.select(
     (s) => s.dm.pendingResponse,
-    (pending) => {
+    () => {
       // btn-send and player-input are now managed by ActionInputUI;
-      // we just handle the "thinking…" narrative indicator here.
-      const existing = document.querySelector(".narrative-dm-thinking");
-      if (pending && !existing) appendNarration("…", "dm-thinking");
-      if (!pending && existing) existing.remove();
+      // we just handle the narrative indicator text here.
+      updateDmThinkingIndicator();
 
       // Also disable/enable action bar buttons to prevent double-submit
       document
         .querySelectorAll("#action-bar .action-btn")
-        .forEach((b) => (b.disabled = pending));
+        .forEach((b) => (b.disabled = gameStore.getState().dm.pendingResponse));
+    },
+  );
+
+  gameStore.select(
+    (s) => s.dm.awaitingRoll,
+    () => {
+      updateDmThinkingIndicator();
     },
   );
 
   // Narrative log updates — mirror both DM narration and player actions.
-  // ActionInputUI emits PLAYER_CUSTOM_ACTION → processTurn logs the player
-  // entry in the store → this watcher renders it.
+  // HybridDecisionBridge appends both player + dm entries in the store.
   gameStore.select(
     (s) => s.dm.narrativeLog.length,
     (_, state) => {
@@ -747,6 +796,10 @@ function subscribeToStore() {
   // UI Notifications
   eventBus.on(EVENTS.UI_NOTIFICATION, ({ text, type = "info", ttl = 3000 }) => {
     showNotification(text, type, ttl);
+  });
+
+  eventBus.on(EVENTS.NPC_AFFINITY_CHANGED, (payload = {}) => {
+    showAffinityPulse(payload);
   });
 
   eventBus.on(EVENTS.NARRATIVE_UPDATE, ({ text, role = "dm" } = {}) => {
@@ -798,7 +851,17 @@ function renderActionBar(actions = []) {
       if (gameStore.getState().dm.pendingResponse) return;
       const text = btn.dataset.action;
       bar.querySelectorAll(".action-btn").forEach((b) => (b.disabled = true));
-      await processTurn(text);
+      try {
+        await eventBus.publish(EVENTS.USER_INPUT_SUBMITTED, {
+          text,
+          source: "action-bar",
+        });
+      } finally {
+        const pending = gameStore.getState().dm.pendingResponse;
+        bar
+          .querySelectorAll(".action-btn")
+          .forEach((b) => (b.disabled = pending));
+      }
     });
   });
 }
@@ -885,6 +948,63 @@ function showNotification(text, type = "info", ttl = 3000) {
   }, ttl);
 }
 
+let _affinityPulseId = 0;
+function showAffinityPulse(payload = {}) {
+  const container = document.querySelector("#notif-container");
+  if (!container) return;
+
+  const npcName =
+    String(payload.npcName ?? payload.npcId ?? "NPC").trim() || "NPC";
+  const deltaRaw = Number(payload.delta ?? 0);
+  const delta = Number.isFinite(deltaRaw) ? deltaRaw : 0;
+  const rawLabel = String(payload.uiLabel ?? "").trim();
+  const label =
+    rawLabel ||
+    (delta > 0
+      ? "Barátságosabb lett"
+      : delta < 0
+        ? "Mérgesebbé vált"
+        : "Viszony változott");
+
+  const el = document.createElement("div");
+  const directionClass =
+    delta > 0
+      ? "affinity-pulse--positive"
+      : delta < 0
+        ? "affinity-pulse--negative"
+        : "affinity-pulse--neutral";
+
+  el.className = `affinity-pulse ${directionClass}`;
+  el.id = `affinity-pulse-${++_affinityPulseId}`;
+
+  const npcEl = document.createElement("span");
+  npcEl.className = "affinity-pulse__npc";
+  npcEl.textContent = npcName;
+
+  const separatorEl = document.createElement("span");
+  separatorEl.className = "affinity-pulse__sep";
+  separatorEl.textContent = ":";
+
+  const labelEl = document.createElement("span");
+  labelEl.className = "affinity-pulse__label";
+  labelEl.textContent = `[${label}]`;
+
+  el.appendChild(npcEl);
+  el.appendChild(separatorEl);
+  el.appendChild(labelEl);
+  container.appendChild(el);
+
+  requestAnimationFrame(() => {
+    el.classList.add("affinity-pulse--visible");
+  });
+
+  const ttl = payload.significant ? 2600 : 2100;
+  setTimeout(() => {
+    el.classList.remove("affinity-pulse--visible");
+    el.addEventListener("transitionend", () => el.remove(), { once: true });
+  }, ttl);
+}
+
 function renderFatalScreen(title, error) {
   const app = document.querySelector("#app");
   const message =
@@ -920,4 +1040,52 @@ function renderFatalScreen(title, error) {
 bootstrap().catch((err) => {
   console.error("[Bootstrap] Fatal:", err);
   renderFatalScreen("Engine failed to start", err);
+});
+// ==========================================
+// 🛠️ CYBORG DM - ISTENI MÓD (GOD MODE) LOGIKA - JAVÍTOTT
+// ==========================================
+// CSAK EZ MARADJON A CTRL+B RÉSZNÉL A MAIN.JS VÉGÉN:
+document.addEventListener("keydown", (event) => {
+  if (event.ctrlKey && event.key === "b") {
+    event.preventDefault();
+
+    let debugPanel = document.getElementById("debug-menu-container");
+    if (!debugPanel) return; // Ha nincs a HTML-ben, ne csináljon semmit
+
+    // EGYSZERI BEKÖTÉS (Ha még nincsenek bekötve a gombok)
+    if (!debugPanel.dataset.initialized) {
+      console.log("🛠️ Debug gombok élesítése...");
+
+      document.getElementById("btn-debug-roll").onclick = () => {
+        console.log("🎲 Kockadobás kérése...");
+        // A DiceBoxUI.js a 'DICE_ROLL_REQUESTED' eseményre vár
+        window.eventBus.emit("DICE_ROLL_REQUESTED", {
+          ability: "dexterity",
+          notation: "1d20",
+          dc: 12,
+        });
+      };
+
+      document.getElementById("btn-debug-combat").onclick = () => {
+        window.eventBus.emit("COMBAT_TRIGGERED", {
+          encounterId: "bandit_camp",
+        });
+      };
+
+      debugPanel.dataset.initialized = "true";
+    }
+
+    // MEGJELENÍTÉS ÉS ADATFRISSÍTÉS
+    if (debugPanel.style.display === "none") {
+      debugPanel.style.display = "block";
+      const state = window.campaignManager?.getWorldState();
+      document.getElementById("debug-state-view").innerText = JSON.stringify(
+        state,
+        null,
+        2,
+      );
+    } else {
+      debugPanel.style.display = "none";
+    }
+  }
 });

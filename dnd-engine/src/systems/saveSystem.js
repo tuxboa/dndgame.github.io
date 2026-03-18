@@ -111,7 +111,12 @@ export function loadGame(slotId = DEFAULT_SLOT) {
     return { ok: true, meta: saveData.meta };
   } catch (err) {
     console.error("[SaveSystem] Load failed:", err);
-    return { ok: false, meta: null };
+    eventBus.emit(EVENTS.UI_NOTIFICATION, {
+      text: "Hiba! A mentés sérült vagy nem olvasható.",
+      type: "error",
+      ttl: 5000,
+    });
+    return { ok: false, meta: null, error: err.message };
   }
 }
 
@@ -262,10 +267,17 @@ function _buildSaveData(state) {
       sceneDescription: state.world.sceneDescription,
       discoveredLocations: state.world.discoveredLocations,
       npcsPresent: state.world.npcsPresent,
+      time: state.world.time ?? { day: 1, hour: 8, minute: 0 },
+      factions: state.world.factions ?? {
+        City_Guard: 0,
+        Underworld: 0,
+        Merchants: 0,
+      },
       // Persist quest state and story flags so they survive reload
       quests: state.world.quests ?? [],
       storyFlags: state.world.storyFlags ?? {},
       npcRelationships: state.world.npcRelationships ?? {},
+      npcAffinity: state.world.npcAffinity ?? {},
     },
     // Persist user settings (language preference etc.)
     settings: state.settings ?? {},
@@ -295,9 +307,15 @@ function _applySaveData(saveData) {
       sceneDescription: saveData.world.sceneDescription,
       discoveredLocations: saveData.world.discoveredLocations ?? [],
       npcsPresent: saveData.world.npcsPresent ?? [],
+      time: saveData.world.time ?? current.world.time,
+      factions: {
+        ...(current.world.factions ?? {}),
+        ...(saveData.world.factions ?? {}),
+      },
       quests: saveData.world.quests ?? [],
       storyFlags: saveData.world.storyFlags ?? {},
       npcRelationships: saveData.world.npcRelationships ?? {},
+      npcAffinity: saveData.world.npcAffinity ?? current.world.npcAffinity,
     };
   }
 

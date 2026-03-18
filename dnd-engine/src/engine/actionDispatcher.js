@@ -29,7 +29,6 @@ import {
 import { resolveAttackDamageAsync } from "../systems/combatDamagePipeline.js";
 import { removeItem, addItem } from "../systems/inventorySystem.js";
 import { addXp, XP_PER_LEVEL } from "../systems/levelUpSystem.js";
-import { processTurn } from "../systems/dmController.js";
 
 // ── Network Adapter ───────────────────────────────────────────────────────────
 
@@ -229,7 +228,10 @@ export function initDispatcher() {
  */
 export async function submitNarrativeAction(text) {
   if (!_canAct()) return;
-  await processTurn(text);
+  await eventBus.publish(EVENTS.USER_INPUT_SUBMITTED, {
+    text,
+    source: "action-dispatcher",
+  });
 }
 
 /**

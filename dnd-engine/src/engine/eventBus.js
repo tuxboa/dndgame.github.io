@@ -225,6 +225,7 @@ export const EVENTS = {
   // ── Dice ─────────────────────────────────────────────────────────
   DICE_ROLL_REQUESTED: "dice:rollRequested",
   DICE_ROLL_COMPLETED: "dice:rollCompleted",
+  DICE_ROLL_RESULT: "dice:rollResult",
   DICE_ANIMATE: "dice:animate",
 
   // ── Combat ───────────────────────────────────────────────────────
@@ -251,8 +252,10 @@ export const EVENTS = {
   DAMAGE_APPLIED: "combat:damageApplied", // mutable payload pipeline (armor -> damage -> logging)
 
   // ── DM / LLM ─────────────────────────────────────────────────────
+  USER_INPUT_SUBMITTED: "dm:userInputSubmitted", // { text, source?, sceneContext? }
   DM_CONTEXT_READY: "dm:contextReady",
   DM_RESPONSE_RECEIVED: "dm:responseReceived",
+  DM_AUDIO_OUTPUT_READY: "dm:audioOutputReady", // { audioCue, audioOutput? }
   DM_NARRATIVE_CHUNK: "dm:narrativeChunk", // streaming
   NARRATION_RECEIVED: "NARRATION_RECEIVED",
 
@@ -284,6 +287,7 @@ export const EVENTS = {
   STORY_CHOICE_MADE: "story:choiceMade",
   STORY_SKILL_CHECK_START: "story:skillCheckStart",
   STORY_SKILL_CHECK_END: "story:skillCheckEnd",
+  STORY_SKILL_CHECK_RESOLVED: "story:skillCheckResolved",
   SCENE_LOADED: "story:sceneLoaded",
   COMBAT_TRIGGERED: "story:combatTriggered",
   STATE_CHANGED: "story:stateChanged",
@@ -293,6 +297,13 @@ export const EVENTS = {
   PLAYER_INPUT_SUBMITTED: "story:playerInputSubmitted",
   NARRATIVE_UPDATE: "story:narrativeUpdate",
   ATMOSPHERE_CHANGED: "story:atmosphereChanged",
+
+  // ── Living World ────────────────────────────────────────────────
+  TIME_ADVANCED: "world:timeAdvanced",
+  TIME_OF_DAY_CHANGED: "world:timeOfDayChanged",
+  FACTION_REPUTATION_CHANGED: "world:factionReputationChanged",
+  AUDIO_PROFILE_SUGGESTED: "audio:profileSuggested",
+
   // ── Player Actions ─────────────────────────────────────────────────────────
   PLAYER_CUSTOM_ACTION: "player:customAction", // { text } — free-text input
   // ── Spells & Abilities ────────────────────────────────────────────
@@ -311,6 +322,7 @@ export const EVENTS = {
 
   // ── NPC ─────────────────────────────────────────────────────────
   NPC_UPDATED: "npc:updated", // { npcId, name, disposition, note }
+  NPC_AFFINITY_CHANGED: "npc:affinityChanged", // { npcId, npcName, previousValue, newValue, delta, significant, message }
 
   // ── Shop ────────────────────────────────────────────────────────────────
   OPEN_SHOP: "shop:open", // payload: { merchantName, items }

@@ -140,6 +140,13 @@ export const gameStore = createStore({
     currentSceneId: null,
     sceneDescription: "",
     storyFlags: {}, // Key-value flags set by story nodes (persisted with save)
+    npcAffinity: {}, // { npcId: number } relationship trend map used by hybrid DM
+    time: { day: 1, hour: 8, minute: 0 },
+    factions: {
+      City_Guard: 0,
+      Underworld: 0,
+      Merchants: 0,
+    },
     availableActions: [], // What the player can legally do right now
     npcsPresent: [], // [{ id, name, disposition }]
     enemiesPresent: [], // [{ id, name, hp, maxHp, ac }]
@@ -173,9 +180,10 @@ export const gameStore = createStore({
     campaignLayers: null, // Loaded from campaign.json by CampaignLoader
     narrativeLog: [], // [{ role: 'dm'|'player', text, timestamp }]
     pendingResponse: false,
+    awaitingRoll: false, // Hybrid DM skill-check gate is waiting for player roll
     lastContext: null, // The context object sent to LLM last turn
     storySoFar: "", // Rolling compressed summary of past turns (memory buffer)
-    turnCount: 0, // Increments each processTurn() — used to trigger summarization
+    turnCount: 0, // Increments each processHybridTurn() — used for pacing hooks
   },
 
   // ── Session (multiplayer-ready) ───────────────────────────────────

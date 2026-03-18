@@ -4,10 +4,90 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dark-rpg-engine</title>
+    <title>Dark RPG Engine - Dev Mode</title>
   </head>
   <body>
     <div id="app"></div>
+
+    <div
+      id="dice-click-overlay"
+      class="hidden"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.5);
+      "
+    >
+      <div id="dice-click-box" class="dice-box" data-side="1">?</div>
+      <div
+        id="dice-click-instructions"
+        style="
+          color: white;
+          position: absolute;
+          bottom: 20%;
+          font-family: sans-serif;
+        "
+      >
+        Kattints a dobáshoz!
+      </div>
+    </div>
+
+    <div id="debug-menu-container" style="display: none"></div>
+    <div
+      id="dice-click-overlay"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 99999;
+      "
+    >
+      git
+      <div id="dice-click-box"></div>
+    </div>
+
+    <div id="debug-menu-container" style="display: none">
+      <div class="debug-header">Cyborg DM - Isteni Mód</div>
+
+      <div class="debug-section">
+        <h4>🌍 WorldState (Live)</h4>
+        <pre id="debug-state-view">Várakozás az adatokra...</pre>
+      </div>
+
+      <div class="debug-section">
+        <h4>⏳ Time Control</h4>
+        <button id="btn-debug-day">☀️ Nappal</button>
+        <button id="btn-debug-night">🌙 Éjszaka</button>
+      </div>
+
+      <div class="debug-section">
+        <h4>⚡ Event Trigger</h4>
+        <button id="btn-debug-roll">🎲 Force Skill Check</button>
+        <button id="btn-debug-combat">⚔️ Force Combat</button>
+        <button id="btn-debug-loot">🎁 Get Gold & XP</button>
+      </div>
+
+      <div class="debug-section">
+        <h4>🤝 Factions</h4>
+        <label
+          >Guard:
+          <input type="number" id="debug-faction-guard" value="0" /></label
+        ><br />
+        <label
+          >Under: <input type="number" id="debug-faction-underworld" value="0"
+        /></label>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

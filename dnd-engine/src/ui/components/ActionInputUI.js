@@ -4,7 +4,7 @@
  * Owns the player free-text input row at the bottom of the game shell.
  * Replaces the static wiring in main.js wireUI() with a proper component
  * that:
- *   • Emits PLAYER_CUSTOM_ACTION when the player submits an action.
+ *   • Emits USER_INPUT_SUBMITTED when the player submits an action.
  *   • Shows a loading state (disables input + changes button label) while
  *     the DM is processing.
  *
@@ -15,17 +15,35 @@
 
 import { gameStore } from "../../store/index.js";
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
-import { campaignManager } from "../../engine/CampaignManager.js";
 
 // ── Labels ────────────────────────────────────────────────────────────────────
 
 const BTN_IDLE = "▶";
-const BTN_LOADING = "⏳ Thinking…";
+const BTN_LOADING = "Gondolkodik a DM...";
+const BTN_WAITING = "Várakozás a dobásra...";
 const PH_IDLE = "What do you want to do?";
-const PH_LOADING = "The DM is thinking…";
+const PH_LOADING = "Gondolkodik a DM...";
+const PH_WAITING = "Várakozás a dobásra...";
 
 // Prevent double-registration if called more than once
 let _wired = false;
+let _pending = false;
+let _awaitingRoll = false;
+
+function _renderLoadingState(input, btn) {
+  const isBusy = _pending;
+  const waitingRoll = _pending && _awaitingRoll;
+
+  input.disabled = isBusy;
+  btn.disabled = isBusy;
+  btn.textContent = waitingRoll ? BTN_WAITING : isBusy ? BTN_LOADING : BTN_IDLE;
+  input.placeholder = waitingRoll
+    ? PH_WAITING
+    : isBusy
+      ? PH_LOADING
+      : PH_IDLE;
+  btn.classList.toggle("btn-send--loading", isBusy);
+}
 
 // ── Public API ─────────────────────────────────────────────────────────────────
 
@@ -52,9 +70,10 @@ export function initActionInput() {
 
   // Update placeholder to match new purpose
   input.placeholder = PH_IDLE;
+  _renderLoadingState(input, btn);
 
   // ── Submission handler ───────────────────────────────────────────────────
-  const submit = () => {
+  const submit = async () => {
     const text = input.value.trim();
     if (!text) return;
     if (gameStore.getState().dm.pendingResponse) return; // guard against race
@@ -62,40 +81,36 @@ export function initActionInput() {
     input.value = "";
     input.blur();
 
-    const sceneContext = campaignManager.getCurrentSceneContext?.();
-    const isInterrogation = sceneContext?.type === "interrogation";
-
-    if (isInterrogation) {
-      eventBus.emit(EVENTS.NARRATIVE_UPDATE, {
-        text,
-        role: "player",
-      });
-
-      eventBus.emit(EVENTS.PLAYER_INPUT_SUBMITTED, {
-        text,
-        sceneContext,
-      });
-      return;
-    }
-
-    // Emit — dmController and any other listener handles the LLM call
-    eventBus.emit(EVENTS.PLAYER_CUSTOM_ACTION, { text });
+    await eventBus.publish(EVENTS.USER_INPUT_SUBMITTED, {
+      text,
+      source: "action-input",
+    });
   };
 
-  btn.addEventListener("click", submit);
+  btn.addEventListener("click", () => {
+    void submit();
+  });
   input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") submit();
+    if (e.key === "Enter") {
+      e.preventDefault();
+      void submit();
+    }
   });
 
   // ── Loading-state subscription ───────────────────────────────────────────
   gameStore.select(
     (s) => s.dm.pendingResponse,
     (pending) => {
-      input.disabled = pending;
-      btn.disabled = pending;
-      btn.textContent = pending ? BTN_LOADING : BTN_IDLE;
-      input.placeholder = pending ? PH_LOADING : PH_IDLE;
-      btn.classList.toggle("btn-send--loading", pending);
+      _pending = pending;
+      _renderLoadingState(input, btn);
+    },
+  );
+
+  gameStore.select(
+    (s) => s.dm.awaitingRoll,
+    (awaitingRoll) => {
+      _awaitingRoll = awaitingRoll;
+      _renderLoadingState(input, btn);
     },
   );
 

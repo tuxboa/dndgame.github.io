@@ -13,9 +13,11 @@
 
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
 import { roll } from "../../systems/diceSystem.js";
+import { gameStore } from "../../store/index.js";
 import { showAutoRoll, waitForRoll } from "./DiceBoxUI.js";
 
 let _ready = false;
+let _rollRequestQueue = Promise.resolve();
 
 export function initDiceUI() {
   if (_ready) return;
@@ -24,6 +26,14 @@ export function initDiceUI() {
 
   eventBus.on(EVENTS.DICE_ANIMATE, ({ notation, result }) => {
     animate(notation, result).catch(() => {});
+  });
+
+  eventBus.on(EVENTS.DICE_ROLL_REQUESTED, (payload = {}) => {
+    _rollRequestQueue = _rollRequestQueue
+      .then(() => _handleRequestedRoll(payload))
+      .catch((error) => {
+        console.error("[DiceUI] Requested roll handler failed:", error);
+      });
   });
 }
 
@@ -81,4 +91,86 @@ function _buildInstruction(notation, result) {
     return `${notation} = ${total}`;
   }
   return notation;
+}
+
+function _normaliseAbility(ability) {
+  const raw = String(ability ?? "").trim().toLowerCase();
+  if (!raw) return "dex";
+
+  const mapping = {
+    strength: "str",
+    str: "str",
+    dexterity: "dex",
+    dex: "dex",
+    constitution: "con",
+    con: "con",
+    intelligence: "int",
+    int: "int",
+    wisdom: "wis",
+    wis: "wis",
+    charisma: "cha",
+    cha: "cha",
+  };
+
+  return mapping[raw] ?? "dex";
+}
+
+function _abilityLabel(abilityKey) {
+  const labels = {
+    str: "Strength",
+    dex: "Dexterity",
+    con: "Constitution",
+    int: "Intelligence",
+    wis: "Wisdom",
+    cha: "Charisma",
+  };
+
+  return labels[abilityKey] ?? "Ability";
+}
+
+function _resolveAbilityModifier(ability, explicitModifier) {
+  if (Number.isFinite(explicitModifier)) return Number(explicitModifier);
+
+  const abilityKey = _normaliseAbility(ability);
+  const score = Number(gameStore.getState().player?.abilities?.[abilityKey] ?? 10);
+  return Math.floor((score - 10) / 2);
+}
+
+async function _handleRequestedRoll(payload = {}) {
+  const requestId =
+    typeof payload.requestId === "string" && payload.requestId.trim().length
+      ? payload.requestId.trim()
+      : `dice-request-${Date.now()}`;
+
+  const abilityKey = _normaliseAbility(payload.ability);
+  const dcRaw = Number(payload.dc);
+  const dc = Number.isFinite(dcRaw) ? Math.max(1, Math.floor(dcRaw)) : 10;
+
+  const modifier = _resolveAbilityModifier(abilityKey, payload.modifier);
+  const sign = modifier >= 0 ? "+" : "-";
+  const absModifier = Math.abs(modifier);
+
+  const notation =
+    typeof payload.notation === "string" && payload.notation.trim().length
+      ? payload.notation.trim()
+      : `1d20${sign}${absModifier}`;
+
+  const label = `${_abilityLabel(abilityKey)} Check (DC ${dc})`;
+  const result = await promptRollAndAnimate(notation, label);
+  const total = Number(result?.total ?? 0);
+  const success = total >= dc;
+
+  const response = {
+    ...payload,
+    requestId,
+    ability: abilityKey,
+    dc,
+    notation,
+    result,
+    total,
+    success,
+  };
+
+  eventBus.emit(EVENTS.DICE_ROLL_RESULT, response);
+  eventBus.emit(EVENTS.DICE_ROLL_COMPLETED, response);
 }

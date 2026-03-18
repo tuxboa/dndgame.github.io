@@ -107,6 +107,22 @@ function _onNarrationReceived(payload) {
   _combatLogElement.scrollTop = _combatLogElement.scrollHeight;
 }
 
+function _onAudioOutputReady(payload) {
+  if (!_combatLogElement || !payload) return;
+
+  const cue = String(payload.audioCue ?? "").trim();
+  const hasBinaryAudio =
+    typeof payload.audioOutput === "string" && payload.audioOutput.length > 0;
+
+  if (!cue && !hasBinaryAudio) return;
+
+  const message = cue
+    ? `🔊 DM audio cue: ${cue}`
+    : "🔊 DM audio output received.";
+
+  _appendMessage(_combatLogElement, message, "dm-audio-cue");
+}
+
 export function logToSystemLog(message) {
   if (!_systemLogElement) {
     _systemLogElement = document.querySelector("#system-log");
@@ -137,6 +153,7 @@ export function initCombatLogUI() {
   eventBus.subscribe(EVENTS.COMBAT_ATTACK_START, _onCombatStart, 250);
   eventBus.subscribe(EVENTS.DAMAGE_APPLIED, _onDamageApplied, -100);
   eventBus.subscribe(EVENTS.NARRATION_RECEIVED, _onNarrationReceived, -90);
+  eventBus.subscribe(EVENTS.DM_AUDIO_OUTPUT_READY, _onAudioOutputReady, -90);
 
   _initialized = true;
 }

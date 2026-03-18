@@ -24,7 +24,6 @@ import {
   applyDamage,
 } from "../../systems/turnManager.js";
 import { roll } from "../../systems/diceSystem.js";
-import { processTurn } from "../../systems/dmController.js";
 import { EQUIPMENT_TEMPLATES } from "../../data/equipment.js";
 import { SPELLS } from "../../data/spells.js";
 import { castSpell } from "../../systems/spellSystem.js";
@@ -352,7 +351,10 @@ export function initCombatUI() {
     } else {
       // Defeat: no modal, narrate directly after a short delay
       await new Promise((r) => setTimeout(r, 500));
-      await processTurn(label);
+      await eventBus.publish(EVENTS.USER_INPUT_SUBMITTED, {
+        text: label,
+        source: "combat-outcome",
+      });
     }
   });
 
@@ -2417,7 +2419,10 @@ function _mountVictoryModal(rewards) {
         const dmLabel =
           _pendingDmLabel ?? "The combat is over. I stand victorious.";
         _pendingDmLabel = null;
-        processTurn(dmLabel);
+        void eventBus.publish(EVENTS.USER_INPUT_SUBMITTED, {
+          text: dmLabel,
+          source: "combat-victory",
+        });
       },
       { once: true },
     );
