@@ -7,6 +7,41 @@
   </head>
   <body>
     <div id="app"></div>
+
+    <!-- Dice Click Overlay (DiceBoxUI) -->
+    <div
+      id="dice-click-overlay"
+      class="hidden"
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.5);
+      "
+    >
+      <div id="dice-click-box" class="dice-box" data-side="1">?</div>
+      <div
+        id="dice-click-instructions"
+        style="
+          color: white;
+          position: absolute;
+          bottom: 20%;
+          font-family: sans-serif;
+        "
+      >
+        Kattints a dobáshoz!
+      </div>
+    </div>
+
+    <!-- Debug Menu Container -->
+    <div id="debug-menu-container" style="display: none"></div>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
