@@ -83,36 +83,7 @@ import { mountRadarChart } from "./ui/components/StatsRadarChart.js";
 import { initRankModal } from "./ui/components/RankProgressionModal.js";
 import { initHowToPlayAccordion } from "./ui/components/HowToPlayAccordion.js";
 import { initChangelog } from "./ui/components/ChangelogModal.js";
-// Golyóálló Debug Toggle
-window.addEventListener("keydown", (e) => {
-  if (e.ctrlKey && e.key.toLowerCase() === "b") {
-    e.preventDefault();
-    const panel = document.getElementById("debug-menu-container");
 
-    if (panel) {
-      const isHidden =
-        panel.style.display === "none" || panel.style.display === "";
-      panel.style.display = isHidden ? "block" : "none";
-      console.log("🛠️ Debug Panel állapot:", panel.style.display);
-
-      // Frissítsük az adatokat is, ha látható
-      if (isHidden && window.campaignManager) {
-        const stateView = document.getElementById("debug-state-view");
-        if (stateView) {
-          stateView.innerText = JSON.stringify(
-            window.campaignManager.getWorldState(),
-            null,
-            2,
-          );
-        }
-      }
-    } else {
-      console.error(
-        "❌ Hiba: A 'debug-menu-container' nem található a HTML-ben!",
-      );
-    }
-  }
-});
 // ── Dev: expose state to DevTools ─────────────────────────────────────────────
 if (import.meta.env.DEV) {
   window.__store__ = gameStore;
