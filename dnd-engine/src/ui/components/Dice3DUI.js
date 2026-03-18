@@ -101,6 +101,7 @@ function _initScene() {
   // Add click listener to canvas
   _renderer.domElement.style.cursor = "pointer";
   _renderer.domElement.addEventListener("click", (event) => {
+    console.log("[Dice3DUI] Canvas clicked");
     event.stopPropagation();
     _handleRollClick();
   });
@@ -139,14 +140,20 @@ function _animate() {
 }
 
 function _showOverlay(instructions = "Kattints a kockára a dobáshoz!") {
+  console.log(
+    "[Dice3DUI] _showOverlay called with instructions:",
+    instructions,
+  );
   if (_instructionsElement) {
     _instructionsElement.textContent = instructions;
   }
   if (_overlayElement) {
     _overlayElement.style.display = "flex"; // Inline style to override
+    console.log("[Dice3DUI] Overlay display set to flex");
   }
 
   if (!_scene && _containerElement) {
+    console.log("[Dice3DUI] Initializing scene");
     _initScene();
   }
 }
@@ -238,6 +245,12 @@ function _failSession(error) {
 }
 
 async function _handleRollClick() {
+  console.log(
+    "[Dice3DUI] Roll click detected, _pendingSession:",
+    !!_pendingSession,
+    "_isRolling:",
+    _isRolling,
+  );
   if (!_pendingSession || _isRolling) return;
 
   const session = _pendingSession;
@@ -246,19 +259,26 @@ async function _handleRollClick() {
   let result;
   try {
     if (typeof session.getResult === "function") {
+      console.log("[Dice3DUI] Using custom getResult callback");
       result = await Promise.resolve(session.getResult());
     } else {
+      console.log("[Dice3DUI] Using random result");
       result = _randomInt(1, sides);
     }
   } catch (error) {
+    console.error("[Dice3DUI] getResult failed:", error);
     _failSession(error);
     return;
   }
+
+  console.log("[Dice3DUI] Result:", result);
 
   const displayValue =
     typeof session.displayValue === "function"
       ? session.displayValue(result)
       : _getDisplayValue(result, sides);
+
+  console.log("[Dice3DUI] Display value:", displayValue);
 
   await _rollDice(displayValue);
   _finishSession(result);
@@ -268,7 +288,18 @@ export function initDiceBoxUI() {
   if (_ready) return;
   _ready = true;
 
+  console.log("[Dice3DUI] initDiceBoxUI called");
+
   _cacheDom();
+  console.log(
+    "[Dice3DUI] DOM cached - overlay:",
+    !!_overlayElement,
+    "instructions:",
+    !!_instructionsElement,
+    "container:",
+    !!_containerElement,
+  );
+
   if (!_overlayElement || !_instructionsElement || !_containerElement) {
     console.warn("[Dice3DUI] Dice overlay elements not found.");
     return;
@@ -276,6 +307,7 @@ export function initDiceBoxUI() {
 
   if (_overlayElement) {
     _overlayElement.addEventListener("click", (event) => {
+      console.log("[Dice3DUI] Overlay clicked");
       if (
         event.target === _overlayElement ||
         event.target === _instructionsElement
@@ -287,6 +319,7 @@ export function initDiceBoxUI() {
 
   if (_containerElement) {
     _containerElement.addEventListener("click", (event) => {
+      console.log("[Dice3DUI] Container clicked");
       event.stopPropagation();
       _handleRollClick();
     });
@@ -308,7 +341,9 @@ export function initDiceBoxUI() {
  * Wait for a user-driven dice click interaction (3D D20).
  */
 export function waitForRoll(options = {}) {
+  console.log("[Dice3DUI] waitForRoll called with options:", options);
   return _enqueue(() => {
+    console.log("[Dice3DUI] waitForRoll _enqueue callback");
     if (!_ready) initDiceBoxUI();
 
     const sides = Math.max(2, Math.floor(options.sides ?? 20));
@@ -316,11 +351,14 @@ export function waitForRoll(options = {}) {
       options.instructions ?? "Kattints a kockára a dobáshoz!";
 
     if (!_overlayElement || !_instructionsElement || !_containerElement) {
+      console.warn("[Dice3DUI] Missing DOM elements in waitForRoll");
       if (typeof options.getResult === "function") {
         return Promise.resolve(options.getResult());
       }
       return Promise.resolve(_randomInt(1, sides));
     }
+
+    console.log("[Dice3DUI] Setting up pending session...");
 
     return new Promise((resolve, reject) => {
       _pendingSession = {
