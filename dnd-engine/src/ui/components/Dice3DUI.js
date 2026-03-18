@@ -306,8 +306,10 @@ export function initDiceBoxUI() {
   }
 
   if (_overlayElement) {
-    _overlayElement.addEventListener("click", (event) => {
-      console.log("[Dice3DUI] Overlay area clicked, target:", event.target.id || event.target.tagName);
+    // Use pointerdown for more reliable interaction with Three.js canvas
+    _overlayElement.addEventListener("pointerdown", (event) => {
+      console.log("[Dice3DUI] Pointer down on overlay area, target:", event.target.id || event.target.tagName, "isPrimary:", event.isPrimary);
+      if (!event.isPrimary) return; // Only handle primary pointer (mouse/touch)
       
       // If it's the canvas, instructions, or inside container → handle roll
       if (
@@ -316,7 +318,23 @@ export function initDiceBoxUI() {
         event.target === _instructionsElement ||
         (event.target && _containerElement?.contains(event.target))
       ) {
-        console.log("[Dice3DUI] Delegating click to _handleRollClick");
+        console.log("[Dice3DUI] Delegating pointer down to _handleRollClick");
+        event.preventDefault();
+        event.stopPropagation();
+        _handleRollClick();
+      }
+    });
+    
+    // Keep click listener as fallback
+    _overlayElement.addEventListener("click", (event) => {
+      console.log("[Dice3DUI] Click event on overlay (fallback handler)");
+      if (
+        event.target === _renderer?.domElement ||
+        event.target === _overlayElement ||
+        event.target === _instructionsElement ||
+        (event.target && _containerElement?.contains(event.target))
+      ) {
+        event.preventDefault();
         event.stopPropagation();
         _handleRollClick();
       }
