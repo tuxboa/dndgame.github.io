@@ -1065,6 +1065,49 @@ document.addEventListener("keydown", (event) => {
         });
       };
 
+      // ⏳ Time Control
+      document.getElementById("btn-debug-day").onclick = () => {
+        console.log("☀️ Nappali idő beállítása...");
+        window.eventBus.emit(EVENTS.ATMOSPHERE_SET_TIME, { time: "day" });
+      };
+
+      document.getElementById("btn-debug-night").onclick = () => {
+        console.log("🌙 Éjszakai idő beállítása...");
+        window.eventBus.emit(EVENTS.ATMOSPHERE_SET_TIME, { time: "night" });
+      };
+
+      // 🎁 Loot
+      document.getElementById("btn-debug-loot").onclick = () => {
+        console.log("🎁 Jutalmazás: 100 arany + 250 XP...");
+        window.eventBus.emit(EVENTS.PLAYER_REWARD_GRANTED, {
+          gold: 100,
+          xp: 250,
+        });
+      };
+
+      // 🤝 Factions
+      document.getElementById("debug-faction-guard").onchange = (event) => {
+        const reputation = Number(event.target.value) || 0;
+        console.log(
+          `🤝 Őrség hírnév megváltozott: ${reputation}`,
+        );
+        window.eventBus.emit(EVENTS.FACTION_REPUTATION_CHANGED, {
+          factionId: "guard",
+          reputation,
+        });
+      };
+
+      document.getElementById("debug-faction-underworld").onchange = (event) => {
+        const reputation = Number(event.target.value) || 0;
+        console.log(
+          `🤝 Alvilág hírnév megváltozott: ${reputation}`,
+        );
+        window.eventBus.emit(EVENTS.FACTION_REPUTATION_CHANGED, {
+          factionId: "underworld",
+          reputation,
+        });
+      };
+
       debugPanel.dataset.initialized = "true";
     }
 

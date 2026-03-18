@@ -301,11 +301,13 @@ export const EVENTS = {
   // ── Living World ────────────────────────────────────────────────
   TIME_ADVANCED: "world:timeAdvanced",
   TIME_OF_DAY_CHANGED: "world:timeOfDayChanged",
+  ATMOSPHERE_SET_TIME: "world:atmosphereSetTime", // Debug: { time: 'day' | 'night' }
   FACTION_REPUTATION_CHANGED: "world:factionReputationChanged",
   AUDIO_PROFILE_SUGGESTED: "audio:profileSuggested",
 
   // ── Player Actions ─────────────────────────────────────────────────────────
   PLAYER_CUSTOM_ACTION: "player:customAction", // { text } — free-text input
+  PLAYER_REWARD_GRANTED: "player:rewardGranted", // Debug: { gold, xp }
   // ── Spells & Abilities ────────────────────────────────────────────
   SPELL_CAST: "spell:cast",
   MANA_CHANGED: "spell:manaChanged",
