@@ -4,6 +4,90 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dark RPG Engine</title>
+    <style>
+      #debug-menu-container {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #1a1a2e;
+        border: 2px solid #16c784;
+        border-radius: 8px;
+        padding: 20px;
+        z-index: 10000;
+        max-height: 80vh;
+        overflow-y: auto;
+        color: #00ff00;
+        font-family: monospace;
+        box-shadow: 0 0 20px rgba(22, 199, 132, 0.5);
+      }
+
+      .debug-header {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #16c784;
+        text-align: center;
+      }
+
+      .debug-section {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #16c784;
+      }
+
+      .debug-section:last-child {
+        border-bottom: none;
+      }
+
+      .debug-section h4 {
+        margin: 0 0 10px 0;
+        color: #00ff00;
+      }
+
+      #debug-state-view {
+        background: #0a0a0e;
+        border: 1px solid #16c784;
+        padding: 10px;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: 0.8em;
+        color: #00ff00;
+      }
+
+      #debug-menu-container button {
+        background: #16c784;
+        color: #000;
+        border: none;
+        padding: 8px 12px;
+        margin: 5px 5px 5px 0;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-family: monospace;
+      }
+
+      #debug-menu-container button:hover {
+        background: #00ff00;
+      }
+
+      #debug-menu-container label {
+        display: block;
+        margin: 8px 0;
+        color: #00ff00;
+      }
+
+      #debug-menu-container input {
+        background: #0a0a0e;
+        color: #00ff00;
+        border: 1px solid #16c784;
+        padding: 5px;
+        margin-left: 5px;
+        width: 100px;
+        font-family: monospace;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
