@@ -1041,6 +1041,30 @@ document.addEventListener("keydown", (event) => {
         });
       };
 
+      document.getElementById("btn-debug-chronicle").onclick = () => {
+        console.log("📜 Krónika teszt esemény...");
+        window.eventBus.emit(EVENTS.CHRONICLE_UPDATED, {
+          entry: {
+            id: "debug-test-" + Date.now(),
+            timestamp: Date.now(),
+            flag: "debug_test",
+            value: true,
+            summary:
+              "🧪 Debug teszt bejegyzés - Ha ezt látod, a krónika működik!",
+          },
+          entries: [
+            {
+              id: "debug-test-" + Date.now(),
+              timestamp: Date.now(),
+              flag: "debug_test",
+              value: true,
+              summary:
+                "🧪 Debug teszt bejegyzés - Ha ezt látod, a krónika működik!",
+            },
+          ],
+        });
+      };
+
       debugPanel.dataset.initialized = "true";
     }
 
