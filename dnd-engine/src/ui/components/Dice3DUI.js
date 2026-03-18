@@ -29,27 +29,19 @@ function _enqueue(task) {
   return _queue;
 }
 
-function _wait(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function _enqueue(task) {
-  _queue = _queue.then(task, task);
-  return _queue;
-}
-
 function _cacheDom() {
   _overlayElement = document.querySelector("#dice-click-overlay");
   _instructionsElement = document.querySelector("#dice-click-instructions");
   // Create a container for Three.js inside the overlay
   _containerElement = document.querySelector("#dice-3d-container");
-  if (!_containerElement) {
+  if (!_containerElement && _overlayElement) {
     _containerElement = document.createElement("div");
     _containerElement.id = "dice-3d-container";
     _containerElement.style.cssText = `
       width: 300px;
       height: 300px;
       position: relative;
+      pointer-events: auto;
     `;
     _overlayElement.insertBefore(_containerElement, _overlayElement.firstChild);
   }
@@ -127,6 +119,8 @@ function _initScene() {
 function _animate() {
   _animationId = requestAnimationFrame(_animate);
 
+  if (!_scene || !_renderer || !_camera) return; // Guard clause
+
   // Gentle rotation in idle state
   if (_dice && !_isRolling) {
     _dice.rotation.x += 0.003;
@@ -137,16 +131,22 @@ function _animate() {
 }
 
 function _showOverlay(instructions = "Kattints a kockára a dobáshoz!") {
-  _instructionsElement.textContent = instructions;
-  _overlayElement.classList.remove("hidden");
+  if (_instructionsElement) {
+    _instructionsElement.textContent = instructions;
+  }
+  if (_overlayElement) {
+    _overlayElement.style.display = "flex"; // Inline style to override
+  }
 
-  if (!_scene) {
+  if (!_scene && _containerElement) {
     _initScene();
   }
 }
 
 function _hideOverlay() {
-  _overlayElement.classList.add("hidden");
+  if (_overlayElement) {
+    _overlayElement.style.display = "none"; // Inline style to override
+  }
 }
 
 function _getDisplayValue(result, fallbackSides = 20) {
@@ -262,7 +262,10 @@ export function initDiceBoxUI() {
 
   if (_overlayElement) {
     _overlayElement.addEventListener("click", (event) => {
-      if (event.target === _overlayElement || event.target === _instructionsElement) {
+      if (
+        event.target === _overlayElement ||
+        event.target === _instructionsElement
+      ) {
         _handleRollClick();
       }
     });
@@ -295,7 +298,8 @@ export function waitForRoll(options = {}) {
     if (!_ready) initDiceBoxUI();
 
     const sides = Math.max(2, Math.floor(options.sides ?? 20));
-    const instructions = options.instructions ?? "Kattints a kockára a dobáshoz!";
+    const instructions =
+      options.instructions ?? "Kattints a kockára a dobáshoz!";
 
     if (!_overlayElement || !_instructionsElement || !_containerElement) {
       if (typeof options.getResult === "function") {
@@ -310,7 +314,10 @@ export function waitForRoll(options = {}) {
         reject,
         sides,
         instructions,
-        rollAnimationMs: Math.max(0, Math.floor(options.rollAnimationMs ?? 500)),
+        rollAnimationMs: Math.max(
+          0,
+          Math.floor(options.rollAnimationMs ?? 500),
+        ),
         resultHoldMs: Math.max(0, Math.floor(options.resultHoldMs ?? 800)),
         getResult: options.getResult,
         displayValue: options.displayValue,
@@ -334,7 +341,10 @@ export function showAutoRoll(options = {}) {
         ? Math.max(1, Math.floor(options.result))
         : _randomInt(1, sides);
     const instructions = options.instructions ?? "Dobás eredmény";
-    const rollAnimationMs = Math.max(0, Math.floor(options.rollAnimationMs ?? 320));
+    const rollAnimationMs = Math.max(
+      0,
+      Math.floor(options.rollAnimationMs ?? 320),
+    );
     const resultHoldMs = Math.max(0, Math.floor(options.resultHoldMs ?? 420));
 
     if (!_overlayElement || !_instructionsElement || !_containerElement) {
@@ -354,7 +364,11 @@ export function cleanup() {
   if (_animationId) {
     cancelAnimationFrame(_animationId);
   }
-  if (_renderer && _containerElement && _containerElement.contains(_renderer.domElement)) {
+  if (
+    _renderer &&
+    _containerElement &&
+    _containerElement.contains(_renderer.domElement)
+  ) {
     _containerElement.removeChild(_renderer.domElement);
   }
   _renderer?.dispose();

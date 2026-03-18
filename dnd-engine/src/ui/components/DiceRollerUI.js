@@ -94,7 +94,9 @@ function _buildInstruction(notation, result) {
 }
 
 function _normaliseAbility(ability) {
-  const raw = String(ability ?? "").trim().toLowerCase();
+  const raw = String(ability ?? "")
+    .trim()
+    .toLowerCase();
   if (!raw) return "dex";
 
   const mapping = {
@@ -132,7 +134,9 @@ function _resolveAbilityModifier(ability, explicitModifier) {
   if (Number.isFinite(explicitModifier)) return Number(explicitModifier);
 
   const abilityKey = _normaliseAbility(ability);
-  const score = Number(gameStore.getState().player?.abilities?.[abilityKey] ?? 10);
+  const score = Number(
+    gameStore.getState().player?.abilities?.[abilityKey] ?? 10,
+  );
   return Math.floor((score - 10) / 2);
 }
 
