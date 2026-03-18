@@ -1058,8 +1058,7 @@ document.addEventListener("keydown", (event) => {
 
       document.getElementById("btn-debug-roll").onclick = () => {
         console.log("🎲 Kockadobás kérése...");
-        // A DiceBoxUI.js a 'DICE_ROLL_REQUESTED' eseményre vár
-        window.eventBus.emit("DICE_ROLL_REQUESTED", {
+        window.eventBus.emit(EVENTS.DICE_ROLL_REQUESTED, {
           ability: "dexterity",
           notation: "1d20",
           dc: 12,
@@ -1067,7 +1066,7 @@ document.addEventListener("keydown", (event) => {
       };
 
       document.getElementById("btn-debug-combat").onclick = () => {
-        window.eventBus.emit("COMBAT_TRIGGERED", {
+        window.eventBus.emit(EVENTS.COMBAT_TRIGGERED, {
           encounterId: "bandit_camp",
         });
       };
