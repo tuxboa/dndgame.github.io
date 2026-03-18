@@ -321,12 +321,12 @@ async function _executeAIDecision(decision, enemy, player) {
 
   // ── 3. Action phase ───────────────────────────────────────────────────────
   if (decision.action === "attack") {
-    // Re-read position after move
-    const updatedEnemy = gameStore
-      .getState()
-      .combat.turnOrder.find((p) => p.id === enemy.id);
+    // Re-read positions after move
+    const turnOrder = gameStore.getState().combat.turnOrder;
+    const updatedEnemy = turnOrder.find((p) => p.id === enemy.id);
+    const updatedPlayer = turnOrder.find((p) => p.isPlayer) ?? player;
     const weaponRange = updatedEnemy?.weaponRange ?? enemy.weaponRange ?? 1;
-    const dist = calcDistance(updatedEnemy ?? enemy, player);
+    const dist = calcDistance(updatedEnemy ?? enemy, updatedPlayer);
 
     if (dist <= weaponRange) {
       await _resolveAttack(updatedEnemy ?? enemy);
@@ -548,15 +548,22 @@ async function _resolveAttack(enemy) {
  */
 async function _executeFallbackTurn(enemy, player) {
   const weaponRange = enemy.weaponRange ?? 1;
-  let dist = calcDistance(enemy, player);
+  const initialTurnOrder = gameStore.getState().combat.turnOrder;
+  const initialPlayer = initialTurnOrder.find((p) => p.isPlayer) ?? player;
+
+  let dist = calcDistance(enemy, initialPlayer);
   let updated = null;
 
   if (dist > weaponRange) {
     _nudgeTowardPlayer(enemy, player);
-    updated =
-      gameStore.getState().combat.turnOrder.find((p) => p.id === enemy.id) ??
-      null;
-    if (updated) dist = calcDistance(updated, player);
+
+    const turnOrder = gameStore.getState().combat.turnOrder;
+    updated = turnOrder.find((p) => p.id === enemy.id) ?? null;
+    const updatedPlayer = turnOrder.find((p) => p.isPlayer) ?? player;
+
+    if (updated) {
+      dist = calcDistance(updated, updatedPlayer);
+    }
   }
 
   if (dist > weaponRange) {
@@ -587,13 +594,19 @@ function _nudgeTowardPlayer(enemy, target) {
   const moveSq = Math.floor((enemy.movementRemaining ?? 0) / 5);
   if (moveSq === 0) return;
 
+  const turnOrder = gameStore.getState().combat.turnOrder;
+  const liveTarget =
+    turnOrder.find((p) => p.id === target.id) ??
+    turnOrder.find((p) => p.isPlayer) ??
+    target;
+
   const weaponRange = enemy.weaponRange ?? 1;
-  const dist = calcDistance(enemy, target);
+  const dist = calcDistance(enemy, liveTarget);
   if (dist <= weaponRange) return;
 
   const steps = Math.min(moveSq, dist - weaponRange);
-  const dx = Math.sign(target.x - enemy.x);
-  const dy = Math.sign(target.y - enemy.y);
+  const dx = Math.sign(liveTarget.x - enemy.x);
+  const dy = Math.sign(liveTarget.y - enemy.y);
   const tx = Math.max(0, Math.min(cols - 1, enemy.x + dx * steps));
   const ty = Math.max(0, Math.min(rows - 1, enemy.y + dy * steps));
 
