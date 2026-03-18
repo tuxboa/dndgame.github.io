@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@dice-roller/rpg-dice-roller": "^5.5.1",
-    "@google/generative-ai": "^0.24.1"
+    "@google/generative-ai": "^0.24.1",
+    "three": "^0.183.2"
   }
 }

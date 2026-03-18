@@ -21,7 +21,7 @@ import { initPlayerEcsBridge } from "./ecs/playerEcsBridge.js";
 import { loadCampaign } from "./data/campaignLoader.js";
 import demoCampaign from "./campaigns/demo_campaign.json";
 import { initDiceUI } from "./ui/components/DiceRollerUI.js";
-import { initDiceBoxUI } from "./ui/components/DiceBoxUI.js";
+import { initDiceBoxUI } from "./ui/components/Dice3DUI.js"; // 3D D20 dice
 import { mountCharacterCreation } from "./ui/components/CharacterCreation.js";
 import { initCombatUI } from "./ui/components/CombatUI.js";
 import { initDispatcher } from "./engine/actionDispatcher.js";

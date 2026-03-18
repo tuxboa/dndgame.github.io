@@ -14,7 +14,7 @@
 import { eventBus, EVENTS } from "../../engine/eventBus.js";
 import { roll } from "../../systems/diceSystem.js";
 import { gameStore } from "../../store/index.js";
-import { showAutoRoll, waitForRoll } from "./DiceBoxUI.js";
+import { showAutoRoll, waitForRoll } from "./Dice3DUI.js"; // 3D D20 dice
 
 let _ready = false;
 let _rollRequestQueue = Promise.resolve();
