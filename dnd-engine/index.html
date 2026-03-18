@@ -122,7 +122,7 @@
           justify-content: center;
         "
       >
-        <!-- 3D Dice Container -->
+        <!-- 3D Dice Container (hidden but animating) -->
         <div
           id="dice-3d-container"
           style="
@@ -130,6 +130,7 @@
             height: 100%;
             position: absolute;
             pointer-events: auto;
+            visibility: hidden;
           "
         ></div>
 
@@ -150,18 +151,20 @@
         ></div>
       </div>
 
-      <!-- Instructions (positioned at bottom) -->
+      <!-- Instructions (positioned near top, towards chronicle panel) -->
       <div
         id="dice-click-instructions"
         style="
-          color: white;
+          color: #00ff00;
           position: absolute;
-          bottom: 8%;
+          top: 15%;
           left: 50%;
           transform: translateX(-50%);
-          font-family: sans-serif;
+          font-family: monospace;
           pointer-events: auto;
-          font-size: 1.2rem;
+          font-size: 1.5rem;
+          font-weight: bold;
+          text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
         "
       >
         Kattints a dobáshoz!
