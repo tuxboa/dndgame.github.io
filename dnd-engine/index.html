@@ -106,7 +106,8 @@
         display: none;
         justify-content: center;
         align-items: center;
-        background: transparent;
+        background: rgba(26, 26, 46, 0.3);
+        backdrop-filter: blur(2px);
         pointer-events: auto;
         flex-direction: column;
       "
@@ -134,40 +135,32 @@
           "
         ></div>
 
-        <!-- Dice Result Display (centered over dice position) -->
+        <!-- Dice Result Display (centered, elegant) -->
         <div
           id="dice-result-display"
           style="
             color: #00ff00;
-            font-size: 8rem;
-            font-weight: bold;
+            font-size: 9rem;
+            font-weight: 900;
             font-family: monospace;
             text-align: center;
             position: absolute;
             display: none;
-            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+            text-shadow: 0 0 20px rgba(0, 255, 0, 0.6), 0 0 40px rgba(0, 255, 0, 0.3);
             z-index: 10;
+            opacity: 0.95;
+            letter-spacing: 0.1em;
           "
         ></div>
       </div>
 
-      <!-- Instructions (positioned near top, towards chronicle panel) -->
+      <!-- Instructions (hidden) -->
       <div
         id="dice-click-instructions"
         style="
-          color: #00ff00;
-          position: absolute;
-          top: 15%;
-          left: 50%;
-          transform: translateX(-50%);
-          font-family: monospace;
-          pointer-events: auto;
-          font-size: 1.5rem;
-          font-weight: bold;
-          text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+          display: none;
         "
       >
-        Kattints a dobáshoz!
       </div>
     </div>
 
