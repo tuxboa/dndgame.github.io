@@ -32,9 +32,10 @@ function _enqueue(task) {
 function _cacheDom() {
   _overlayElement = document.querySelector("#dice-click-overlay");
   _instructionsElement = document.querySelector("#dice-click-instructions");
-  // Create a container for Three.js inside the overlay
   _containerElement = document.querySelector("#dice-3d-container");
+
   if (!_containerElement && _overlayElement) {
+    // Fallback: Create container if not found
     _containerElement = document.createElement("div");
     _containerElement.id = "dice-3d-container";
     _containerElement.style.cssText = `
