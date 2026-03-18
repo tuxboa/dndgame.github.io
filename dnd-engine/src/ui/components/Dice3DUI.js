@@ -254,10 +254,23 @@ function _finishSession(result) {
   _pendingSession = null;
   _isRolling = false;
 
-  // Display result on screen
+  // Display result on screen - show and hide after delay
   if (_resultDisplayElement && session.displayValue != null) {
     _resultDisplayElement.textContent = String(session.displayValue);
+    _resultDisplayElement.style.display = "flex";
+    _resultDisplayElement.style.alignItems = "center";
+    _resultDisplayElement.style.justifyContent = "center";
     console.log("[Dice3DUI] Displayed result on screen:", session.displayValue);
+
+    // Hide result display and overlay after 2 seconds
+    setTimeout(() => {
+      _resultDisplayElement.style.display = "none";
+      _hideOverlay();
+      session?.resolve?.(result);
+    }, 2000);
+  } else {
+    _hideOverlay();
+    session?.resolve?.(result);
   }
 
   // Emit chronicle event
@@ -274,13 +287,7 @@ function _finishSession(result) {
       },
     ],
   });
-  console.log(
-    "[Dice3DUI] Chronicle event emitted for result:",
-    displayValue,
-  );
-
-  _hideOverlay();
-  session?.resolve?.(result);
+  console.log("[Dice3DUI] Chronicle event emitted for result:", displayValue);
 }
 
 function _failSession(error) {
