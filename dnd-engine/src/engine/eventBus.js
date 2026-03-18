@@ -256,11 +256,6 @@ export const EVENTS = {
   DM_NARRATIVE_CHUNK: "dm:narrativeChunk", // streaming
   NARRATION_RECEIVED: "NARRATION_RECEIVED",
 
-  // ── Text-to-Speech ───────────────────────────────────────────────
-  TTS_SPEAK: "tts:speak", // { text } — playback started
-  TTS_STOPPED: "tts:stopped", // {} — stop() called explicitly
-  TTS_MUTE_CHANGED: "tts:muteChanged", // { muted: boolean }
-
   // ── Inventory / Trade ────────────────────────────────────────────
   INVENTORY_CHANGED: "inventory:changed",
   TRADE_PROPOSED: "trade:proposed",

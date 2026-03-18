@@ -20,13 +20,7 @@ import { geminiDMService } from "./services/GeminiDMService.js";
 import { initPlayerEcsBridge } from "./ecs/playerEcsBridge.js";
 import { loadCampaign } from "./data/campaignLoader.js";
 import demoCampaign from "./campaigns/demo_campaign.json";
-import { getGroqKey, getTtsKey, isAiEnabled } from "./config/apiConfig.js";
-import {
-  initDM,
-  restoreApiKey,
-  processTurn,
-  setApiKey,
-} from "./systems/dmController.js";
+import { initDM, processTurn } from "./systems/dmController.js";
 import { initDiceUI } from "./ui/components/DiceRollerUI.js";
 import { initDiceBoxUI } from "./ui/components/DiceBoxUI.js";
 import { mountCharacterCreation } from "./ui/components/CharacterCreation.js";
@@ -47,14 +41,6 @@ import { initAudio } from "./systems/audioSystem.js";
 import { initCombatDamagePipeline } from "./systems/combatDamagePipeline.js";
 import { initVisualEffectSystem } from "./systems/visualEffectSystem.js";
 import { initCombatLogUI } from "./systems/combatLogUI.js";
-import {
-  initTTS,
-  setTtsKey,
-  restoreTtsKey,
-  toggleTtsMute,
-  isTtsMuted,
-  stopNarration,
-} from "./systems/ttsSystem.js";
 import { initActionInput } from "./ui/components/ActionInputUI.js";
 import { initChronicleUI } from "./ui/components/ChronicleUI.js";
 import { initCombatMap } from "./ui/components/CombatMapEngine.js";
@@ -161,23 +147,12 @@ async function bootstrap() {
   gameEl.classList.add("game-container--enter");
 
   // ── Step 6: DM controller ─────────────────────────────────────────────────────
-  const savedKey = restoreApiKey();
-  initDM(savedKey);
+  initDM();
 
   // ── Step 7: Render game UI shell into #game-container ────────────────────────
   renderUI(gameEl, campaign);
   wireUI();
   subscribeToStore();
-
-  // Show offline notice if no Groq key is configured
-  if (!isAiEnabled()) {
-    appendNarration(
-      "⚙️ Offline mód — Az AI DM le van tiltva. Adj meg egy Groq API kulcsot a ⚙️ Beállítások gombban a teljes élményért.",
-      "system",
-    );
-    // Auto-open settings modal so the player can enter a key immediately
-    showKeyModal();
-  }
 
   // Step 3b: Init subsystems
   initAudio();
@@ -288,9 +263,6 @@ async function bootstrap() {
   // Wire the tactical grid map (mounts on COMBAT_STARTED, unmounts on COMBAT_ENDED)
   initCombatMap();
 
-  // Initialise Google Cloud TTS for the DM Voice (after audio context is unblocked)
-  initTTS(restoreTtsKey());
-
   // ── New UI components ──────────────────────────────────────────────────────
   // Rank Progression Modal (attaches click handler to #rank-btn)
   initRankModal();
@@ -351,7 +323,7 @@ function renderUI(app, campaign) {
           <button id="how-to-play-btn" class="icon-btn" title="Hogyan játssz?">❓</button>
           <button id="changelog-btn"  class="icon-btn" title="Változásnapló">📋</button>
           <button id="btn-save"       class="icon-btn" title="Save / Load (F5)">💾</button>
-          <button id="btn-settings"   class="icon-btn" title="Settings">⚙️<span id="settings-offline-badge" class="offline-badge" style="display:none" title="Offline — Nincs API kulcs">!</span></button>
+          <button id="btn-settings"   class="icon-btn" title="Settings">⚙️</button>
         </div>
       </header>
 
@@ -399,13 +371,6 @@ function renderUI(app, campaign) {
       <div class="modal settings-modal">
         <h2>⚙️ Settings</h2>
 
-        <!-- DM AI section -->
-        <div class="settings-section">
-          <h3 class="settings-section-title">🎲 DM AI (Groq)</h3>
-          <p class="settings-hint">Powers the AI Dungeon Master. Get a free key at <a href="https://console.groq.com" target="_blank" rel="noopener">console.groq.com</a>.</p>
-          <input type="password" id="api-key-input" class="key-input" placeholder="gsk_…" />
-        </div>
-
         <!-- Language -->
         <div class="settings-section">
           <h3 class="settings-section-title">🌍 Language / Nyelv</h3>
@@ -415,20 +380,9 @@ function renderUI(app, campaign) {
           </select>
         </div>
 
-        <!-- TTS / DM Voice section -->
-        <div class="settings-section">
-          <h3 class="settings-section-title">🎙️ DM Voice (Google Cloud TTS)</h3>
-          <p class="settings-hint">Narrates every DM message in a deep wizard voice. Get a free key at <a href="https://console.cloud.google.com" target="_blank" rel="noopener">console.cloud.google.com</a> — 1 M chars / month free on Wavenet.</p>
-          <input type="password" id="tts-key-input" class="key-input" placeholder="AIzaSy…" />
-          <div class="settings-row">
-            <button id="btn-tts-mute" class="btn-secondary settings-mute-btn" type="button">🔊 DM Voice: On</button>
-            <button id="btn-tts-stop" class="btn-secondary" type="button" title="Stop current narration">⏹ Stop</button>
-          </div>
-        </div>
-
         <div class="modal-actions">
-          <button id="btn-save-key" class="btn-primary">Save &amp; Apply</button>
-          <button id="btn-offline"  class="btn-secondary">Play Offline</button>
+          <button id="btn-save-key" class="btn-primary">Save &amp; Close</button>
+          <button id="btn-close-settings" class="btn-secondary">Close</button>
         </div>
       </div>
     </div>
@@ -538,87 +492,38 @@ function wireUI() {
     .querySelector("#btn-close-save-modal")
     ?.addEventListener("click", closeSaveModal);
 
+  document.querySelector("#btn-save-key").addEventListener("click", () => {
+    // ── Language ────────────────────────────────────────────────
+    const lang = document.querySelector("#lang-select")?.value ?? "hu";
+    localStorage.setItem("dnd_lang", lang);
+    const curSettings = gameStore.getState().settings ?? {};
+    gameStore.setState(
+      { settings: { ...curSettings, language: lang } },
+      "main:setLanguage",
+    );
+
+    closeKeyModal();
+    appendNarration("Settings saved.", "system");
+  });
+
   document
-    .querySelector("#btn-save-key")
-    .addEventListener("click", async () => {
-      // ── Language ────────────────────────────────────────────────
-      const lang = document.querySelector("#lang-select")?.value ?? "hu";
-      localStorage.setItem("dnd_lang", lang);
-      const curSettings = gameStore.getState().settings ?? {};
-      gameStore.setState(
-        { settings: { ...curSettings, language: lang } },
-        "main:setLanguage",
-      );
-
-      // ── DM AI key ────────────────────────────────────────────────────────
-      const dmKey = document.querySelector("#api-key-input")?.value.trim();
-      if (dmKey) {
-        setApiKey(dmKey);
-        initDM(dmKey);
-      }
-
-      // ── TTS key ────────────────────────────────────────────────────────────
-      const ttsKey = document.querySelector("#tts-key-input")?.value.trim();
-      if (ttsKey) {
-        setTtsKey(ttsKey);
-        initTTS(ttsKey); // Re-init with new key (listener is idempotent)
-      }
-
-      if (!dmKey && !ttsKey) return; // Nothing to save
-
+    .querySelector("#btn-close-settings")
+    ?.addEventListener("click", () => {
       closeKeyModal();
-      // Update offline badge after saving keys
-      _updateSettingsBadge();
-
-      if (dmKey) {
-        appendNarration("DM connected. Beginning your adventure…", "system");
-        await processTurn(
-          "I enter the world for the first time and look around.",
-        );
-      } else {
-        appendNarration("DM Voice key saved.", "system");
-      }
     });
 
-  document.querySelector("#btn-offline").addEventListener("click", () => {
-    closeKeyModal();
-    appendNarration(
-      "Playing offline. Narration will use placeholder text until a key is added.",
-      "system",
-    );
-  });
-
-  // ── TTS controls ──────────────────────────────────────────────────────────
-  document.querySelector("#btn-tts-mute")?.addEventListener("click", (e) => {
-    const muted = toggleTtsMute();
-    e.currentTarget.textContent = muted
-      ? "🔇 DM Voice: Off"
-      : "🔊 DM Voice: On";
-    e.currentTarget.classList.toggle("settings-mute-btn--muted", muted);
-  });
-
-  document.querySelector("#btn-tts-stop")?.addEventListener("click", () => {
-    stopNarration();
-  });
-
-  // Sync mute button label + language selector + key inputs when the modal opens
-  document.querySelector("#btn-settings")?.addEventListener("click", () => {
-    const muteBtn = document.querySelector("#btn-tts-mute");
-    if (muteBtn) {
-      const muted = isTtsMuted();
-      muteBtn.textContent = muted ? "🔇 DM Voice: Off" : "🔊 DM Voice: On";
-      muteBtn.classList.toggle("settings-mute-btn--muted", muted);
+  document.querySelector("#modal-key")?.addEventListener("click", (e) => {
+    if (e.target === document.querySelector("#modal-key")) {
+      closeKeyModal();
     }
-    // Pre-select the current language
+  });
+
+  // Sync language selector when the modal opens
+  document.querySelector("#btn-settings")?.addEventListener("click", () => {
     const langSelect = document.querySelector("#lang-select");
     if (langSelect) {
       langSelect.value = gameStore.getState().settings?.language ?? "hu";
     }
-    // Pre-fill saved API keys so the player can see / update them
-    const dmKeyInput = document.querySelector("#api-key-input");
-    if (dmKeyInput) dmKeyInput.value = getGroqKey();
-    const ttsKeyInput = document.querySelector("#tts-key-input");
-    if (ttsKeyInput) ttsKeyInput.value = getTtsKey();
   });
 
   document
@@ -803,9 +708,6 @@ function renderEncounterList() {
       if (ok) closeEncounterModal();
     });
   });
-
-  // Initialise offline badge state
-  _updateSettingsBadge();
 }
 
 function subscribeToStore() {
@@ -906,14 +808,6 @@ function showKeyModal() {
 }
 function closeKeyModal() {
   document.querySelector("#modal-key")?.classList.add("hidden");
-}
-
-/** Show/hide the red "!" badge on the ⚙️ button based on whether a Groq key is set. */
-function _updateSettingsBadge() {
-  const badge = document.querySelector("#settings-offline-badge");
-  if (!badge) return;
-  const offline = !isAiEnabled();
-  badge.style.display = offline ? "inline" : "none";
 }
 
 function showSaveModal() {

@@ -203,23 +203,6 @@ export function setSfxVolume(v) {
   _sfxVolume = Math.max(0, Math.min(1, v));
 }
 
-/**
- * Speak a combat-narration line via the TTS voice (GCP en-GB-Wavenet-B).
- * Thin facade so callers only need to import audioSystem, not ttsSystem.
- * Uses a dynamic import to avoid a circular dependency between the two systems.
- *
- * @param {string} text  English narration text (plain or Markdown)
- * @returns {Promise<void>}
- */
-export async function speakCombatLine(text) {
-  try {
-    const { speakNarration } = await import("./ttsSystem.js");
-    return speakNarration(text);
-  } catch (err) {
-    console.warn("[AudioSystem] speakCombatLine failed:", err.message);
-  }
-}
-
 // ── Private helpers ────────────────────────────────────────────────────────────
 
 /**

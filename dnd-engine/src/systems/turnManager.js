@@ -831,7 +831,7 @@ function _isMyTurn(current, session) {
 // ── Enemy AI ──────────────────────────────────────────────────────────────────
 
 /**
- * Execute one enemy's turn via the Groq-powered Combat AI.
+ * Execute one enemy's turn via deterministic combat AI.
  * Delegates to combatManager to avoid circular imports while keeping
  * CombatUI's existing `runEnemyTurn` call site unchanged.
  *
