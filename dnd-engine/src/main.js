@@ -1013,15 +1013,14 @@ bootstrap().catch((err) => {
   renderFatalScreen("Engine failed to start", err);
 });
 // ==========================================
-// 🛠️ CYBORG DM - ISTENI MÓD (GOD MODE) LOGIKA - JAVÍTOTT
+// 🛠️ CYBORG DM - ISTENI MÓD (GOD MODE) LOGIKA
 // ==========================================
-// CSAK EZ MARADJON A CTRL+B RÉSZNÉL A MAIN.JS VÉGÉN:
 document.addEventListener("keydown", (event) => {
-  if (event.ctrlKey && event.key === "b") {
+  if (event.ctrlKey && event.key.toLowerCase() === "b") {
     event.preventDefault();
 
     let debugPanel = document.getElementById("debug-menu-container");
-    if (!debugPanel) return; // Ha nincs a HTML-ben, ne csináljon semmit
+    if (!debugPanel) return;
 
     // EGYSZERI BEKÖTÉS (Ha még nincsenek bekötve a gombok)
     if (!debugPanel.dataset.initialized) {
